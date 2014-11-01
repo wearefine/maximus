@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Maximus::VERSION
   spec.authors       = ["Tim Shedor"]
   spec.email         = ["tim@wearefine.com"]
-  spec.summary       = %q{}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.summary       = %q{Run tests and save them to the Colosseum}
+  spec.description   = %q{Currently supports scss-lint, jshint, and stylestats}
   spec.homepage      = ""
   spec.license       = "MIT"
 
@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "git", ">= 1.2.8"
   spec.add_development_dependency "scss-lint", ">= 0.29.0"
+  spec.add_development_dependency "rainbow"
   spec.add_development_dependency "bundler", "~> 1.6"
   spec.add_development_dependency "rake"
 end

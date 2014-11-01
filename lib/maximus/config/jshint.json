@@ -1,5 +1,4 @@
 {
-  // Documentation: http://www.jshint.com/docs/options/
   "browser": true,
   "esnext": true,
   "globals": {},

@@ -1,11 +1,13 @@
 require 'net/http'
 require 'git'
+require 'rainbow'
+require 'rainbow/ext/string'
 
 desc "Run some sweet lint scripts and post them to the main hub"
 
 def lint_globals
   @project = Rails.root.to_s.split('/').last
-  @g = Git.open(Rails.root)
+  @g = Git.open(Rails.root, :log => Logger.new("#{Rails.root}/log/maximus_git.log"))
   @sha = @g.object('HEAD').sha
   branch = `env -i git rev-parse --abbrev-ref HEAD`
   master_commit = @g.branches[:master].gcommit
@@ -14,7 +16,7 @@ def lint_globals
   @output = {
     project: {
       name: @project,
-      remote_repo: @g.remotes.first.url
+      remote_repo: (@g.remotes.first.url if @g.remotes.present?)
     },
     git: {
       commitsha: @sha,
@@ -31,7 +33,18 @@ def lint_globals
   }
 end
 
-def felint_refine(data)
+def check_node_module(node_module)
+  cmd = `if hash #{node_module} 2>/dev/null; then
+    echo "true"
+  else
+    echo "false"
+  fi`
+  if cmd.include? "false"
+    abort("#{'Missing node module'.color(:red)}: Please run `npm install -g #{node_module}` And try again\n")
+  end
+end
+
+def felint_refine(data, t)
   error_list = JSON.parse(data)
   lint_warnings = []
   lint_errors = []
@@ -56,6 +69,12 @@ def felint_refine(data)
   @output[:lint_warnings] = lint_warnings.length
   @output[:refined_data] = lint_warnings.concat(lint_errors)
   @output[:raw_data] = error_list
+
+  if @output[:refined_data].length > 150
+    puts format_output(@output[:refined_data])
+    failed_task = "rake #{t}".color(:green)
+    abort("\n#{'Failure.'.color(:red)} You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.\n\n")
+  end
 end
 
 def lint_post(name)
@@ -66,76 +85,109 @@ def lint_post(name)
   res = Net::HTTP.start(uri.hostname, uri.port) do |http|
     http.request(req)
   end
+  if @output[:lint_errors] > 0
+    puts "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name}"
+  else
+    success = name.color(:green)
+    success += ": "
+    success += "[#{@output[:lint_warnings]}]".color(:yellow)
+    success += " "
+    success += "[#{@output[:lint_errors]}]".color(:red)
+    puts success
+  end
 end
 
 def check_default(filename)
   user_file = "#{Rails.root}/config/#{filename}"
-  return File.exist?(user_file) ? user_file : "#{Dir.pwd}/config/#{filename}"
+  return File.exist?(user_file) ? user_file : File.expand_path("../../config/#{filename}", __FILE__)
 end
 
-namespace :felint do
+def get_file_count(path)
+  @output[:file_count] = Dir[path].count { |file| File.file?(file) }
+end
 
-  desc "Run scss-lint" #scss-lint Rake API was challenging
-  task :scss, :dev, :path do |t, args|
+def format_output(errors)
 
-    args.with_defaults(:dev => false, :path => 'app/assets/stylesheets/website/')
-    is_dev = args[:dev] == 'true' ? true : false
-
-    config_file = check_default('scss-lint.yml')
-
-    scss_cli = "scss-lint #{args[:path]} -c #{config_file}"
-
-    if is_dev
-
-      puts %x[#{scss_cli}]
-
-    else
-
-      scss_cli += " --format=JSON"
-      lint_globals
-      scss=`#{scss_cli}`
-      felint_refine(scss)
-      @output[:division] = 'front'
-      lint_post('scss_lint')
-
-    end
+  pretty_output = ''
+  errors.each do |error|
+    pretty_output += error['filename'].color(:cyan)
+    pretty_output += ":"
+    pretty_output += error['line'].to_s.color(:magenta)
+    pretty_output += " #{error['linter'].color(:green)}: "
+    pretty_output += error['reason']
+    pretty_output += "\n"
   end
-
-  desc "Run jshint (node required)"
-  task :jshint, :dev, :path do |t, args|
-    args.with_defaults(:dev => false, :path => 'app/assets/javascripts/**/*.js')
-    is_dev = args[:dev] == 'true' ? true : false
-
-    has_node_dep=`node #{Dir.pwd}/config/check_node_dependencies.js`
-    unless has_node_dep
-      abort('Please install the node dependencies')
-    end
-
-    config_file = check_default('jshint.json')
-    exclude_file = check_default('.jshintignore')
-
-    jshint_cli = "jshint -c #{config_file} #{args[:path]} --exclude-path=#{exclude_file}"
-
-    if is_dev
-
-      puts %x[#{jshint_cli}]
-
-    else
-
-      jshint_cli += " --reporter=#{Dir.pwd}/config/jshint-reporter.js"
-      lint_globals
-      jshint=`#{jshint_cli}`
-      felint_refine(jshint)
-      @output[:division] = 'front'
-      lint_post('jshint')
-
-    end
-  end
-
-  desc "Get everything done at once"
-  task :all => [:scss, :jshint]
+  return pretty_output
 
 end
 
-desc "Argument less task"
-task :felint => 'felint:all'
+
+namespace :maximus do
+  namespace :fe do
+
+    desc "Run scss-lint" #scss-lint Rake API was challenging
+    task :scss, :dev, :path do |t, args|
+      `scss-lint -v`
+      args.with_defaults(:dev => false, :path => "app/assets/stylesheets/")
+      is_dev = args[:dev] == 'true' ? true : false
+      config_file = check_default('scss-lint.yml')
+      scss_cli = "scss-lint #{args[:path]} -c #{config_file}  --format=JSON"
+
+      lint_globals
+      scss = `#{scss_cli}`
+      felint_refine(scss, t)
+      format_output(@output[:refined_data])
+
+      @output[:division] = 'front'
+      count_path = args[:path].include?("*") ? args[:path] : "#{args[:path]}/**/*.scss" #stupid, but necessary so that directories aren't counted
+      get_file_count(count_path)
+
+      lint_post('scss_lint') unless is_dev
+
+    end
+
+    desc "Run jshint (node required)"
+    task :js, :dev, :path do |t, args|
+      args.with_defaults(:dev => false, :path => 'app/assets/**/*.js')
+      is_dev = args[:dev] == 'true' ? true : false
+
+      check_node_module('jshint')
+
+      config_file = check_default('jshint.json')
+      exclude_file = check_default('.jshintignore')
+      jshint_cli = "jshint #{args[:path]} --config=#{config_file} --exclude-path=#{exclude_file} --reporter=#{File.expand_path("../../config/jshint-reporter.js", __FILE__)}"
+
+      jshint = `#{jshint_cli}`
+
+      unless jshint.empty?
+
+          lint_globals
+          felint_refine(jshint, t)
+          format_output(@output[:refined_data])
+
+      else
+
+        puts "No JSHint errors"
+
+        @output[:lint_errors] = 0
+        @output[:lint_warnings] = 0
+
+      end
+
+      @output[:division] = 'front'
+      get_file_count(args[:path])
+      lint_post('jshint') unless is_dev
+
+    end
+
+    task :stylestats, :dev do |t, args|
+      check_node_module('stylestats')
+    end
+
+    desc "Get everything done at once"
+    task :all => [:scss, :js]
+
+  end
+  desc "Argument less task"
+  task :fe => 'fe:all'
+end
