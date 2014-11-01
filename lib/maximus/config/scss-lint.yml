@@ -1,0 +1,59 @@
+scss_files: 'app/assets/stylesheets/'
+
+# exclude: 'app/assets/stylesheets/admin/'
+
+format: 'JSON'
+
+linters:
+  ColorKeyword:
+    enabled: false
+  Compass::*:
+    enabled: true
+  Comment:
+    exclude:
+      - 'app/assets/stylesheets/**/*.css.scss'
+  Compass::PropertyWithMixin:
+    ignore:
+      - 'inline-block'
+      - 'border-radius'
+      - 'box-shadow'
+      - 'opacity'
+      - 'text-shadow'
+  Indentation:
+    enabled: false
+    character: tab
+    severity: warning
+    width: 1
+  NameFormat:
+    convention: BEM
+    enabled: false
+  SelectorFormat:
+    enabled: false
+  EmptyLineBetweenBlocks:
+    enabled: false
+  NestingDepth:
+    max_depth: 6
+    severity: error
+  SelectorDepth:
+    max_depth: 5
+    severity: error
+  LeadingZero:
+    enabled: false
+  PlaceholderInExtend:
+    enabled: false
+  PropertySortOrder:
+    enabled: false
+  SpaceAfterPropertyColon:
+    enabled: false
+  UrlFormat:
+    enabled: false
+  UnnecessaryParentReference:
+    severity: error
+  VendorPrefixes:
+    exclude:
+      - '-webkit-tap-highlight-color'
+      - '-webkit-font-smoothing'
+      - '-moz-osx-font-smoothing'
+      - '-webkit-appearance'
+  FinalNewline:
+    enabled: false
