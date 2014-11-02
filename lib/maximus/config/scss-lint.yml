@@ -5,13 +5,8 @@ scss_files: 'app/assets/stylesheets/'
 format: 'JSON'
 
 linters:
-  ColorKeyword:
-    enabled: false
   Compass::*:
     enabled: true
-  Comment:
-    exclude:
-      - 'app/assets/stylesheets/**/*.css.scss'
   Compass::PropertyWithMixin:
     ignore:
       - 'inline-block'
@@ -44,8 +39,6 @@ linters:
   PropertySortOrder:
     enabled: false
   SpaceAfterPropertyColon:
-    enabled: false
-  UrlFormat:
     enabled: false
   UnnecessaryParentReference:
     severity: error
