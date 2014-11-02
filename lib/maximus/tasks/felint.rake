@@ -84,7 +84,7 @@ def felint_refine(data, t)
     puts format_output(@output[:refined_data])
     failed_task = "rake #{t}".color(:green)
     errors = Rainbow("#{@output[:refined_data].length} failures").red
-    abort("\n#{errors}\nYou wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.\n\n")
+    puts "\n#{errors}\nYou wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.\n\n"
   end
 
 end
@@ -183,8 +183,6 @@ namespace :maximus do
           puts format_output(@output[:refined_data]) if is_dev
 
       else
-
-        puts "No JSHint errors"
 
         @output[:lint_errors] = 0
         @output[:lint_warnings] = 0
