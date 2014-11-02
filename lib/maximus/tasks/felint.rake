@@ -182,6 +182,17 @@ namespace :maximus do
 
     task :stylestats, :dev do |t, args|
       check_node_module('stylestats')
+      if Gem::Specification::find_all_by_name('compass').any?
+        Compass.sass_engine_options[:load_paths].each do |path|
+          Sass.load_paths << path
+        end
+      end
+      Dir.glob('app/assets/**/*').select {|f| File.directory? f}.each do |file|
+        Sass.load_paths << file
+      end
+      scss_file = File.open("app/assets/stylesheets/website/application.css.scss", 'rb') { |f| f.read }
+
+      puts Sass::Engine.new(scss_file, { syntax: :scss, quiet: true, style: :compressed }).render
     end
 
     desc "Get everything done at once"
