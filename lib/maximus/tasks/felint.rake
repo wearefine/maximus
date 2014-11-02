@@ -100,7 +100,7 @@ def fe_post(name, url)
 end
 
 def lint_post(name)
-  fe_post(name, "http://localhost:3001/lint/new/#{name}")
+  fe_post(name, "http://localhost:3001/lints/new/#{name}")
   if @output[:lint_errors] > 0
     puts "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name}"
   else
@@ -263,7 +263,7 @@ namespace :maximus do
 
       @output[:division] = 'front'
 
-      fe_post('stylestats', 'http://localhost:3001/statistic/new/stylestats') unless is_dev
+      fe_post('stylestats', 'http://localhost:3001/statistics/new/stylestats') unless is_dev
 
     end
 
