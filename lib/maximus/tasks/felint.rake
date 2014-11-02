@@ -2,12 +2,21 @@ require 'net/http'
 require 'git'
 require 'rainbow'
 require 'rainbow/ext/string'
+require 'json'
+require 'active_support'
+require 'active_support/core_ext/object/blank'
 
 desc "Run some sweet lint scripts and post them to the main hub"
 
+def is_rails
+  defined?(Rails)
+end
+
 def lint_globals
-  @project = Rails.root.to_s.split('/').last
-  @g = Git.open(Rails.root, :log => Logger.new("#{Rails.root}/log/maximus_git.log"))
+  root_dir = is_rails ? Rails.root : Dir.pwd
+  log = is_rails ? Logger.new("#{root_dir}/log/maximus_git.log") : nil
+  @project = root_dir.to_s.split('/').last
+  @g = Git.open(root_dir, :log => log)
   @sha = @g.object('HEAD').sha
   branch = `env -i git rev-parse --abbrev-ref HEAD`
   master_commit = @g.branches[:master].gcommit
@@ -16,7 +25,7 @@ def lint_globals
   @output = {
     project: {
       name: @project,
-      remote_repo: (@g.remotes.first.url if @g.remotes.present?)
+      remote_repo: (@g.remotes.first.url unless @g.remotes.blank?)
     },
     git: {
       commitsha: @sha,
@@ -70,21 +79,28 @@ def felint_refine(data, t)
   @output[:refined_data] = lint_warnings.concat(lint_errors)
   @output[:raw_data] = error_list
 
-  if @output[:refined_data].length > 150
+  #If there's just too much to handle
+  if @output[:refined_data].length > 100
     puts format_output(@output[:refined_data])
     failed_task = "rake #{t}".color(:green)
-    abort("\n#{'Failure.'.color(:red)} You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.\n\n")
+    errors = Rainbow("#{@output[:refined_data].length} failures").red
+    abort("\n#{errors}\nYou wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.\n\n")
   end
+
 end
 
-def lint_post(name)
-  uri = URI("http://localhost:3001/lint/new/#{name}")
+def fe_post(name, url)
+  uri = URI(url)
   req = Net::HTTP::Post.new(uri, initheader = {'Content-Type' =>'application/json'})
   req.basic_auth 'user54', 'pass77'
   req.body = @output.to_json
   res = Net::HTTP.start(uri.hostname, uri.port) do |http|
     http.request(req)
   end
+end
+
+def lint_post(name)
+  fe_post(name, "http://localhost:3001/lint/new/#{name}")
   if @output[:lint_errors] > 0
     puts "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name}"
   else
@@ -98,7 +114,8 @@ def lint_post(name)
 end
 
 def check_default(filename)
-  user_file = "#{Rails.root}/config/#{filename}"
+  root_dir = is_rails ? Rails.root : Dir.pwd
+  user_file = "#{root_dir}/config/#{filename}"
   return File.exist?(user_file) ? user_file : File.expand_path("../../config/#{filename}", __FILE__)
 end
 
@@ -126,17 +143,18 @@ namespace :maximus do
   namespace :fe do
 
     desc "Run scss-lint" #scss-lint Rake API was challenging
-    task :scss, :dev, :path do |t, args|
-      `scss-lint -v`
-      args.with_defaults(:dev => false, :path => "app/assets/stylesheets/")
+    task :scss, [:dev, :path] do |t, args|
+
+      args.with_defaults(:dev => false, :path => (is_rails ? "app/assets/stylesheets/" : "source/assets/stylesheets") )
       is_dev = args[:dev] == 'true' ? true : false
-      config_file = check_default('scss-lint.yml')
-      scss_cli = "scss-lint #{args[:path]} -c #{config_file}  --format=JSON"
 
       lint_globals
-      scss = `#{scss_cli}`
+
+      config_file = check_default('scss-lint.yml')
+
+      scss = `scss-lint #{args[:path]} -c #{config_file}  --format=JSON`
       felint_refine(scss, t)
-      format_output(@output[:refined_data])
+      puts format_output(@output[:refined_data]) if is_dev
 
       @output[:division] = 'front'
       count_path = args[:path].include?("*") ? args[:path] : "#{args[:path]}/**/*.scss" #stupid, but necessary so that directories aren't counted
@@ -148,22 +166,21 @@ namespace :maximus do
 
     desc "Run jshint (node required)"
     task :js, :dev, :path do |t, args|
-      args.with_defaults(:dev => false, :path => 'app/assets/**/*.js')
-      is_dev = args[:dev] == 'true' ? true : false
 
       check_node_module('jshint')
 
+      args.with_defaults(:dev => false, :path => (is_rails ? "app/assets/**" : "source/assets/**") )
+      is_dev = args[:dev] == 'true' ? true : false
+
       config_file = check_default('jshint.json')
       exclude_file = check_default('.jshintignore')
-      jshint_cli = "jshint #{args[:path]} --config=#{config_file} --exclude-path=#{exclude_file} --reporter=#{File.expand_path("../../config/jshint-reporter.js", __FILE__)}"
-
-      jshint = `#{jshint_cli}`
+      jshint = `jshint #{args[:path]} --config=#{config_file} --exclude-path=#{exclude_file} --reporter=#{File.expand_path("../../config/jshint-reporter.js", __FILE__)}`
 
       unless jshint.empty?
 
           lint_globals
           felint_refine(jshint, t)
-          format_output(@output[:refined_data])
+          puts format_output(@output[:refined_data]) if is_dev
 
       else
 
@@ -180,23 +197,80 @@ namespace :maximus do
 
     end
 
-    task :stylestats, :dev do |t, args|
+    task :stylestats, :dev, :path do |t, args|
+
       check_node_module('stylestats')
+
+      args.with_defaults(:dev => false, :path => (is_rails ? 'app/assets/**/*' : 'source/assets/**/*') )
+      is_dev = args[:dev] == 'true' ? true : false
+
+      lint_globals
+
+      #Load Compass paths if it exists
       if Gem::Specification::find_all_by_name('compass').any?
+        require 'compass' unless is_rails
         Compass.sass_engine_options[:load_paths].each do |path|
           Sass.load_paths << path
         end
       end
-      Dir.glob('app/assets/**/*').select {|f| File.directory? f}.each do |file|
+
+      #Toggle default looks for rails or middleman
+      search_for_scss = args[:path]
+
+      Dir.glob(search_for_scss).select {|f| File.directory? f}.each do |file|
         Sass.load_paths << file
       end
-      scss_file = File.open("app/assets/stylesheets/website/application.css.scss", 'rb') { |f| f.read }
 
-      puts Sass::Engine.new(scss_file, { syntax: :scss, quiet: true, style: :compressed }).render
+      search_for_scss += ".css.scss"
+
+      #Prep for stylestats
+      config_file = check_default('.stylestatsrc')
+
+      @output[:statistics] = {}
+      @output[:statistics][:files] = {} #what am i doing wrong
+      Dir[search_for_scss].select { |file| File.file? file }.each do |file|
+
+        scss_file = File.open(file, 'rb') { |f| f.read }
+
+        output_file = File.open( file.split('.').reverse.drop(1).reverse.join('.'), "w" )
+        output_file << Sass::Engine.new(scss_file, { syntax: :scss, quiet: true, style: :compressed }).render
+        output_file.close
+
+
+        stylestats = "stylestats #{output_file.path} --config=#{config_file} --type=json"
+        puts "Stylestatting #{file.color(:green)}"
+        if is_dev
+
+          puts `#{stylestats.gsub('--type=json', '')}`
+
+        else
+          stats = JSON.parse(`#{stylestats}`)
+          symbol_file = output_file.path.to_sym
+          @output[:statistics][:files][symbol_file] = {} #still doing something wrong here
+          file_collection = @output[:statistics][:files][symbol_file]
+
+          stats.each do |stat, value|
+
+            file_collection[stat.to_sym] = value
+
+          end
+
+          @output[:raw_data] = stats
+
+          File.delete(output_file)
+
+        end
+
+      end
+
+      @output[:division] = 'front'
+
+      fe_post('stylestats', 'http://localhost:3001/statistic/new/stylestats') unless is_dev
+
     end
 
     desc "Get everything done at once"
-    task :all => [:scss, :js]
+    task :all => [:scss, :js, :stylestats]
 
   end
   desc "Argument less task"
