@@ -1,5 +1,5 @@
 require 'maximus/version'
-require 'maximus/helpers'
+require 'maximus/helper'
 require 'maximus/remote'
 require 'maximus/lint'
 require 'maximus/rake_tasks'

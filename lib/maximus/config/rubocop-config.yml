@@ -57,8 +57,8 @@ Style/EmptyLinesAroundAccessModifier:
 
 # Offense count: 1
 # Cop supports --auto-correct.
-Style/EmptyLinesAroundBody:
-  Enabled: true
+# Style/EmptyLinesAroundBody:
+#   Enabled: true
 
 # Offense count: 1
 # Configuration parameters: Exclude.
@@ -79,13 +79,9 @@ Style/IfUnlessModifier:
 Style/Lambda:
   Enabled: true
 
-# Offense count: 55
-Style/LineLength:
-  Max: 112
-
 # Offense count: 17
 # Configuration parameters: CountComments.
-Style/MethodLength:
+Metrics/MethodLength:
   Max: 24
 
 # Offense count: 1

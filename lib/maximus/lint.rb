@@ -43,20 +43,28 @@ module Maximus
       error_list = JSON.parse(data)
       lint_warnings = []
       lint_errors = []
-      filename = ''
+      lint_conventions = []
+      lint_refactors = []
       error_list.each do |filename, error_list|
         error_list.each do |message|
           message['filename'] = filename
           if message['severity'] == 'warning'
             lint_warnings << message
-          else
+          elsif message['severity'] == 'error'
             lint_errors << message
+          elsif message['severity'] == 'convention'
+            lint_conventions << message
+          elsif message['severity'] == 'refactor'
+            lint_refactors << message
           end
         end
       end
-      @output[:errors] = lint_errors.length
-      @output[:warnings] = lint_warnings.length
-      @output[:refined_data] = lint_warnings.concat(lint_errors)
+
+      @output[:lint_errors] = lint_errors.length
+      @output[:lint_warnings] = lint_warnings.length
+      @output[:lint_conventions] = lint_conventions.length
+      @output[:lint_refactors] = lint_refactors.length
+      @output[:refined_data] = lint_warnings.concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
       @output[:raw_data] = error_list
 
       #If there's just too much to handle
@@ -65,7 +73,7 @@ module Maximus
         failed_task = "rake #{t}".color(:green)
         errors = Rainbow("#{@output[:refined_data].length} failures.").red
         errormsg = "\n#{errors}\n"
-        errormsg += ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass your city. Fight another day. #{failed_task}", "You are without honor. Replenish it with #{failed_task}.", "You will never claim the throne with a #{failed_task} performance like that.", "Pompeii has been lost."].sample
+        errormsg += ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass your city. Fight another day. #{failed_task}", "You are without honor. Replenish it with #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost."].sample
         errormsg += "\n\n"
         abort errormsg
       end
@@ -89,14 +97,16 @@ module Maximus
 
     def after_post(name)
 
-      if @output[:errors] > 0
-        "#{'Warning'.color(:red)}: #{@output[:errors]} errors found in #{name}"
+      if @output[:lint_errors] > 0
+        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name}"
+        "#{name.color(:green)} complete"
       else
         success = name.color(:green)
         success += ": "
-        success += "[#{@output[:warnings]}]".color(:yellow)
-        success += " "
-        success += "[#{@output[:errors]}]".color(:red)
+        success += "[#{@output[:lint_warnings]}]".color(:yellow)
+        success += " " + "[#{@output[:lint_errors]}]".color(:red)
+        success += " " + "[#{@output[:lint_conventions]}]".color(:cyan) if name == 'rubocop'
+        success += " " + "[#{@output[:lint_refactors]}]".color(:white) if name == 'rubocop'
         success
       end
     end

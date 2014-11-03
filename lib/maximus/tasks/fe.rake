@@ -25,11 +25,24 @@ namespace :maximus do
       config_file = @helper.check_default('scss-lint.yml')
 
       scss = `scss-lint #{args[:path]} -c #{config_file}  --format=JSON`
+
+      unless scss.empty?
+
+          lint.refine(scss, t)
+          puts lint.format if is_dev
+
+      else
+
+        @output[:lint_errors] = 0
+        @output[:lint_warnings] = 0
+
+      end
+
       lint.refine(scss, t)
       puts lint.format if is_dev
 
       @output[:division] = 'front'
-      @output[:file_count] = @helper.file_count(args[:path])
+      @output[:files_inspected] = @helper.file_count(args[:path], 'scss')
 
       name = 'scss_lint'
       puts lint.after_post(name)
@@ -63,13 +76,13 @@ namespace :maximus do
 
       else
 
-        @output[:errors] = 0
-        @output[:warnings] = 0
+        @output[:lint_errors] = 0
+        @output[:lint_warnings] = 0
 
       end
 
       @output[:division] = 'front'
-      @output[:file_count] = @helper.file_count(args[:path])
+      @output[:files_inspected] = @helper.file_count(args[:path], 'js')
 
       name = 'jshint'
       puts lint.after_post(name)

@@ -26,7 +26,6 @@ module RuboCop
         unless offenses.empty?
           @output_hash[relative_path(file).to_sym] = {}
           @output_hash[relative_path(file).to_sym] = offenses.map { |o| hash_for_offense(o) }
-
         end
       end
 

@@ -27,8 +27,8 @@ module Maximus
       File.exist?(user_file) ? user_file : File.expand_path("../config/#{filename}", __FILE__)
     end
 
-    def file_count(path)
-      count_path = path.include?("*") ? path : "#{path}/**/*.scss" #stupid, but necessary so that directories aren't counted
+    def file_count(path, ext = 'scss')
+      count_path = path.include?("*") ? path : "#{path}/**/*.#{ext}" #stupid, but necessary so that directories aren't counted
       Dir[count_path].count { |file| File.file?(file) }
     end
 
