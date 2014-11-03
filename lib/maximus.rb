@@ -1,6 +1,5 @@
-require "maximus/version"
+require 'maximus/version'
+require 'maximus/helpers'
+require 'maximus/remote'
+require 'maximus/lint'
 require 'maximus/rake_tasks'
-
-module Maximus
-  # Your code goes here...
-end
