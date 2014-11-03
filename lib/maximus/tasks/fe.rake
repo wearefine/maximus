@@ -109,7 +109,7 @@ namespace :maximus do
       search_for_scss += ".css.scss"
 
       #Prep for stylestats
-      config_file = @helper.check_default('.stylestatsrc')
+      config_file = @helper.check_default('stylestats-config.json')
 
       @output[:statistics] = {}
       @output[:statistics][:files] = {} #what am i doing wrong

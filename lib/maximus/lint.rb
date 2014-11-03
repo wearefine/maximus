@@ -44,19 +44,13 @@ module Maximus
       lint_warnings = []
       lint_errors = []
       filename = ''
-      error_list.each do |all_errors|
-        all_errors.each do |file_list|
-          if file_list.is_a? String
-            filename = file_list
+      error_list.each do |filename, error_list|
+        error_list.each do |message|
+          message['filename'] = filename
+          if message['severity'] == 'warning'
+            lint_warnings << message
           else
-            file_list.each do |messaging|
-              messaging['filename'] = filename
-              if messaging['severity'] == 'warning'
-                lint_warnings << messaging
-              else
-                lint_errors << messaging
-              end
-            end
+            lint_errors << message
           end
         end
       end
@@ -70,7 +64,10 @@ module Maximus
         puts format(@output[:refined_data])
         failed_task = "rake #{t}".color(:green)
         errors = Rainbow("#{@output[:refined_data].length} failures.").red
-        abort "\n#{errors}\nYou wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.\n\n"
+        errormsg = "\n#{errors}\n"
+        errormsg += ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass your city. Fight another day. #{failed_task}", "You are without honor. Replenish it with #{failed_task}.", "You will never claim the throne with a #{failed_task} performance like that.", "Pompeii has been lost."].sample
+        errormsg += "\n\n"
+        abort errormsg
       end
 
     end
