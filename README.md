@@ -11,13 +11,13 @@ In the development block:
 Lint syntax:
 
 ```
-<filename>: {
+[ <filename String>: {
   linter: <test_name String>
   severity: <warning | error | convention | refactor String>
   reason: <explaination String>
   column: <position Integer>
   line: <position Integer>
-}
+} ]
 ```
 
 ## All tasks
