@@ -63,8 +63,8 @@ namespace :maximus do
 
       else
 
-        @output[:lint_errors] = 0
-        @output[:lint_warnings] = 0
+        @output[:errors] = 0
+        @output[:warnings] = 0
 
       end
 

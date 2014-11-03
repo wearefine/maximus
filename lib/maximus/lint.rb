@@ -60,8 +60,8 @@ module Maximus
           end
         end
       end
-      @output[:lint_errors] = lint_errors.length
-      @output[:lint_warnings] = lint_warnings.length
+      @output[:errors] = lint_errors.length
+      @output[:warnings] = lint_warnings.length
       @output[:refined_data] = lint_warnings.concat(lint_errors)
       @output[:raw_data] = error_list
 
@@ -92,14 +92,14 @@ module Maximus
 
     def after_post(name)
 
-      if @output[:lint_errors] > 0
-        "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name}"
+      if @output[:errors] > 0
+        "#{'Warning'.color(:red)}: #{@output[:errors]} errors found in #{name}"
       else
         success = name.color(:green)
         success += ": "
-        success += "[#{@output[:lint_warnings]}]".color(:yellow)
+        success += "[#{@output[:warnings]}]".color(:yellow)
         success += " "
-        success += "[#{@output[:lint_errors]}]".color(:red)
+        success += "[#{@output[:errors]}]".color(:red)
         success
       end
     end
