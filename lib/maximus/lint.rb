@@ -30,7 +30,7 @@ module Maximus
       end
     end
 
-    def refine(data, task, is_dev)
+    def refine(data, task, is_dev = false)
       error_list = JSON.parse(data)
       lint_warnings = []
       lint_errors = []

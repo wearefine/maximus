@@ -103,5 +103,14 @@ module Maximus
       Maximus::Remote.new(name, "statistics/new/#{name}", @output) unless @is_dev
 
     end
+
+    def loadreport
+      name = __method__.to_s
+      node_module_exists('phantomjs')
+
+      file_report_path = File.expand_path("../node/loadreport.js", __FILE__)
+
+    end
+
   end
 end

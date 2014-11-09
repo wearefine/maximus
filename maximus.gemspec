@@ -22,6 +22,8 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "scss-lint", ">= 0.29.0"
   spec.add_runtime_dependency "rainbow"
   spec.add_runtime_dependency "rubocop"
+  spec.add_runtime_dependency "rails_best_practices"
+  spec.add_runtime_dependency "brakeman"
   spec.add_runtime_dependency "activesupport"
   spec.add_development_dependency "bundler", "~> 1.6"
   spec.add_runtime_dependency "rake"
