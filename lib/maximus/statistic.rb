@@ -16,10 +16,10 @@ module Maximus
     def initialize(output = {})
 
       super
-      @output = VersionControl::GitControl.new(is_rails?).export
+      @output = VersionControl::GitControl.new.export
 
       @output[:statistics] = {}
-      @output[:statistics][:files] = {} #Is this necessary
+      @output[:statistics][:files] = {} # Is this necessary
 
     end
 

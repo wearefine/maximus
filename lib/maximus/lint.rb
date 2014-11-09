@@ -12,9 +12,8 @@ module Maximus
     include VersionControl
 
     def initialize(output = {})
-      git_data = VersionControl::GitControl.new(is_rails?)
       super
-      @output = git_data.export
+      @output = VersionControl::GitControl.new.export
     end
 
 

@@ -35,6 +35,10 @@ namespace :maximus do
       Rake::Task['maximus:be:brakeman'].invoke(args[:dev]) if is_rails?
     end
 
+    task :compare do
+      Maximus::VersionControl::GitControl.new.compare
+    end
+
   end
 
   desc "Execute all back-end tasks"
