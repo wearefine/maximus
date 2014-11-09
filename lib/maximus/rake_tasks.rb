@@ -1,6 +1,10 @@
 require 'rake'
 
-if defined?(Rails)
+def is_rails?
+  defined?(Rails)
+end
+
+if is_rails?
   module Maximus
     class Railtie < Rails::Railtie
       rake_tasks do

@@ -1,6 +1,5 @@
-
 module Maximus
-  class Helper
+  module Helper
 
     def initialize(is_rails = nil)
       @is_rails = is_rails?
@@ -37,5 +36,4 @@ module Maximus
     end
 
   end
-
 end

@@ -1,45 +1,36 @@
-require 'git'
 require 'rainbow'
 require 'rainbow/ext/string'
-require 'active_support'
-require 'active_support/core_ext/object/blank'
 require 'json'
 
 module Maximus
 
   class Lint
     attr_accessor :output
+
+    include Helper
+    include Remote
+    include VersionControl
+
     def initialize(output = {})
-      root_dir = @is_rails ? Rails.root : Dir.pwd
-      log = @is_rails ? Logger.new("#{root_dir}/log/maximus_git.log") : nil
-      project = root_dir.to_s.split('/').last
-      @g = Git.open(root_dir, :log => log)
-      sha = @g.object('HEAD').sha
-      branch = `env -i git rev-parse --abbrev-ref HEAD`
-      master_commit = @g.branches[:master].gcommit
-      commit = @g.gcommit(sha)
-      diff = @g.diff(commit, master_commit).stats
-      @output = {
-        project: {
-          name: project,
-          remote_repo: (@g.remotes.first.url unless @g.remotes.blank?)
-        },
-        git: {
-          commitsha: sha,
-          branch: branch,
-          message: commit.message,
-          deletions: diff[:total][:deletions],
-          insertions: diff[:total][:insertions],
-          raw_data: diff
-        },
-        user: {
-          name: @g.config('user.name'),
-          email: @g.config('user.email')
-        },
-      }
+      git_data = VersionControl::GitControl.new(is_rails?)
+      super
+      @output = git_data.export
     end
 
-    def refine(data, t)
+
+    def check_empty(data)
+      unless data.blank?
+        @lint.refine(data, @task, @is_dev)
+        puts @lint.format if @is_dev
+      else
+        @output[:lint_errors] = 0
+        @output[:lint_warnings] = 0
+        @output[:lint_conventions] = 0
+        @output[:lint_refactors] = 0
+      end
+    end
+
+    def refine(data, task, is_dev)
       error_list = JSON.parse(data)
       lint_warnings = []
       lint_errors = []
@@ -70,12 +61,12 @@ module Maximus
       #If there's just too much to handle
       if @output[:refined_data].length > 100
         puts format(@output[:refined_data])
-        failed_task = "rake #{t}".color(:green)
+        failed_task = "#{task}".color(:green)
         errors = Rainbow("#{@output[:refined_data].length} failures.").red
         errormsg = "\n#{errors}\n"
-        errormsg += ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass your city. Fight another day. #{failed_task}", "You are without honor. Replenish it with #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost."].sample
+        errormsg += ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost."].sample
         errormsg += "\n\n"
-        abort errormsg
+        abort errormsg unless is_dev
       end
 
     end
@@ -95,21 +86,23 @@ module Maximus
 
     end
 
-    def after_post(name)
+    def lint_post(name = '', is_dev = false)
 
       if @output[:lint_errors] > 0
-        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name}"
-        "#{name.color(:green)} complete"
+        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name.to_s}"
+        "#{name.to_s.color(:green)} complete"
       else
-        success = name.color(:green)
+        success = name.to_s.color(:green)
         success += ": "
         success += "[#{@output[:lint_warnings]}]".color(:yellow)
         success += " " + "[#{@output[:lint_errors]}]".color(:red)
         success += " " + "[#{@output[:lint_conventions]}]".color(:cyan) if name == 'rubocop'
         success += " " + "[#{@output[:lint_refactors]}]".color(:white) if name == 'rubocop'
-        success
+        puts success
       end
-    end
 
+      remote(name, "lints/new/#{name}", @output) unless is_dev
+
+    end
   end
 end
