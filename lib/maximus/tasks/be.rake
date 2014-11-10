@@ -24,7 +24,7 @@ namespace :maximus do
     end
 
     task :compare do
-      Maximus::VersionControl::GitControl.new.lint
+      Maximus::GitControl.new.lint
     end
 
   end
