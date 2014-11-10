@@ -84,10 +84,33 @@ module Maximus
           diff_return[git_sha.to_sym] = files
 
         end
-        puts diff_return.inspect
+        diff_return
       end
 
-      def lint(file = compare)
+      def lint(shas = compare)
+        base_branch = branch
+        shas.each do |sha, exts|
+          quietly { `git checkout #{sha} -b maximus_#{sha}` }
+          exts.each do |ext, files|
+            unless files.blank?
+              file_list = files.map { |f| (f[:filename] unless f[:changes].blank?) }.compact
+              unless file_list.blank?
+                file_list = ext == :ruby ? file_list.join(' ') : file_list.join(',')
+                opts = { dev: true, path: "\"#{file_list}\"" }
+                LintTask.new(opts).jshint if ext == :js
+                LintTask.new(opts).scsslint if ext == :scss
+                StatisticTask.new(opts).stylestats if ext == :scss
+                LintTask.new(opts).rubocop if ext == :ruby
+                LintTask.new(opts).railsbp if ext == :ruby || :rails
+                LintTask.new(opts).brakeman if ext == :ruby
+              end
+            end
+          end
+          quietly {
+            @g.branch(base_branch).checkout
+            @g.branch("maximus_#{sha}").delete
+          }
+        end
 
       end
 
@@ -102,7 +125,7 @@ module Maximus
       end
 
       def branch
-        `env -i git rev-parse --abbrev-ref HEAD`
+        `env -i git rev-parse --abbrev-ref HEAD`.strip!
       end
 
       def master_commit

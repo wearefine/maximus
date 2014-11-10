@@ -11,28 +11,16 @@ namespace :maximus do
 
     desc "Run scss-lint" #scss-lint Rake API was challenging
     task :scss, [:dev, :path] do |t, args|
-      args.with_defaults(
-        :dev => false,
-        :path => (is_rails? ? "app/assets/stylesheets/" : "source/assets/stylesheets")
-      )
       Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).scsslint
     end
 
     desc "Run jshint (node required)"
     task :js, :dev, :path do |t, args|
-      args.with_defaults(
-        :dev => false,
-        :path => (is_rails? ? "app/assets/**/*.js" : "source/assets/**")
-      )
       Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).jshint
     end
 
     desc "Run stylestats (node required)"
     task :stylestats, :dev, :path do |t, args|
-      args.with_defaults(
-        :dev => false,
-        :path => (is_rails? ? "#{Rails.root}/public/assets/**/*.css" : 'source/assets/**/*')
-      )
       Maximus::StatisticTask.new({dev: args[:dev], path: args[:path], task: t}).stylestats
     end
 

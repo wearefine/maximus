@@ -3,28 +3,16 @@ namespace :maximus do
 
     desc "Run rubocop"
     task :rb, [:dev, :path] do |t, args|
-      args.with_defaults(
-        :dev => false,
-        :path => (is_rails? ? "app/" : "*.rb")
-      )
       Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).rubocop
     end
 
     desc "Run rails_best_practices"
     task :railsbp, [:dev, :path] do |t, args|
-      args.with_defaults(
-        :dev => false,
-        :path => "."
-      )
       Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).railsbp
     end
 
     desc "Run brakeman"
     task :brakeman, [:dev, :path] do |t, args|
-      args.with_defaults(
-        :dev => false,
-        :path => Rails.root.to_s
-      )
       Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).brakeman
     end
 
@@ -36,7 +24,7 @@ namespace :maximus do
     end
 
     task :compare do
-      Maximus::VersionControl::GitControl.new.compare
+      Maximus::VersionControl::GitControl.new.lint
     end
 
   end

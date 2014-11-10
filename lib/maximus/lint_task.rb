@@ -6,6 +6,7 @@ module Maximus
   class LintTask < Lint
 
     def initialize(opts = {})
+      opts[:dev] ||= false
       @is_dev = truthy(opts[:dev])
       @path = opts[:path]
       @lint = Lint.new
@@ -15,6 +16,7 @@ module Maximus
     def scsslint
 
       @task = __method__.to_s
+      @path ||= is_rails? ? "app/assets/stylesheets/" : "source/assets/stylesheets"
 
       config_file = check_default('scss-lint.yml')
 
@@ -32,6 +34,7 @@ module Maximus
     def jshint
 
       @task = __method__.to_s
+      @path ||= is_rails? ? "app/assets/**/*.js" : "source/assets/**"
 
       node_module_exists(@task)
 
@@ -52,6 +55,7 @@ module Maximus
     def rubocop
 
       @task = __method__.to_s
+      @path ||= is_rails? ? "app/" : "*.rb"
 
       config_file = check_default('rubocop-config.yml')
 
@@ -73,19 +77,20 @@ module Maximus
       return unless is_rails?
 
       @task = __method__.to_s
-
-      railsbp = `rails_best_practices #{@path} -f json`
+      @path ||= "."
+      tmp = Tempfile.new('railsbp')
+      `rails_best_practices #{@path} -f json --output-file #{tmp.path}`
+      railsbp = tmp.read
+      tmp.close
+      tmp.unlink
 
       unless railsbp.blank?
-        file = File.open('rails_best_practices_output.json')
-        rbj = JSON.parse(file.read).railsbp_json.group_by { |s| s['filename'] }
-        file.close
+        rbj = JSON.parse(railsbp).group_by { |s| s['filename'] }
         railsbp = {}
         rbj.each do |file, errors|
           railsbp[file.gsub(Rails.root.to_s, '')[1..-1].to_sym] = errors.map { |o| hash_for_railsbp(o) }
         end
         railsbp = railsbp.to_json
-        File.delete(file)
       end
 
       check_empty(railsbp)
@@ -102,6 +107,8 @@ module Maximus
       return unless is_rails?
 
       @task = __method__.to_s
+      @path ||= Rails.root.to_s
+
       tmp = Tempfile.new('brakeman')
       quietly { `brakeman #{@path} -f json -o #{tmp.path} -q` }
       brakeman = tmp.read

@@ -6,6 +6,7 @@ module Maximus
   class StatisticTask < Statistic
 
     def initialize(opts = {})
+      opts[:dev] ||= false
       @is_dev = truthy(opts[:dev])
       @path = opts[:path]
       @statistic = Statistic.new
@@ -18,6 +19,7 @@ module Maximus
       node_module_exists(name)
       searched_files = []
       regex = /(-{1}[a-z0-9]{32}*\.{1}){1}/
+      @path ||= is_rails? ? "#{Rails.root}/public/assets/**/*.css" : 'source/assets/**/*'
 
       config_file = check_default('stylestats-config.json') #Prep for stylestats
 
