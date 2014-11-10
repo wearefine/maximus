@@ -19,16 +19,10 @@ namespace :maximus do
       Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).jshint
     end
 
-    desc "Run stylestats (node required)"
-    task :stylestats, :dev, :path do |t, args|
-      Maximus::StatisticTask.new({dev: args[:dev], path: args[:path], task: t}).stylestats
-    end
-
     desc "Execute all front-end tasks"
     task :all, :dev do |t, args|
       Rake::Task['maximus:fe:scss'].invoke(args[:dev])
       Rake::Task['maximus:fe:js'].invoke(args[:dev])
-      Rake::Task['maximus:fe:stylestats'].invoke(args[:dev])
     end
 
   end
@@ -40,8 +34,9 @@ namespace :maximus do
 
 end
 
-desc "Execute all front-end and back-end tasks"
+desc "Execute all front-end, back-end and statistic tasks"
 task :maximus, :dev do |t, args|
   Rake::Task['maximus:fe:all'].invoke(args[:dev])
   Rake::Task['maximus:be:all'].invoke(args[:dev])
+  Rake::Task['maximus:stat:all'].invoke(args[:dev])
 end

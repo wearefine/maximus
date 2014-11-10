@@ -8,12 +8,10 @@ module Maximus
     attr_accessor :output
 
     include Helper
-    include Remote
-    include VersionControl
 
     def initialize(output = {})
       super
-      @output = VersionControl::GitControl.new.export
+      @output = GitControl.new.export
     end
 
 
@@ -100,7 +98,7 @@ module Maximus
         puts success
       end
 
-      remote(name, "lints/new/#{name}", @output) unless is_dev
+      Remote.new(name, "lints/new/#{name}", @output) unless is_dev
 
     end
   end

@@ -10,13 +10,11 @@ module Maximus
     attr_accessor :output
 
     include Helper
-    include Remote
-    include VersionControl
 
     def initialize(output = {})
 
       super
-      @output = VersionControl::GitControl.new.export
+      @output = GitControl.new.export
 
       @output[:statistics] = {}
       @output[:statistics][:files] = {} # Is this necessary

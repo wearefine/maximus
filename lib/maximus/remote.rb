@@ -2,9 +2,9 @@ require 'net/http'
 require 'json'
 
 module Maximus
-  module Remote
+  class Remote
 
-    def remote(name, url, output)
+    def initialize(name, url, output)
       uri = URI("http://localhost:3001/#{url}")
       req = Net::HTTP::Post.new(uri, initheader = {'Content-Type' =>'application/json'})
       req.basic_auth 'user54', 'pass77'

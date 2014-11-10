@@ -102,7 +102,7 @@ module Maximus
       quietly { Rake::Task['assets:clobber'].invoke } if is_rails?
 
       @output[:division] = 'front'
-      Maximus::Remote.new(name, "statistics/new/#{name}", @output) unless @is_dev
+      Remote.new(name, "statistics/new/#{name}", @output) unless @is_dev
 
     end
 
