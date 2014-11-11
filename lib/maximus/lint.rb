@@ -11,7 +11,7 @@ module Maximus
 
     def initialize(output = {})
       super
-      @output = GitControl.new.export
+      @output = {}
     end
 
     def check_empty(data)
@@ -62,7 +62,10 @@ module Maximus
         errormsg = "\n#{errors}\n"
         errormsg += ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost."].sample
         errormsg += "\n\n"
-        abort errormsg unless is_dev
+        unless is_dev
+          go_on = prompt "#{errors} errors. Continue? "
+          abort errormsg unless go_on
+        end
       end
 
     end
@@ -82,6 +85,7 @@ module Maximus
 
     # POST lint to main hub
     def lint_post(name = '', is_dev = false)
+      @output.merge(GitControl.new.export)
       if @output[:lint_errors] > 0
         puts "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name.to_s}"
         "#{name.to_s.color(:green)} complete"

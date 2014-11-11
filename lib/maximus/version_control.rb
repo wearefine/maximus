@@ -56,7 +56,7 @@ module Maximus
         files.compact!
 
         assoc = {
-          js:     ['js', 'json'],
+          js:     ['js'],
           scss:   ['scss', 'sass'],
           rails:  ['slim', 'haml'],
           ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc'],
@@ -101,7 +101,7 @@ module Maximus
                   match_lines(LintTask.new(opts).jshint, files)
                 when :scss
                   match_lines(LintTask.new(opts).scsslint, files)
-                  # StatisticTask.new({ dev: true }).stylestats
+                  StatisticTask.new({ dev: true }).stylestats
                 when :ruby
                   match_lines(LintTask.new(opts).rubocop, files)
                   match_lines(LintTask.new(opts).railsbp, files)
@@ -124,19 +124,18 @@ module Maximus
     # Compare lint output with lines changed in commit
     # returns array of lints that match the lines in commit
     def match_lines(output, files)
+      return unless output[:raw_data]
       all_files = []
       files.each do |file|
-        if output[:raw_data]
-          lint = output[:raw_data][file[:filename].to_s]
+        lint = output[:raw_data][file[:filename].to_s]
 
-          #convert line ranges from string to expanded array - i'm sure there's a better way of doing this
-          changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
-          expanded = changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
+        #convert line ranges from string to expanded array - i'm sure there's a better way of doing this
+        changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
+        expanded = changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
 
-          all_files << lint.map { |l| l if expanded.include?(l['line'].to_i) } unless lint.blank?
-        end
+        all_files << lint.map { |l| l if expanded.include?(l['line'].to_i) } unless lint.blank?
       end
-      all_files.flatten.compact.inspect
+      all_files.flatten.compact
     end
 
     def project

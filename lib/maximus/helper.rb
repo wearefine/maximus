@@ -39,5 +39,9 @@ module Maximus
       return false if str == false || str.blank? || str =~ (/^(false|f|no|n|0)$/i)
     end
 
+    def prompt(*args)
+      print(*args)
+      truthy(gets)
+    end
   end
 end
