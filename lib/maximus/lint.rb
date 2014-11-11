@@ -14,7 +14,6 @@ module Maximus
       @output = GitControl.new.export
     end
 
-
     def check_empty(data)
       unless data.blank?
         @lint.refine(data, @task, @is_dev)
@@ -69,7 +68,6 @@ module Maximus
     end
 
     def format(errors = @output[:refined_data])
-
       pretty_output = ''
       errors.each do |error|
         pretty_output += error['filename'].color(:cyan)
@@ -80,11 +78,10 @@ module Maximus
         pretty_output += "\n"
       end
       return pretty_output
-
     end
 
+    # POST lint to main hub
     def lint_post(name = '', is_dev = false)
-
       if @output[:lint_errors] > 0
         puts "#{'Warning'.color(:red)}: #{@output[:lint_errors]} errors found in #{name.to_s}"
         "#{name.to_s.color(:green)} complete"
@@ -99,7 +96,6 @@ module Maximus
       end
 
       Remote.new(name, "lints/new/#{name}", @output) unless is_dev
-
     end
   end
 end

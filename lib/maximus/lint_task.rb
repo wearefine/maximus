@@ -14,7 +14,6 @@ module Maximus
     end
 
     def scsslint
-
       @task = __method__.to_s
       @path ||= is_rails? ? "app/assets/stylesheets/" : "source/assets/stylesheets"
 
@@ -28,11 +27,10 @@ module Maximus
       @output[:files_inspected] = file_count(@path, 'scss')
 
       @lint.lint_post(@task, @is_dev)
-
+      @output
     end
 
     def jshint
-
       @task = __method__.to_s
       @path ||= is_rails? ? "app/assets/**/*.js" : "source/assets/**"
 
@@ -49,11 +47,10 @@ module Maximus
       @output[:files_inspected] = file_count(@path, 'js')
 
       @lint.lint_post(@task, @is_dev)
-
+      @output
     end
 
     def rubocop
-
       @task = __method__.to_s
       @path ||= is_rails? ? "app/" : "*.rb"
 
@@ -69,7 +66,7 @@ module Maximus
       @output[:files_inspected] = file_count(@path, 'rb')
 
       @lint.lint_post(@task, @is_dev)
-
+      @output
     end
 
     def railsbp
@@ -99,7 +96,7 @@ module Maximus
       @output[:files_inspected] = file_count(@path, 'rb')
 
       @lint.lint_post(@task, @is_dev)
-
+      @output
     end
 
     def brakeman
@@ -134,14 +131,14 @@ module Maximus
       @output[:files_inspected] = file_count(@path, 'rb')
 
       @lint.lint_post(@task, @is_dev)
-
+      @output
     end
 
     private
 
     def hash_for_railsbp(error)
       {
-        linter: error['message'].parameterize('_').camelize,
+        linter: error['message'].gsub(/\((.*)\)/, '').strip!.parameterize('_').camelize,
         severity: 'warning',
         reason: error['message'],
         column: 0,

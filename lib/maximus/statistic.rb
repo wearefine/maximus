@@ -12,13 +12,11 @@ module Maximus
     include Helper
 
     def initialize(output = {})
-
       super
       @output = GitControl.new.export
 
       @output[:statistics] = {}
       @output[:statistics][:files] = {} # Is this necessary
-
     end
 
   end

@@ -14,13 +14,11 @@ module Maximus
     end
 
     def stylestats
-
       name = __method__.to_s
       node_module_exists(name)
       searched_files = []
       regex = /(-{1}[a-z0-9]{32}*\.{1}){1}/
       @path ||= is_rails? ? "#{Rails.root}/public/assets/**/*.css" : 'source/assets/**/*'
-
       config_file = check_default('stylestats-config.json') #Prep for stylestats
 
       if is_rails?
@@ -61,7 +59,6 @@ module Maximus
 
         end
       end
-
       searched_files.each do |file|
 
         if is_rails?
@@ -103,7 +100,6 @@ module Maximus
 
       @output[:division] = 'front'
       Remote.new(name, "statistics/new/#{name}", @output) unless @is_dev
-
     end
 
     def loadreport
@@ -111,7 +107,6 @@ module Maximus
       node_module_exists('phantomjs')
 
       file_report_path = File.expand_path("../node/loadreport.js", __FILE__)
-
     end
 
   end
