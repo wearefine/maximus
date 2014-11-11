@@ -6,8 +6,10 @@ module Maximus
   class LintTask < Lint
 
     def initialize(opts = {})
-      opts[:dev] ||= false
-      @is_dev = truthy(opts[:dev])
+      opts[:is_dev] ||= false
+      opts[:from_git] ||= false
+      @from_git = opts[:from_git]
+      @is_dev = truthy(opts[:is_dev])
       @path = opts[:path]
       @lint = Lint.new
       @output = @lint.output
@@ -21,18 +23,16 @@ module Maximus
 
       scss = `scss-lint #{@path} -c #{config_file}  --format=JSON`
 
-      check_empty(scss)
-
       @output[:division] = 'front'
-      @output[:files_inspected] = file_count(@path, 'scss')
+      @output[:files_inspected] = @from_git ? @path.split(',').length : file_count(@path, 'scss')
 
-      @lint.lint_post(@task, @is_dev)
-      @output
+      return @from_git ? hash_for_git(scss) : refine(JSON.parse(scss))
+
     end
 
     def jshint
       @task = __method__.to_s
-      @path ||= is_rails? ? "app/assets/**/*.js" : "source/assets/**"
+      @path ||= is_rails? ? "app/assets/" : "source/assets/"
 
       node_module_exists(@task)
 
@@ -41,13 +41,12 @@ module Maximus
 
       jshint = `jshint #{@path} --config=#{config_file} --exclude-path=#{exclude_file} --reporter=#{File.expand_path("../config/jshint-reporter.js", __FILE__)}`
 
-      check_empty(jshint)
-
       @output[:division] = 'front'
-      @output[:files_inspected] = file_count(@path, 'js')
+      @output[:files_inspected] = @from_git ? @path.split(',').length : file_count(@path, 'js')
 
-      @lint.lint_post(@task, @is_dev)
-      @output
+      jshint = jshint.blank? ? jshint : JSON.parse(jshint) #defend against blank JSON errors
+      return @from_git ? hash_for_git(jshint) : refine(jshint)
+
     end
 
     def rubocop
@@ -60,13 +59,12 @@ module Maximus
       rubo_cli += " -R" if is_rails?
       rubo = `#{rubo_cli}`
 
-      check_empty(rubo)
-
       @output[:division] = 'back'
-      @output[:files_inspected] = file_count(@path, 'rb')
+      @output[:files_inspected] = @from_git ? @path.split(' ').length : file_count(@path, 'rb')
 
-      @lint.lint_post(@task, @is_dev)
-      @output
+      rubo = rubo.blank? ? rubo : JSON.parse(rubo) #defend against blank JSON errors
+      return @from_git ? hash_for_git(rubo) : refine(rubo)
+
     end
 
     def railsbp
@@ -87,16 +85,13 @@ module Maximus
         rbj.each do |file, errors|
           railsbp[file.gsub(Rails.root.to_s, '')[1..-1].to_sym] = errors.map { |o| hash_for_railsbp(o) }
         end
-        railsbp = railsbp.to_json
       end
 
-      check_empty(railsbp)
-
       @output[:division] = 'back'
-      @output[:files_inspected] = file_count(@path, 'rb')
+      @output[:files_inspected] = @from_git ? @path.split(' ').length : file_count(@path, 'rb')
 
-      @lint.lint_post(@task, @is_dev)
-      @output
+      return @from_git ? hash_for_git(railsbp) : refine(railsbp)
+
     end
 
     def brakeman
@@ -120,25 +115,22 @@ module Maximus
             brakeman[file.to_sym] = errors.map { |e| hash_for_brakeman(e, type) }
           end
         end
-        brakeman = brakeman.to_json
       end
 
       tmp.unlink
 
-      check_empty(brakeman)
-
       @output[:division] = 'back'
-      @output[:files_inspected] = file_count(@path, 'rb')
+      @output[:files_inspected] = @from_git ? @path.split(' ').length : file_count(@path, 'rb')
 
-      @lint.lint_post(@task, @is_dev)
-      @output
+      return @from_git ? hash_for_git(brakeman) : refine(brakeman)
+
     end
 
     private
 
     def hash_for_railsbp(error)
       {
-        linter: error['message'].gsub(/\((.*)\)/, '').strip!.parameterize('_').camelize,
+        linter: error['message'].gsub(/\((.*)\)/, '').strip.parameterize('_').camelize,
         severity: 'warning',
         reason: error['message'],
         column: 0,
@@ -154,6 +146,17 @@ module Maximus
         column: 0,
         line: error['line'].to_i,
         confidence: error['confidence']
+      }
+    end
+
+    def hash_for_git(data)
+      if data.is_a? String
+        data = JSON.parse(data) unless data.blank?
+      end
+      {
+        data: data,
+        lint: @lint,
+        task: @task
       }
     end
 

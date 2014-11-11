@@ -11,7 +11,7 @@ namespace :maximus do
 
     desc "Run stylestats (node required)"
     task :stylestats, :dev, :path do |t, args|
-      Maximus::StatisticTask.new({dev: args[:dev], path: args[:path], task: t}).stylestats
+      Maximus::StatisticTask.new({is_dev: args[:dev], path: args[:path], task: t}).stylestats
     end
 
     desc "Execute all statistics tasks"

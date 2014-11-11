@@ -6,8 +6,8 @@ module Maximus
   class StatisticTask < Statistic
 
     def initialize(opts = {})
-      opts[:dev] ||= false
-      @is_dev = truthy(opts[:dev])
+      opts[:is_dev] ||= false
+      @is_dev = truthy(opts[:is_dev])
       @path = opts[:path]
       @statistic = Statistic.new
       @output = @statistic.output

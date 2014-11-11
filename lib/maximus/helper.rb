@@ -41,7 +41,7 @@ module Maximus
 
     def prompt(*args)
       print(*args)
-      truthy(gets)
+      STDIN.gets
     end
   end
 end

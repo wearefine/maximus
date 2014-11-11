@@ -3,17 +3,17 @@ namespace :maximus do
 
     desc "Run rubocop"
     task :rb, [:dev, :path] do |t, args|
-      Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).rubocop
+      Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).rubocop
     end
 
     desc "Run rails_best_practices"
     task :railsbp, [:dev, :path] do |t, args|
-      Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).railsbp
+      Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).railsbp
     end
 
     desc "Run brakeman"
     task :brakeman, [:dev, :path] do |t, args|
-      Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).brakeman
+      Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).brakeman
     end
 
     desc "Execute all back-end tasks"

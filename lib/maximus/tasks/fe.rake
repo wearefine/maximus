@@ -11,12 +11,12 @@ namespace :maximus do
 
     desc "Run scss-lint" #scss-lint Rake API was challenging
     task :scss, [:dev, :path] do |t, args|
-      Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).scsslint
+      Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).scsslint
     end
 
     desc "Run jshint (node required)"
     task :js, :dev, :path do |t, args|
-      Maximus::LintTask.new({dev: args[:dev], path: args[:path], task: t}).jshint
+      Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).jshint
     end
 
     desc "Execute all front-end tasks"

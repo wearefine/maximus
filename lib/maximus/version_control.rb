@@ -95,19 +95,19 @@ module Maximus
             file_list = files.map { |f| (f[:filename] unless f[:changes].flatten.compact.blank?) }.compact
             unless file_list.blank?
               file_list_joined = ext == :ruby ? file_list.join(' ') : file_list.join(',') #lints accept files differently
-              opts = { dev: true, path: "\"#{file_list_joined}\"" }
+              opts = { is_dev: true, path: "\"#{file_list_joined}\"", from_git: true }
               case ext
                 when :js
-                  match_lines(LintTask.new(opts).jshint, files)
+                  match_lines(LintTask.new(opts).jshint, files, 'jshint') # Is there a way to not have task explicitly declared here? Maybe attr_accessor on the LintTask? Or similar?
                 when :scss
-                  match_lines(LintTask.new(opts).scsslint, files)
+                  match_lines(LintTask.new(opts).scsslint, files, 'scsslint')
                   StatisticTask.new({ dev: true }).stylestats
                 when :ruby
-                  match_lines(LintTask.new(opts).rubocop, files)
-                  match_lines(LintTask.new(opts).railsbp, files)
-                  match_lines(LintTask.new(opts).brakeman, files)
+                  match_lines(LintTask.new(opts).rubocop, files, 'rubocop')
+                  match_lines(LintTask.new(opts).railsbp, files, 'railsbp')
+                  match_lines(LintTask.new(opts).brakeman, files, 'brakeman')
                 when :rails
-                  match_lines(LintTask.new(opts).railsbp, files)
+                  match_lines(LintTask.new(opts).railsbp, files, 'railsbp')
               end
             end
           end
@@ -123,19 +123,20 @@ module Maximus
 
     # Compare lint output with lines changed in commit
     # returns array of lints that match the lines in commit
-    def match_lines(output, files)
-      return unless output[:raw_data]
-      all_files = []
+    def match_lines(lint_task, files, task)
+      return if lint_task[:data].blank?
+      all_files = {}
       files.each do |file|
-        lint = output[:raw_data][file[:filename].to_s]
+        lint = lint_task[:data][file[:filename].to_s]
 
         #convert line ranges from string to expanded array - i'm sure there's a better way of doing this
         changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
         expanded = changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
 
-        all_files << lint.map { |l| l if expanded.include?(l['line'].to_i) } unless lint.blank?
+        all_files[file[:filename]] = lint.map { |l| l if expanded.include?(l['line'].to_i) } unless lint.blank?
+        all_files.delete_if { |k,v| v.flatten.compact.blank? }
       end
-      all_files.flatten.compact
+      lint_task[:lint].refine(all_files, task) #optionally include is_dev param
     end
 
     def project
