@@ -20,13 +20,13 @@ module Maximus
       @path ||= is_rails? ? "app/assets/stylesheets/" : "source/assets/stylesheets"
 
       config_file = check_default('scss-lint.yml')
-
       scss = `scss-lint #{@path} -c #{config_file}  --format=JSON`
 
       @output[:division] = 'front'
       @output[:files_inspected] = @from_git ? @path.split(',').length : file_count(@path, 'scss')
 
-      return @from_git ? hash_for_git(scss) : refine(JSON.parse(scss))
+      scss = scss.blank? ? scss : JSON.parse(scss) #defend against blank JSON errors
+      return @from_git ? hash_for_git(scss) : refine(scss)
 
     end
 

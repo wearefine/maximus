@@ -36,14 +36,14 @@ module Maximus
           end
         end
       end
-
       @output[:lint_errors] = lint_errors
       @output[:lint_warnings] = lint_warnings
       @output[:lint_conventions] = lint_conventions
       @output[:lint_refactors] = lint_refactors
       @output[:raw_data] = data
 
-      lint_all = lint_warnings.concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
+      lint_all = []
+      lint_all.concat(lint_warnings).concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
 
       if is_dev
         puts format(lint_all) unless lint_all.blank?
@@ -97,6 +97,7 @@ module Maximus
           when 'error' then 'E'.color(:red)
           when 'convention' then 'C'.color(:cyan)
           when 'refactor' then 'R'.color(:white)
+          else '?'.color(:blue)
         end
         pretty_output += ' '
         pretty_output += error['filename'].color(:cyan)

@@ -1,6 +1,6 @@
 # Maximus
 
-A warrior for the Colosseum.
+A warrior for the Colosseum. Sends messages through Mercury.
 
 Plays nice with Middleman and Rails.
 
@@ -43,7 +43,7 @@ Example:
 
 ### Stylestats
 
-`rake maximus:fe:stylestats`
+`rake maximus:stat:stylestats`
 
 ## Back End tasks
 
@@ -52,3 +52,19 @@ Example:
 ### Rubocop
 
 `rake maximus:be:rb`
+
+### Rails Best Practices
+
+`rake maximus:be:railsbp`
+
+### Brakeman
+
+`rake maximus:be:brakeman`
+
+## Lint committed files against the master branch with git
+
+`rake maximus:compare`
+
+## Front End, Back End, Stats, Compare
+
+`rake maximus`

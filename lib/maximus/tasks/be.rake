@@ -23,15 +23,6 @@ namespace :maximus do
       Rake::Task['maximus:be:brakeman'].invoke(args[:dev]) if is_rails?
     end
 
-    task :compare do
-      Maximus::GitControl.new.lint
-    end
-
-  end
-
-  desc "Execute all back-end tasks"
-  task :be, :dev do |t, args|
-    Rake::Task['maximus:be:all'].invoke(args[:dev])
   end
 
 end

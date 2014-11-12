@@ -1,9 +1,3 @@
-require 'rainbow'
-require 'rainbow/ext/string'
-require 'active_support'
-require 'active_support/core_ext/object/blank'
-require 'json'
-
 desc "Run some sweet lint scripts and post them to the main hub"
 namespace :maximus do
 
@@ -32,11 +26,4 @@ namespace :maximus do
     Rake::Task['maximus:fe:all'].invoke(args[:dev])
   end
 
-end
-
-desc "Execute all front-end, back-end and statistic tasks"
-task :maximus, :dev do |t, args|
-  Rake::Task['maximus:fe:all'].invoke(args[:dev])
-  Rake::Task['maximus:be:all'].invoke(args[:dev])
-  Rake::Task['maximus:stat:all'].invoke(args[:dev])
 end

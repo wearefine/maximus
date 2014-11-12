@@ -14,16 +14,16 @@ function lines-added(){
       path=${BASH_REMATCH[2]}
     elif [[ $REPLY =~ @@\ -[0-9]+,([0-9]+)?\ \+([0-9]+)?,([0-9]+)?\ @@.* ]]; then
       if [[ ${BASH_REMATCH[2]} = ${BASH_REMATCH[3]} ]]; then
-        line=${BASH_REMATCH[0]}
+        line="0..0"
       elif [[ ${BASH_REMATCH[2]} = $((${BASH_REMATCH[2]} + ${BASH_REMATCH[3]})) ]]; then
-        line=${BASH_REMATCH[0]}
+        line="$((${BASH_REMATCH[2]} + ${BASH_REMATCH[3]} - ${BASH_REMATCH[1]}))..$((${BASH_REMATCH[2]} + ${BASH_REMATCH[3]} - ${BASH_REMATCH[1]}))"
       else
         line="${BASH_REMATCH[2]}..$((${BASH_REMATCH[2]} + ${BASH_REMATCH[3]}))"
       fi
-    elif [[ $REPLY =~ @@\ -[0-9]+,([0-9]+)\ \+([0-9]+)?\ @@.* ]]; then
-      line="${BASH_REMATCH[2]}..${BASH_REMATCH[2]}"
-    elif [[ $REPLY =~ @@\ -[0-9]+\ \+([0-9]+)?\ @@.* ]]; then
-      line="${BASH_REMATCH[2]}..${BASH_REMATCH[2]}"
+    elif [[ $REPLY =~ @@\ -([0-9])?,([0-9]+)?\ \+([0-9]+)?\ @@.* ]]; then
+      line="${BASH_REMATCH[3]}..${BASH_REMATCH[3]}"
+    elif [[ $REPLY =~ @@\ -([0-9]+)?,\ \+([0-9]+)?\ @@.* ]]; then
+      line="0..${BASH_REMATCH[2]}"
     elif [[ $REPLY =~ ^($esc\[[0-9;]+m)*([\ +-]) ]]; then
       echo "$path:$line"
     fi
