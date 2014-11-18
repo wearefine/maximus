@@ -22,17 +22,14 @@ module Maximus
     #Regular git data for POSTing
     def export
       {
-        project: {
-          name: project,
-          remote_repo: remote
-        },
         git: {
           commitsha: sha,
           branch: branch,
           message: vccommit.message,
           deletions: diff[:total][:deletions],
           insertions: diff[:total][:insertions],
-          raw_data: diff
+          raw_data: diff,
+          remote_repo: remote
         },
         user: {
           name: user,
@@ -158,10 +155,6 @@ module Maximus
         end
       end
       lint_task[:lint].refine(all_files, task, @is_dev) #optionally include is_dev param
-    end
-
-    def project
-      @root_dir.to_s.split('/').last
     end
 
     def sha

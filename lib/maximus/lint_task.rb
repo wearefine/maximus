@@ -17,7 +17,7 @@ module Maximus
 
     def scsslint
       @task = __method__.to_s
-      @path ||= is_rails? ? "app/assets/stylesheets/" : "source/assets/stylesheets"
+      @path ||= is_rails? ? "app/assets/stylesheets/" : "source/assets/stylesheets/"
 
       config_file = check_default('scss-lint.yml')
       scss = `scss-lint #{@path} -c #{config_file}  --format=JSON`
