@@ -13,9 +13,9 @@ module Maximus
       @output = @statistic.output
     end
 
-    def stylestats
+    def stylestat
       name = __method__.to_s
-      node_module_exists(name)
+      node_module_exists("#{name}s")
       searched_files = []
       regex = /(-{1}[a-z0-9]{32}*\.{1}){1}/
       @path ||= is_rails? ? "#{Rails.root}/public/assets/**/*.css" : 'source/assets/**/*'
@@ -90,7 +90,7 @@ module Maximus
 
           File.delete(file)
 
-          Remote.new(name, "statistics/new/#{name}", @output)
+          Remote.new(name, "mercury/new/s/#{name}", @output)
 
         end
       end

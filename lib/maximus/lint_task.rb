@@ -17,7 +17,7 @@ module Maximus
 
     def scsslint
       @task = __method__.to_s
-      @path ||= is_rails? ? "app/assets/stylesheets/" : "source/assets/stylesheets/"
+      @path ||= is_rails? ? "app/assets/stylesheets" : "source/assets/stylesheets"
 
       config_file = check_default('scss-lint.yml')
       scss = `scss-lint #{@path} -c #{config_file}  --format=JSON`
@@ -31,7 +31,7 @@ module Maximus
 
     def jshint
       @task = __method__.to_s
-      @path ||= is_rails? ? "app/assets/" : "source/assets/"
+      @path ||= is_rails? ? "app/assets" : "source/assets"
 
       node_module_exists(@task)
 
@@ -49,11 +49,11 @@ module Maximus
 
     def rubocop
       @task = __method__.to_s
-      @path ||= is_rails? ? "app/" : "*.rb"
+      @path ||= is_rails? ? "app" : "*.rb"
 
       config_file = check_default('rubocop-config.yml')
 
-      rubo_cli = "rubocop #{@path} --require #{File.expand_path("../config/maximus_formatter", __FILE__)} --config #{config_file} --format RuboCop::Formatter::MaximusRuboFormatter"
+      rubo_cli = "rubocop #{@path} --require #{File.expand_path("../config/maximus_rubo_formatter", __FILE__)} --config #{config_file} --format RuboCop::Formatter::MaximusRuboFormatter"
       rubo_cli += " -R" if is_rails?
       rubo = `#{rubo_cli}`
 
@@ -82,10 +82,10 @@ module Maximus
         rbj.each do |file, errors|
           railsbp[file.gsub(Rails.root.to_s, '')[1..-1].to_sym] = errors.map { |o| hash_for_railsbp(o) }
         end
+        railsbp = JSON.parse(railsbp.to_json) #don't event ask
       end
 
-      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb')
-
+      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb', './')
       return @from_git ? hash_for_git(railsbp) : refine(railsbp)
 
     end
@@ -104,6 +104,13 @@ module Maximus
 
       unless brakeman.blank?
         bjson = JSON.parse(brakeman)
+        @output[:ignored_warnings] = bjson['scan_info']['ignored_warnings']
+        @output[:checks_performed] = bjson['scan_info']['checks_performed']
+        @output[:number_of_controllers] = bjson['scan_info']['number_of_controllers']
+        @output[:number_of_models] = bjson['scan_info']['number_of_models']
+        @output[:number_of_templates] = bjson['scan_info']['number_of_templates']
+        @output[:ruby_version] = bjson['scan_info']['ruby_version']
+        @output[:rails_version] = bjson['scan_info']['rails_version']
         brakeman = {}
         ['warnings', 'errors'].each do |type|
           new_brakeman = bjson[type].group_by { |s| s['file'] }
@@ -111,12 +118,11 @@ module Maximus
             brakeman[file.to_sym] = errors.map { |e| hash_for_brakeman(e, type) }
           end
         end
+        brakeman = JSON.parse(brakeman.to_json) #don't event ask
       end
-
       tmp.unlink
 
-      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb')
-
+      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb', "#{Rails.root.to_s}/")
       return @from_git ? hash_for_git(brakeman) : refine(brakeman)
 
     end

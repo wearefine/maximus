@@ -16,7 +16,6 @@ module Maximus
     # Convert raw data into warnings, errors, conventions or refactors. Use this wisely.
     def refine(data, task = @task, is_dev = @is_dev)
       is_dev ||= false # in case @is_dev is unavailable
-
       lint_warnings = []
       lint_errors = []
       lint_conventions = []
@@ -24,6 +23,7 @@ module Maximus
       unless data.blank?
         data.each do |filename, error_list|
           error_list.each do |message|
+            message = message.clone # so that :raw_data remains unaffected
             message.delete('length')
             message['filename'] = filename
             if message['severity'] == 'warning'
@@ -47,7 +47,6 @@ module Maximus
       @output[:lint_conventions] = lint_conventions
       @output[:lint_refactors] = lint_refactors
       @output[:raw_data] = data
-
       lint_all = []
       lint_all.concat(lint_warnings).concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
 
@@ -62,22 +61,22 @@ module Maximus
 
     # POST lint to main hub
     def lint_post(task = '', is_dev = false)
-      if is_dev
-        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{task.to_s}" if @output[:lint_errors].length > 0
 
-        success = task.to_s.color(:green)
-        success += ": "
-        success += "[#{@output[:lint_warnings].length}]".color(:yellow)
-        success += " " + "[#{@output[:lint_errors].length}]".color(:red)
-        success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan) if task == 'rubocop'
-        success += " " + "[#{@output[:lint_refactors].length}]".color(:white) if task == 'rubocop'
+      puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{task.to_s}" if @output[:lint_errors].length > 0
 
-        puts success
+      success = task.to_s.color(:green)
+      success += ": "
+      success += "[#{@output[:lint_warnings].length}]".color(:yellow)
+      success += " " + "[#{@output[:lint_errors].length}]".color(:red)
+      success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan) if task == 'rubocop'
+      success += " " + "[#{@output[:lint_refactors].length}]".color(:white) if task == 'rubocop'
 
-      else
+      puts success
+
+      unless is_dev
 
         @output.merge!(GitControl.new.export)
-        Remote.new(task, "lints/new/#{task}", @output)
+        Remote.new(task, "mercury/new/l/#{task}", @output)
 
       end
     end

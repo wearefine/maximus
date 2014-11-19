@@ -38,7 +38,6 @@ module RuboCop
           severity: offense.severity.name,
           reason:  offense.message,
           linter: offense.cop_name,
-          corrected: offense.corrected?,
           line: offense.line,
           column: offense.real_column
         }

@@ -34,9 +34,9 @@ module Maximus
       Dir[count_path].count { |file| File.file?(file) }
     end
 
-    def file_list(path, ext = 'scss')
+    def file_list(path, ext = 'scss', remover = '')
       collect_path = path.include?("*") ? path : "#{path}/**/*.#{ext}" #stupid, but necessary so that directories aren't counted
-      Dir[collect_path].collect { |file| file if File.file?(file) }
+      Dir[collect_path].collect { |file| file.gsub(remover, '') if File.file?(file) }
     end
 
     def truthy(str)
