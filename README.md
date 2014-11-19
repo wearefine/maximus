@@ -8,26 +8,14 @@ In the development block:
 
 `gem 'maximus', git: 'git@bitbucket.org:wearefine/maximus.git'`
 
-Lint syntax:
-
-```
-[ <filename String>: {
-  linter: <test_name String>
-  severity: <warning | error | convention | refactor String>
-  reason: <explaination String>
-  column: <position Integer>
-  line: <position Integer>
-} ]
-```
-
 ## All tasks
 
-First arg: Display results in the console and don't send to the Colosseum
-Second arg: Custom path to target folder
+First arg (dev mode): Send results to Colosseum if false)
+Second arg (path): Custom path to target folder, but don't 
 
 Example:
 
-`rake maximus:fe:scss[true,path/to/scss_folder]`
+`rake maximus:fe:scss[false,path/to/scss_folder]`
 
 ## Front End tasks
 
@@ -68,3 +56,15 @@ Example:
 ## Front End, Back End, Stats, Compare
 
 `rake maximus`
+
+## Lint syntax:
+
+```
+[ <filename String>: {
+  linter: <test_name String>
+  severity: <warning | error | convention | refactor String>
+  reason: <explaination String>
+  column: <position Integer>
+  line: <position Integer>
+} ]
+```
