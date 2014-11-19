@@ -10,7 +10,7 @@ namespace :maximus do
 
     desc "Execute all statistics tasks"
     task :all, :dev do |t, args|
-      Rake::Task['maximus:fe:stylestats'].invoke(args[:dev])
+      Rake::Task['maximus:stat:stylestats'].invoke(args[:dev])
     end
 
   end

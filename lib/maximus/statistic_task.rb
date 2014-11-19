@@ -79,27 +79,24 @@ module Maximus
 
           stats = JSON.parse(`#{stylestats}`)
 
-          symbol_file = pretty_name.to_sym
-          @output[:statistics][:files][symbol_file] = {} #still doing something wrong here
-          file_collection = @output[:statistics][:files][symbol_file]
+          @output[:file_path] = pretty_name
+          @output[:statistics] = {}
 
           stats.each do |stat, value|
 
-            file_collection[stat.to_sym] = value
+            @output[:statistics][stat.to_sym] = value
 
           end
 
-          @output[:raw_data] = stats
-
           File.delete(file)
+
+          Remote.new(name, "statistics/new/#{name}", @output)
 
         end
       end
 
       quietly { Rake::Task['assets:clobber'].invoke } if is_rails?
 
-      @output[:division] = 'front'
-      Remote.new(name, "statistics/new/#{name}", @output) unless @is_dev
     end
 
     def loadreport

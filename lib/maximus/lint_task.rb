@@ -22,8 +22,7 @@ module Maximus
       config_file = check_default('scss-lint.yml')
       scss = `scss-lint #{@path} -c #{config_file}  --format=JSON`
 
-      @output[:division] = 'front'
-      @output[:files_inspected] = @from_git ? @path.split(',').length : file_count(@path, 'scss')
+      @output[:files_inspected] = @from_git ? @path.split(',') : file_list(@path, 'scss')
 
       scss = scss.blank? ? scss : JSON.parse(scss) #defend against blank JSON errors
       return @from_git ? hash_for_git(scss) : refine(scss)
@@ -41,8 +40,7 @@ module Maximus
 
       jshint = `jshint #{@path} --config=#{config_file} --exclude-path=#{exclude_file} --reporter=#{File.expand_path("../config/jshint-reporter.js", __FILE__)}`
 
-      @output[:division] = 'front'
-      @output[:files_inspected] = @from_git ? @path.split(',').length : file_count(@path, 'js')
+      @output[:files_inspected] = @from_git ? @path.split(',') : file_list(@path, 'js')
 
       jshint = jshint.blank? ? jshint : JSON.parse(jshint) #defend against blank JSON errors
       return @from_git ? hash_for_git(jshint) : refine(jshint)
@@ -59,8 +57,7 @@ module Maximus
       rubo_cli += " -R" if is_rails?
       rubo = `#{rubo_cli}`
 
-      @output[:division] = 'back'
-      @output[:files_inspected] = @from_git ? @path.split(' ').length : file_count(@path, 'rb')
+      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb')
 
       rubo = rubo.blank? ? rubo : JSON.parse(rubo) #defend against blank JSON errors
       return @from_git ? hash_for_git(rubo) : refine(rubo)
@@ -87,8 +84,7 @@ module Maximus
         end
       end
 
-      @output[:division] = 'back'
-      @output[:files_inspected] = @from_git ? @path.split(' ').length : file_count(@path, 'rb')
+      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb')
 
       return @from_git ? hash_for_git(railsbp) : refine(railsbp)
 
@@ -119,8 +115,7 @@ module Maximus
 
       tmp.unlink
 
-      @output[:division] = 'back'
-      @output[:files_inspected] = @from_git ? @path.split(' ').length : file_count(@path, 'rb')
+      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb')
 
       return @from_git ? hash_for_git(brakeman) : refine(brakeman)
 

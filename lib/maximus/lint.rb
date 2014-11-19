@@ -13,6 +13,7 @@ module Maximus
       @output ||= {}
     end
 
+    # Convert raw data into warnings, errors, conventions or refactors. Use this wisely.
     def refine(data, task = @task, is_dev = @is_dev)
       is_dev ||= false # in case @is_dev is unavailable
 
@@ -23,14 +24,19 @@ module Maximus
       unless data.blank?
         data.each do |filename, error_list|
           error_list.each do |message|
+            message.delete('length')
             message['filename'] = filename
             if message['severity'] == 'warning'
+              message.delete('severity')
               lint_warnings << message
             elsif message['severity'] == 'error'
+              message.delete('severity')
               lint_errors << message
             elsif message['severity'] == 'convention'
+              message.delete('severity')
               lint_conventions << message
             elsif message['severity'] == 'refactor'
+              message.delete('severity')
               lint_refactors << message
             end
           end
@@ -56,26 +62,29 @@ module Maximus
 
     # POST lint to main hub
     def lint_post(task = '', is_dev = false)
-      puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{task.to_s}" if @output[:lint_errors].length > 0
+      if is_dev
+        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{task.to_s}" if @output[:lint_errors].length > 0
 
-      success = task.to_s.color(:green)
-      success += ": "
-      success += "[#{@output[:lint_warnings].length}]".color(:yellow)
-      success += " " + "[#{@output[:lint_errors].length}]".color(:red)
-      success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan) if task == 'rubocop'
-      success += " " + "[#{@output[:lint_refactors].length}]".color(:white) if task == 'rubocop'
+        success = task.to_s.color(:green)
+        success += ": "
+        success += "[#{@output[:lint_warnings].length}]".color(:yellow)
+        success += " " + "[#{@output[:lint_errors].length}]".color(:red)
+        success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan) if task == 'rubocop'
+        success += " " + "[#{@output[:lint_refactors].length}]".color(:white) if task == 'rubocop'
 
-      puts success
+        puts success
 
-      unless is_dev
-        @output.merge(GitControl.new.export)
+      else
+
+        @output.merge!(GitControl.new.export)
         Remote.new(task, "lints/new/#{task}", @output)
+
       end
     end
 
     private
 
-    #If there's just too much to handle
+    # If there's just too much to handle
     def lint_ceiling(lint_all, task)
       if lint_all.length > 100
         puts format(lint_all)
@@ -89,6 +98,7 @@ module Maximus
       end
     end
 
+    # Dev display, used in the rake task
     def format(errors)
       pretty_output = ''
       errors.each do |error|
