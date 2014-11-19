@@ -9,14 +9,14 @@ module Maximus
 
     def initialize(opts = {})
       opts[:root_dir] ||= is_rails? ? Rails.root : Dir.pwd
-      opts[:is_dev] ||= false
+      opts[:is_dev] ||= true
       @root_dir = opts[:root_dir]
       opts[:log] ||= true
       log = is_rails? ? Logger.new("#{@root_dir}/log/maximus_git.log") : nil
       log = opts[:log] ? log : nil
       @g = Git.open(@root_dir, :log => log)
       @is_dev = opts[:is_dev]
-      @dev_mode = true
+      @dev_mode = false
     end
 
     #Regular git data for POSTing

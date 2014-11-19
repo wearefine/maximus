@@ -6,7 +6,7 @@ module Maximus
   class LintTask < Lint
 
     def initialize(opts = {})
-      opts[:is_dev] ||= false
+      opts[:is_dev] ||= true
       opts[:from_git] ||= false
       @from_git = opts[:from_git]
       @is_dev = truthy(opts[:is_dev])

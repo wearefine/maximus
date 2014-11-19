@@ -51,9 +51,9 @@ module Maximus
       lint_all.concat(lint_warnings).concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
 
       if is_dev
-        puts format(lint_all) unless lint_all.blank?
+        format(data) unless data.blank?
       else
-        lint_ceiling(lint_all, task)
+        lint_ceiling(lint_all.length, task)
       end
       lint_post(task, is_dev)
 
@@ -84,11 +84,11 @@ module Maximus
     private
 
     # If there's just too much to handle
-    def lint_ceiling(lint_all, task)
-      if lint_all.length > 100
-        puts format(lint_all)
+    def lint_ceiling(lint_length, task)
+      if lint_length > 100
+        format
         failed_task = "#{task}".color(:green)
-        errors = Rainbow("#{lint_all.length} failures.").red
+        errors = Rainbow("#{lint_length} failures.").red
         errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
         errormsg += "\n\n"
 
@@ -98,25 +98,28 @@ module Maximus
     end
 
     # Dev display, used in the rake task
-    def format(errors)
+    def format(errors = @output[:raw_data])
       pretty_output = ''
-      errors.each do |error|
-        pretty_output += case error['severity']
-          when 'warning' then 'W'.color(:yellow)
-          when 'error' then 'E'.color(:red)
-          when 'convention' then 'C'.color(:cyan)
-          when 'refactor' then 'R'.color(:white)
-          else '?'.color(:blue)
-        end
-        pretty_output += ' '
-        pretty_output += error['filename'].color(:cyan)
-        pretty_output += ':'
-        pretty_output += error['line'].to_s.color(:magenta)
-        pretty_output += " #{error['linter'].color(:green)}: "
-        pretty_output += error['reason']
+      errors.each do |filename, error_list|
         pretty_output += "\n"
+        pretty_output += filename.color(:cyan).underline
+        pretty_output += "\n"
+        error_list.each do |message|
+          pretty_output += case message['severity']
+            when 'warning' then 'W'.color(:yellow)
+            when 'error' then 'E'.color(:red)
+            when 'convention' then 'C'.color(:cyan)
+            when 'refactor' then 'R'.color(:white)
+            else '?'.color(:blue)
+          end
+          pretty_output += ' '
+          pretty_output += message['line'].to_s.color(:blue)
+          pretty_output += " #{message['linter'].color(:green)}: "
+          pretty_output += message['reason']
+          pretty_output += "\n"
+        end
       end
-      return pretty_output
+      puts pretty_output
     end
 
   end
