@@ -81,16 +81,13 @@ module Maximus
 
           @output[:file_path] = pretty_name
           @output[:statistics] = {}
-
           stats.each do |stat, value|
-
-            @output[:statistics][stat.to_sym] = value
-
+            @output[:statistics][stat.to_sym] = value # Can I do like a self << thing here?
           end
 
           File.delete(file)
 
-          Remote.new(name, "mercury/new/s/#{name.chomp('s')}", @output)
+          Remote.new("mercury/new/s/#{name.chomp('s')}", @output)
 
         end
       end
@@ -99,11 +96,34 @@ module Maximus
 
     end
 
-    def loadreport
-      name = __method__.to_s
-      node_module_exists('phantomjs')
+    def phantomas
+      node_module_exists('phantomas')
+      @path ||= 'http://localhost:3000'
+      @path.is_a?(Array) ? @path.each { |u| phantomas_action(u) } : phantomas_action(@path)
+    end
+
+
+    private
+
+    def phantomas_action(url)
 
       file_report_path = File.expand_path("../node/loadreport.js", __FILE__)
+      file_config_path = File.expand_path("../node/config.json", __FILE__)
+      config_file = check_default('phantomas.json')
+      phantomas = `phantomas --config=#{config_file} #{url} #{'--reporter=json:no-skip' unless @is_dev} #{'--colors' if @is_dev}`
+
+      return puts phantomas if @is_dev # Stop right there unless you mean business
+
+      stats = JSON.parse(phantomas)
+
+      @output[:file_path] = url
+      @output[:statistics] = {}
+      stats.each do |stat, value|
+        @output[:statistics][stat.to_sym] = value # Can I do like a self << thing here?
+      end
+
+      Remote.new("mercury/new/s/phantomas", @output)
+
     end
 
   end

@@ -1,0 +1,4 @@
+{
+  "block-domain": "google-analytics.com",
+  "skip-modules": ["Caching", "localStorage", "Cookies"]
+}

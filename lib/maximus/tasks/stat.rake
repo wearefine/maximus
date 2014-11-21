@@ -8,9 +8,15 @@ namespace :maximus do
       Maximus::StatisticTask.new({is_dev: args[:dev], path: args[:path], task: t}).stylestats
     end
 
+    desc "Run phantomas (node and phantomjs required)"
+    task :phantomas, :dev, :path do |t, args|
+      Maximus::StatisticTask.new({is_dev: args[:dev], path: args[:path], task: t}).phantomas
+    end
+
     desc "Execute all statistics tasks"
     task :all, :dev do |t, args|
       Rake::Task['maximus:stat:stylestats'].invoke(args[:dev])
+      # Rake::Task['maximus:stat:phantomas'].invoke(args[:dev]) # Just a little too much data
     end
 
   end

@@ -76,7 +76,7 @@ module Maximus
       unless is_dev
 
         @output.merge!(GitControl.new.export)
-        Remote.new(task, "mercury/new/l/#{task}", @output)
+        Remote.new("mercury/new/l/#{task}", @output)
 
       end
     end
