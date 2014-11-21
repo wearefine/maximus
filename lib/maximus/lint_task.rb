@@ -19,7 +19,7 @@ module Maximus
       @task = __method__.to_s
       @path ||= is_rails? ? "app/assets/stylesheets" : "source/assets/stylesheets"
 
-      config_file = check_default('scss-lint.yml')
+      config_file = check_default('scsslint.yml')
       scss = `scss-lint #{@path} -c #{config_file}  --format=JSON`
 
       @output[:files_inspected] = @from_git ? @path.split(',') : file_list(@path, 'scss')
@@ -38,7 +38,7 @@ module Maximus
       config_file = check_default('jshint.json')
       exclude_file = check_default('.jshintignore')
 
-      jshint = `jshint #{@path} --config=#{config_file} --exclude-path=#{exclude_file} --reporter=#{File.expand_path("../config/jshint-reporter.js", __FILE__)}`
+      jshint = `jshint #{@path} --config=#{config_file} --exclude-path=#{exclude_file} --reporter=#{File.expand_path("../reporter/jshint.js", __FILE__)}`
 
       @output[:files_inspected] = @from_git ? @path.split(',') : file_list(@path, 'js')
 
@@ -51,9 +51,9 @@ module Maximus
       @task = __method__.to_s
       @path ||= is_rails? ? "app" : "*.rb"
 
-      config_file = check_default('rubocop-config.yml')
+      config_file = check_default('rubocop.yml')
 
-      rubo_cli = "rubocop #{@path} --require #{File.expand_path("../config/maximus_rubo_formatter", __FILE__)} --config #{config_file} --format RuboCop::Formatter::MaximusRuboFormatter"
+      rubo_cli = "rubocop #{@path} --require #{File.expand_path("../reporter/rubocop", __FILE__)} --config #{config_file} --format RuboCop::Formatter::MaximusRuboFormatter"
       rubo_cli += " -R" if is_rails?
       rubo = `#{rubo_cli}`
 
