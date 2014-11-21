@@ -4,19 +4,21 @@ namespace :maximus do
   namespace :fe do
 
     desc "Run scss-lint" #scss-lint Rake API was challenging
-    task :scss, [:dev, :path] do |t, args|
+    task :scsslint, [:dev, :path] do |t, args|
       Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).scsslint
     end
+    task :scss, [:dev, :path] => :scsslint # alias by extension
 
     desc "Run jshint (node required)"
-    task :js, :dev, :path do |t, args|
+    task :jshint, :dev, :path do |t, args|
       Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).jshint
     end
+    task :js, [:dev, :path] => :jshint
 
     desc "Execute all front-end tasks"
     task :all, :dev do |t, args|
-      Rake::Task['maximus:fe:scss'].invoke(args[:dev])
-      Rake::Task['maximus:fe:js'].invoke(args[:dev])
+      Rake::Task['maximus:fe:scsslint'].invoke(args[:dev])
+      Rake::Task['maximus:fe:jshint'].invoke(args[:dev])
     end
 
   end

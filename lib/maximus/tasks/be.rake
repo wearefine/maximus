@@ -2,7 +2,7 @@ namespace :maximus do
   namespace :be do
 
     desc "Run rubocop"
-    task :rb, [:dev, :path] do |t, args|
+    task :rubocop, [:dev, :path] do |t, args|
       Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).rubocop
     end
 
@@ -18,10 +18,11 @@ namespace :maximus do
 
     desc "Execute all back-end tasks"
     task :all, :dev do |t, args|
-      Rake::Task['maximus:be:rb'].invoke(args[:dev])
+      Rake::Task['maximus:be:rubocop'].invoke(args[:dev])
       Rake::Task['maximus:be:railsbp'].invoke(args[:dev]) if is_rails?
       Rake::Task['maximus:be:brakeman'].invoke(args[:dev]) if is_rails?
     end
+    task :rb, [:dev] => :all # alias by extension
 
   end
 
