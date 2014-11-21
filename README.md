@@ -15,7 +15,7 @@ Second arg (path): Custom path to target folder, but don't
 
 Example:
 
-`rake maximus:fe:scss[false,path/to/scss_folder]`
+`rake maximus:fe:scsslint[false,path/to/scss_folder]`
 
 ## Front End tasks
 
@@ -23,15 +23,11 @@ Example:
 
 ### SCSS Lint
 
-`rake maximus:fe:scss`
+`rake maximus:fe:scsslint`
 
 ### JSHint
 
-`rake maximus:fe:js`
-
-### Stylestats
-
-`rake maximus:stat:stylestats`
+`rake maximus:fe:jshint`
 
 ## Back End tasks
 
@@ -39,7 +35,7 @@ Example:
 
 ### Rubocop
 
-`rake maximus:be:rb`
+`rake maximus:be:rubocop`
 
 ### Rails Best Practices
 
@@ -48,6 +44,16 @@ Example:
 ### Brakeman
 
 `rake maximus:be:brakeman`
+
+## Statistics
+
+### Stylestats
+
+`rake maximus:stat:stylestats`
+
+### Phantomas
+
+`rake maximus:stat:phantomas`
 
 ## Lint committed files against the master branch with git
 
