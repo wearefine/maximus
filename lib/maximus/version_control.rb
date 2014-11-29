@@ -12,9 +12,9 @@ module Maximus
     def initialize(opts = {})
       @is_rails = is_rails?
       opts[:root_dir] ||= @is_rails ? Rails.root : Dir.pwd
-      opts[:is_dev] ||= true
+      opts[:is_dev] = true if opts[:is_dev].nil?
       @root_dir = opts[:root_dir]
-      opts[:log] ||= true
+      opts[:log] = true if opts[:log].nil?
       log = @is_rails ? Logger.new("#{@root_dir}/log/maximus_git.log") : nil
       log = opts[:log] ? log : nil
       @g = Git.open(@root_dir, :log => log)
@@ -45,9 +45,12 @@ module Maximus
     # Returns Hash grouped by file extension (defined in assoc) => { filename, changes: (changed line ranges) }
     # Example: 'sha' => { rb: {filename: 'file.rb', changes: { ['0..4'], ['10..20'] }  }}
     def compare(sha1 = master_commit.sha, sha2 = sha)
-      git_diff = `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
       diff_return = {}
-      abort 'No new commits'.color(:blue) if git_diff.length == 0
+      git_diff = `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
+      if git_diff.length == 0
+        puts 'No new commits'.color(:blue)
+        return false # Fail silently
+      end
       # Reverse so that we go in chronological order
       git_diff.reverse.each do |git_sha|
         new_lines = lines_added(git_sha)
@@ -89,6 +92,7 @@ module Maximus
     # The match_lines method here is essential
     # Executes the LintTask after filtering it with match_lines
     def lint(git_shas = compare)
+      return false if git_shas.blank?
       base_branch = branch
       git_shas.each do |sha, exts|
         quietly { `git checkout #{sha} -b maximus_#{sha}` } # TODO - better way to silence git, in case there's a real error?
@@ -129,32 +133,35 @@ module Maximus
     # Returns Hash with all data grouped by task
     # TODO - could this be DRY'd up with the above method?
     def all_lints_and_stats(git_shas = compare)
+      return false if git_shas.blank?
       base_branch = branch
       @lint_output = {}
       @lint_output[:statistics] = {}
       @lint_output[:lints] = {}
       git_shas.each do |sha, exts|
         quietly { `git checkout #{sha} -b maximus_#{sha}` } # TODO - better way to silence git, in case there's a real error?
-        puts sha.to_s.color(:blue) if @is_dev
+        puts "Commit #{sha.to_s}".color(:blue) if @is_dev
         exts.each do |ext, files|
+          puts ext
+          puts @dev_mode
           opts = {
             is_dev: @is_dev,
-            from_git: true
+            from_git: false
           }
           case ext
             when :js
-              hash_for_raw_lint(LintTask.new(opts).jshint)
-              @lint_output[:statistics][:phantomas] = StatisticTask.new.phantomas unless @dev_mode
+              @lint_output[:lints][:jshint] = LintTask.new(opts).jshint
+              @lint_output[:statistics][:phantomas] = StatisticTask.new({is_dev: @is_dev}).phantomas unless @dev_mode
             when :scss
-              hash_for_raw_lint(LintTask.new(opts).scsslint)
-              @lint_output[:statistics][:stylestats] = StatisticTask.new.stylestats unless @dev_mode
-              @lint_output[:statistics][:phantomas] ||= StatisticTask.new.phantomas unless @dev_mode # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+              @lint_output[:lints][:scsslint] = LintTask.new(opts).scsslint
+              @lint_output[:statistics][:stylestats] = StatisticTask.new({is_dev: @is_dev}).stylestats unless @dev_mode
+              @lint_output[:statistics][:phantomas] ||= StatisticTask.new({is_dev: @is_dev}).phantomas unless @dev_mode # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
             when :ruby
-              hash_for_raw_lint(LintTask.new(opts).rubocop)
-              hash_for_raw_lint(LintTask.new(opts).railsbp)
-              hash_for_raw_lint(LintTask.new(opts).brakeman)
+              @lint_output[:lints][:rubocop] = LintTask.new(opts).rubocop
+              @lint_output[:lints][:railsbp] = LintTask.new(opts).railsbp
+              @lint_output[:lints][:brakeman] = LintTask.new(opts).brakeman
             when :rails
-              hash_for_raw_lint(LintTask.new(opts).railsbp)
+              @lint_output[:lints][:railsbp] = LintTask.new(opts).railsbp
           end
         end
         quietly {
@@ -210,13 +217,6 @@ module Maximus
         end
       end
       lint_task[:lint].refine(all_files, lint_task[:task])
-    end
-
-    def hash_for_raw_lint(lint_task)
-      @lint_output[:lints] << {
-        task_name: lint_task[:task],
-        data: lint_task[:lint].refine(lint_task[:data], lint_task[:task])
-      }
     end
 
     # Get last commit on current branch

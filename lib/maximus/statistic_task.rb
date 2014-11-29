@@ -6,9 +6,9 @@ module Maximus
     # @path can be array or string
     # Each public method returns complete @@output as Hash
     def initialize(opts = {})
-      opts[:is_dev] ||= true
+      opts[:is_dev] = true if opts[:is_dev].nil?
       @path = opts[:path]
-      @statistic = Statistic.new(truthy(opts[:is_dev]))
+      @statistic = Statistic.new(opts[:is_dev])
     end
 
     # @path array preferrably absolute paths, but relative should work
@@ -68,6 +68,8 @@ module Maximus
       searched_files = []
 
       if @@is_rails
+        require 'sprockets/rails/task'
+
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)
 
@@ -85,7 +87,7 @@ module Maximus
 
         # Load Compass paths if it exists
         if Gem::Specification::find_all_by_name('compass').any?
-          require 'compass' unless @@is_rails
+          require 'compass'
           Compass.sass_engine_options[:load_paths].each do |path|
             Sass.load_paths << path
           end

@@ -7,11 +7,11 @@ module Maximus
   class LintTask < Lint
 
     def initialize(opts = {})
-      opts[:is_dev] ||= true
-      opts[:from_git] ||= false
+      opts[:is_dev] = true if opts[:is_dev].nil?
+      opts[:from_git] = false if opts[:from_git].nil?
       @from_git = opts[:from_git]
       @path = opts[:path]
-      @lint = Lint.new(truthy(opts[:is_dev]))
+      @lint = Lint.new(opts[:is_dev])
     end
 
     # SCSS-Lint
@@ -146,6 +146,8 @@ module Maximus
     end
 
     # Give git a little more data to help it out
+    # If it's from git explicitly, we're looking at line numbers.
+    # There's a call in version_control.rb for all lints, and that is not considered 'from_git' because it's not filtering the results and instead taking them all indiscriminately
     def hash_for_git(data)
       if data.is_a? String
         data = JSON.parse(data) unless data.blank?
@@ -169,9 +171,9 @@ module Maximus
     # Convert export depending on execution origin
     def hash_or_refine(data, parse_JSON = true)
       if parse_JSON
-        data = data.blank? ? data : JSON.parse(data) #defend against blank JSON errors
+        data = data.blank? ? data : JSON.parse(data) # defend against blank JSON errors
       end
-      @from_git ? hash_for_git(data) : refine(data)
+      @from_git ? hash_for_git(data) : @lint.refine(data)
     end
 
   end
