@@ -19,7 +19,7 @@ module Maximus
       log = opts[:log] ? log : nil
       @g = Git.open(@root_dir, :log => log)
       @is_dev = opts[:is_dev]
-      @dev_mode = false
+      @dev_mode = true
     end
 
     # Returns Hash of commit data
@@ -151,7 +151,8 @@ module Maximus
             when :scss
               lints[:scsslint] = LintTask.new(opts).scsslint
               if @dev_mode
-                statistics[:stylestats] = StatisticTask.new({is_dev: @is_dev}).stylestats
+                # stylestat is singular here because model name in Rails is singular. This could be a TODO
+                statistics[:stylestat] = StatisticTask.new({is_dev: @is_dev}).stylestats
                 statistics[:phantomas] ||= StatisticTask.new({is_dev: @is_dev}).phantomas # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
               end
             when :js

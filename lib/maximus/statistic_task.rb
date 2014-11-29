@@ -68,7 +68,7 @@ module Maximus
       searched_files = []
 
       if @@is_rails
-        require 'sprockets/rails/task'
+        Rails.application.load_tasks
 
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)
@@ -128,7 +128,6 @@ module Maximus
       stats = JSON.parse(stats_cli)
       @@output[:statistics][file_path.to_sym] ||= {}
       fp = @@output[:statistics][file_path.to_sym] # TODO - is there a better way to do this?
-      fp[:raw_data] = stats_cli
       stats.each do |stat, value|
         fp[stat.to_sym] = value # TODO - Can I do like a self << thing here?
       end
