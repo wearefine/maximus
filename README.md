@@ -1,6 +1,6 @@
 # Maximus
 
-A warrior for the Colosseum. Sends messages through Mercury.
+A warrior for the [Colosseum](https://bitbucket.org/wearefine/colosseum).
 
 Plays nice with Middleman and Rails.
 
