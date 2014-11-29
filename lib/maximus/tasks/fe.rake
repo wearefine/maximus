@@ -1,4 +1,4 @@
-desc "Run some sweet lint scripts and post them to the main hub"
+desc "Run some sweet lint scripts for the front-end"
 namespace :maximus do
 
   namespace :fe do

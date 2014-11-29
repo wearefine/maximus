@@ -1,3 +1,4 @@
+desc "Run some sweet lint scripts for the back-end"
 namespace :maximus do
   namespace :be do
 

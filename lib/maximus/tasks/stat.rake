@@ -1,4 +1,4 @@
-desc "Run some sweet statistic scripts and post them to the main hub"
+desc "Run some sweet statistic scripts for the front-end"
 namespace :maximus do
 
   namespace :stat do
