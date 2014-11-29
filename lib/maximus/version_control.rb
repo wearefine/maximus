@@ -22,22 +22,18 @@ module Maximus
       @dev_mode = false
     end
 
-    # Returns Hash of git data
-    def export
+    # Returns Hash of commit data
+    def commit_export(commitsha = sha)
+      ce_commit = vccommit(commitsha)
+      ce_diff = diff(ce_commit, @g.object('HEAD^'))
       {
-        git: {
-          commitsha: sha,
-          branch: branch,
-          message: vccommit.message,
-          deletions: diff[:total][:deletions],
-          insertions: diff[:total][:insertions],
-          raw_data: diff,
-          remote_repo: remote
-        },
-        user: {
-          name: user,
-          email: email
-        },
+        commitsha: commitsha,
+        branch: branch,
+        message: ce_commit.message,
+        remote_repo: remote,
+        git_author: ce_commit.author.name,
+        git_author_email: ce_commit.author.email,
+        diff: ce_diff
       }
     end
 
@@ -111,7 +107,7 @@ module Maximus
               StatisticTask.new.stylestats unless @dev_mode
             when :js
               match_lines(LintTask.new(opts).jshint, files)
-              @lint_output[:statistics] << StatisticTask.new.phantomas unless @dev_mode
+              statistics << StatisticTask.new.phantomas unless @dev_mode
             when :ruby
               match_lines(LintTask.new(opts).rubocop, files)
               match_lines(LintTask.new(opts).railsbp, files)
@@ -131,45 +127,52 @@ module Maximus
     # Creates new branch based on each sha, then deletes it
     # Different from above method as it returns the entire lint, not just the lines relevant to commit
     # Returns Hash with all data grouped by task
+    # Example: { 'sha': { lints: { scsslint: { files_inspec... }, statisti... } }, 'sha...' }
     # TODO - could this be DRY'd up with the above method?
     def all_lints_and_stats(git_shas = compare)
       return false if git_shas.blank?
       base_branch = branch
       @lint_output = {}
-      @lint_output[:statistics] = {}
-      @lint_output[:lints] = {}
       git_shas.each do |sha, exts|
         quietly { `git checkout #{sha} -b maximus_#{sha}` } # TODO - better way to silence git, in case there's a real error?
         puts "Commit #{sha.to_s}".color(:blue) if @is_dev
+        @lint_output[sha.to_sym] = {
+          lints: {},
+          statistics: {}
+        }
+        lints = @lint_output[sha.to_sym][:lints]
+        statistics = @lint_output[sha.to_sym][:statistics]
         exts.each do |ext, files|
-          puts ext
-          puts @dev_mode
           opts = {
             is_dev: @is_dev,
             from_git: false
           }
           case ext
             when :scss
-              @lint_output[:lints][:scsslint] = LintTask.new(opts).scsslint
-              @lint_output[:statistics][:stylestats] = StatisticTask.new({is_dev: @is_dev}).stylestats unless @dev_mode
-              @lint_output[:statistics][:phantomas] ||= StatisticTask.new({is_dev: @is_dev}).phantomas unless @dev_mode # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+              lints[:scsslint] = LintTask.new(opts).scsslint
+              if @dev_mode
+                statistics[:stylestats] = StatisticTask.new({is_dev: @is_dev}).stylestats
+                statistics[:phantomas] ||= StatisticTask.new({is_dev: @is_dev}).phantomas # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+              end
             when :js
-              @lint_output[:lints][:jshint] = LintTask.new(opts).jshint
-              @lint_output[:statistics][:phantomas] = StatisticTask.new({is_dev: @is_dev}).phantomas unless @dev_mode
+              lints[:jshint] = LintTask.new(opts).jshint
+              if @dev_mode
+                statistics[:phantomas] = StatisticTask.new({is_dev: @is_dev}).phantomas
+              end
             when :ruby
-              @lint_output[:lints][:rubocop] = LintTask.new(opts).rubocop
-              @lint_output[:lints][:railsbp] = LintTask.new(opts).railsbp
-              @lint_output[:lints][:brakeman] = LintTask.new(opts).brakeman
+              lints[:rubocop] = LintTask.new(opts).rubocop
+              lints[:railsbp] = LintTask.new(opts).railsbp
+              lints[:brakeman] = LintTask.new(opts).brakeman
             when :rails
-              @lint_output[:lints][:railsbp] = LintTask.new(opts).railsbp
+              lints[:railsbp] = LintTask.new(opts).railsbp
           end
         end
         quietly {
           @g.branch(base_branch).checkout
           @g.branch("maximus_#{sha}").delete
         } # TODO - better way to silence git, in case there's a real error?
-        @lint_output
       end
+      @lint_output
     end
 
 
@@ -239,14 +242,15 @@ module Maximus
 
     # Store last commit as Ruby Git::Object
     # Returns Git::Object
-    def vccommit
-      @g.gcommit(sha)
+    def vccommit(commitsha = sha)
+      @g.gcommit(commitsha)
     end
 
     # Get general stats of commit on HEAD versus last commit on master branch
+    # Roadmap - include lines_added in this method's output
     # Returns Git::Diff
-    def diff
-      @g.diff(vccommit, master_commit).stats
+    def diff(new_commit = vccommit, old_commit = master_commit)
+      @g.diff(new_commit, old_commit).stats
     end
 
     # Get remote URL

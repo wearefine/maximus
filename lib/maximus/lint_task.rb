@@ -173,7 +173,7 @@ module Maximus
       if parse_JSON
         data = data.blank? ? data : JSON.parse(data) # defend against blank JSON errors
       end
-      @from_git ? hash_for_git(data) : @lint.refine(data)
+      @from_git ? hash_for_git(data) : @lint.refine(data, @task)
     end
 
   end
