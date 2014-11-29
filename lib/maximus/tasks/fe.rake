@@ -4,28 +4,25 @@ namespace :maximus do
   namespace :fe do
 
     desc "Run scss-lint"
-    task :scsslint, [:dev, :path] do |t, args|
-      Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).scsslint
+    task :scsslint, :path do |t, args|
+      Maximus::LintTask.new({path: args[:path], task: t}).scsslint
     end
-    task :scss, [:dev, :path] => :scsslint # alias by extension
+    task :scss, [:path] => :scsslint # alias by extension
 
     desc "Run jshint (node required)"
-    task :jshint, :dev, :path do |t, args|
-      Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).jshint
+    task :jshint, :path do |t, args|
+      Maximus::LintTask.new({path: args[:path], task: t}).jshint
     end
-    task :js, [:dev, :path] => :jshint
+    task :js, [:path] => :jshint # alias by extension
 
     desc "Execute all front-end tasks"
-    task :all, :dev do |t, args|
-      Rake::Task['maximus:fe:scsslint'].invoke(args[:dev])
-      Rake::Task['maximus:fe:jshint'].invoke(args[:dev])
-    end
+    task :all => [:scsslint, :jshint]
 
   end
 
   desc "Execute all front-end tasks"
-  task :fe, :dev do |t, args|
-    Rake::Task['maximus:fe:all'].invoke(args[:dev])
+  task :fe do
+    Rake::Task['maximus:fe:all'].invoke
   end
 
 end

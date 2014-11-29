@@ -10,12 +10,13 @@ In the development block:
 
 ## All tasks
 
-First arg (dev mode): Send results to Colosseum if false)
-Second arg (path): Custom path to target folder, but don't 
+First and only arg (path): Path to target folder/file or URL if using Phantomas.
+Lint tasks can accept glob notation, i.e. `**/*.scss`
+Statistics tasks can accept an Array
 
 Example:
 
-`rake maximus:fe:scsslint[false,path/to/scss_folder]`
+`rake maximus:fe:scsslint[app/assets/stylesheets]`
 
 ## Front End tasks
 

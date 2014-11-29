@@ -4,20 +4,18 @@ namespace :maximus do
   namespace :stat do
 
     desc "Run stylestats (node required)"
-    task :stylestats, :dev, :path do |t, args|
-      Maximus::StatisticTask.new({is_dev: args[:dev], path: args[:path], task: t}).stylestats
+    task :stylestats, :path do |t, args|
+      Maximus::StatisticTask.new({path: args[:path], task: t}).stylestats
     end
 
     desc "Run phantomas (node and phantomjs required)"
-    task :phantomas, :dev, :path do |t, args|
-      Maximus::StatisticTask.new({is_dev: args[:dev], path: args[:path], task: t}).phantomas
+    task :phantomas, :path do |t, args|
+      Maximus::StatisticTask.new({path: args[:path], task: t}).phantomas
     end
 
     desc "Execute all statistics tasks"
-    task :all, :dev do |t, args|
-      Rake::Task['maximus:stat:stylestats'].invoke(args[:dev])
-      # Rake::Task['maximus:stat:phantomas'].invoke(args[:dev]) # Just a little too much data
-    end
+    task :all => [:stylestats]
+    # task :all => [:stylestats, :phantomas] # Just a little too much data
 
   end
 
