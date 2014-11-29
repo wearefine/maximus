@@ -1,22 +1,16 @@
-require 'rainbow'
-require 'rainbow/ext/string'
-require 'active_support'
-require 'active_support/core_ext/object/blank'
-require 'json'
 
 module Maximus
 
+  # Base Statistic class
   class Statistic
     attr_accessor :output
 
     include Helper
 
-    def initialize(output = {})
-      super
-      @output = GitControl.new.export
-
-      @output[:statistics] = {}
-      @output[:statistics][:files] = {} # Is this necessary
+    def initialize(is_dev = true, output = {})
+      @@is_dev = is_dev
+      @@output = output
+      @@is_rails = is_rails?
     end
 
   end

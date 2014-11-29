@@ -3,7 +3,7 @@ namespace :maximus do
 
   namespace :fe do
 
-    desc "Run scss-lint" #scss-lint Rake API was challenging
+    desc "Run scss-lint"
     task :scsslint, [:dev, :path] do |t, args|
       Maximus::LintTask.new({is_dev: args[:dev], path: args[:path], task: t}).scsslint
     end

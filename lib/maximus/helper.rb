@@ -1,17 +1,20 @@
+require 'rainbow'
+require 'rainbow/ext/string'
 require 'active_support'
 require 'active_support/core_ext/object/blank'
 
 module Maximus
   module Helper
 
-    def initialize(is_rails = nil)
-      @is_rails = is_rails?
-    end
-
+    # See if Rails or a framework, i.e. Middleman
+    # This will usually be stored as a class variable in the inherited class, like @@is_rails = is_rails? in lint.rb
+    # Returns Boolean
     def is_rails?
       defined?(Rails)
     end
 
+    # Verify that node module is installed on the box before continuing
+    # Continues if module exists
     def node_module_exists(node_module)
       cmd = `if hash #{node_module} 2>/dev/null; then
         echo "true"
@@ -23,30 +26,46 @@ module Maximus
       end
     end
 
+    # Look for a custom config in the app's config/ directory; otherwise, use the built-in one
+    # Returns String
     def check_default(filename)
-      root_dir = @is_rails ? Rails.root : Dir.pwd
+      root_dir = is_rails? ? Rails.root : Dir.pwd
       user_file = "#{root_dir}/config/#{filename}"
-      File.exist?(user_file) ? user_file : File.expand_path("../config/#{filename}", __FILE__)
+      File.exist?(user_file) ? user_file : File.join(File.dirname(__FILE__), "config/#{filename}")
     end
 
-    def file_count(path, ext = 'scss')
-      count_path = path.include?("*") ? path : "#{path}/**/*.#{ext}" #stupid, but necessary so that directories aren't counted
-      Dir[count_path].count { |file| File.file?(file) }
+    # Grab the absolute path of the reporter file
+    # Returns String
+    def reporter_path(filename)
+      File.join(File.dirname(__FILE__),"reporter/#{filename}")
     end
 
+    # Find all files that were linted by extension
+    # Returns Array
     def file_list(path, ext = 'scss', remover = '')
       collect_path = path.include?("*") ? path : "#{path}/**/*.#{ext}" #stupid, but necessary so that directories aren't counted
       Dir[collect_path].collect { |file| file.gsub(remover, '') if File.file?(file) }
     end
 
+    # Count how many files were linted
+    # Returns Integer
+    def file_count(path, ext = 'scss')
+      file_list(path, ext).length
+    end
+
+    # Convert string to boolean
+    # Returns Boolean
     def truthy(str)
       return true if str == true || str =~ (/^(true|t|yes|y|1)$/i)
       return false if str == false || str.blank? || str =~ (/^(false|f|no|n|0)$/i)
     end
 
+    # Request user input
+    # Returns user input as String
     def prompt(*args)
       print(*args)
       STDIN.gets
     end
+
   end
 end

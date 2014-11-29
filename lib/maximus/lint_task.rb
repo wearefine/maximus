@@ -1,72 +1,63 @@
-require 'active_support'
-require 'active_support/core_ext/object/blank'
+require 'json'
 
 module Maximus
 
+  # Run lints
+  # Returns data as Hash; modified Hash if @from_git,
   class LintTask < Lint
 
     def initialize(opts = {})
       opts[:is_dev] ||= true
       opts[:from_git] ||= false
       @from_git = opts[:from_git]
-      @is_dev = truthy(opts[:is_dev])
       @path = opts[:path]
-      @lint = Lint.new
-      @output = @lint.output
+      @lint = Lint.new(truthy(opts[:is_dev]))
     end
 
+    # SCSS-Lint
     def scsslint
       @task = __method__.to_s
-      @path ||= is_rails? ? "app/assets/stylesheets" : "source/assets/stylesheets"
+      @path ||= @@is_rails ? "app/assets/stylesheets" : "source/assets/stylesheets"
 
-      config_file = check_default('scsslint.yml')
-      scss = `scss-lint #{@path} -c #{config_file}  --format=JSON`
+      scss = `scss-lint #{@path} -c #{check_default('scsslint.yml')}  --format=JSON`
 
-      @output[:files_inspected] = @from_git ? @path.split(',') : file_list(@path, 'scss')
-
-      scss = scss.blank? ? scss : JSON.parse(scss) #defend against blank JSON errors
-      return @from_git ? hash_for_git(scss) : refine(scss)
+      files_inspected('scss')
+      hash_or_refine(scss)
 
     end
 
+    # JSHint (requires node module)
     def jshint
       @task = __method__.to_s
-      @path ||= is_rails? ? "app/assets" : "source/assets"
+      @path ||= @@is_rails ? "app/assets" : "source/assets"
 
       node_module_exists(@task)
 
-      config_file = check_default('jshint.json')
-      exclude_file = check_default('.jshintignore')
+      jshint = `jshint #{@path} --config=#{check_default('jshint.json')} --exclude-path=#{check_default('.jshintignore')} --reporter=#{reporter_path('jshint.js')}`
 
-      jshint = `jshint #{@path} --config=#{config_file} --exclude-path=#{exclude_file} --reporter=#{File.expand_path("../reporter/jshint.js", __FILE__)}`
-
-      @output[:files_inspected] = @from_git ? @path.split(',') : file_list(@path, 'js')
-
-      jshint = jshint.blank? ? jshint : JSON.parse(jshint) #defend against blank JSON errors
-      return @from_git ? hash_for_git(jshint) : refine(jshint)
+      files_inspected('js')
+      hash_or_refine(jshint)
 
     end
 
+    # RuboCop
     def rubocop
       @task = __method__.to_s
-      @path ||= is_rails? ? "app" : "*.rb"
+      @path ||= @@is_rails ? "app" : "*.rb"
 
-      config_file = check_default('rubocop.yml')
-
-      rubo_cli = "rubocop #{@path} --require #{File.expand_path("../reporter/rubocop", __FILE__)} --config #{config_file} --format RuboCop::Formatter::MaximusRuboFormatter"
-      rubo_cli += " -R" if is_rails?
+      rubo_cli = "rubocop #{@path} --require #{reporter_path('rubocop')} --config #{check_default('rubocop.yml')} --format RuboCop::Formatter::MaximusRuboFormatter"
+      rubo_cli += " -R" if @@is_rails
       rubo = `#{rubo_cli}`
 
-      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb')
-
-      rubo = rubo.blank? ? rubo : JSON.parse(rubo) #defend against blank JSON errors
-      return @from_git ? hash_for_git(rubo) : refine(rubo)
+      files_inspected('rb', ' ')
+      hash_or_refine(rubo)
 
     end
 
+    # rails_best_practice (requires Rails)
     def railsbp
 
-      return unless is_rails?
+      return unless @@is_rails
 
       @task = __method__.to_s
       @path ||= "."
@@ -80,19 +71,21 @@ module Maximus
         rbj = JSON.parse(railsbp).group_by { |s| s['filename'] }
         railsbp = {}
         rbj.each do |file, errors|
+          # This crazy gsub grapbs scrubs the absolute path from the filename
           railsbp[file.gsub(Rails.root.to_s, '')[1..-1].to_sym] = errors.map { |o| hash_for_railsbp(o) }
         end
         railsbp = JSON.parse(railsbp.to_json) #don't event ask
       end
 
-      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb', './')
-      return @from_git ? hash_for_git(railsbp) : refine(railsbp)
+      files_inspected('rb', ' ', './')
+      hash_or_refine(railsbp, false)
 
     end
 
+    # Brakeman (requires Rails)
     def brakeman
 
-      return unless is_rails?
+      return unless @@is_rails
 
       @task = __method__.to_s
       @path ||= Rails.root.to_s
@@ -104,13 +97,13 @@ module Maximus
 
       unless brakeman.blank?
         bjson = JSON.parse(brakeman)
-        @output[:ignored_warnings] = bjson['scan_info']['ignored_warnings']
-        @output[:checks_performed] = bjson['scan_info']['checks_performed']
-        @output[:number_of_controllers] = bjson['scan_info']['number_of_controllers']
-        @output[:number_of_models] = bjson['scan_info']['number_of_models']
-        @output[:number_of_templates] = bjson['scan_info']['number_of_templates']
-        @output[:ruby_version] = bjson['scan_info']['ruby_version']
-        @output[:rails_version] = bjson['scan_info']['rails_version']
+        @@output[:ignored_warnings] = bjson['scan_info']['ignored_warnings']
+        @@output[:checks_performed] = bjson['scan_info']['checks_performed']
+        @@output[:number_of_controllers] = bjson['scan_info']['number_of_controllers']
+        @@output[:number_of_models] = bjson['scan_info']['number_of_models']
+        @@output[:number_of_templates] = bjson['scan_info']['number_of_templates']
+        @@output[:ruby_version] = bjson['scan_info']['ruby_version']
+        @@output[:rails_version] = bjson['scan_info']['rails_version']
         brakeman = {}
         ['warnings', 'errors'].each do |type|
           new_brakeman = bjson[type].group_by { |s| s['file'] }
@@ -122,13 +115,14 @@ module Maximus
       end
       tmp.unlink
 
-      @output[:files_inspected] = @from_git ? @path.split(' ') : file_list(@path, 'rb', "#{Rails.root.to_s}/")
-      return @from_git ? hash_for_git(brakeman) : refine(brakeman)
+      files_inspected('rb', ' ', "#{Rails.root.to_s}/")
+      hash_or_refine(brakeman, false)
 
     end
 
-    private
+    protected
 
+    # Convert to maximus format
     def hash_for_railsbp(error)
       {
         linter: error['message'].gsub(/\((.*)\)/, '').strip.parameterize('_').camelize,
@@ -139,6 +133,7 @@ module Maximus
       }
     end
 
+    # Convert to maximus format
     def hash_for_brakeman(error, type)
       {
         linter: error['warning_type'],
@@ -150,6 +145,7 @@ module Maximus
       }
     end
 
+    # Give git a little more data to help it out
     def hash_for_git(data)
       if data.is_a? String
         data = JSON.parse(data) unless data.blank?
@@ -159,6 +155,23 @@ module Maximus
         lint: @lint,
         task: @task
       }
+    end
+
+
+    private
+
+    # List all files inspected
+    # Returns Array
+    def files_inspected(ext, delimiter = ',', replace = '')
+      @@output[:files_inspected] = @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, replace)
+    end
+
+    # Convert export depending on execution origin
+    def hash_or_refine(data, parse_JSON = true)
+      if parse_JSON
+        data = data.blank? ? data : JSON.parse(data) #defend against blank JSON errors
+      end
+      @from_git ? hash_for_git(data) : refine(data)
     end
 
   end

@@ -7,19 +7,22 @@ require 'rainbow/ext/string'
 module Maximus
   class GitControl
 
+    include Helper
+
     def initialize(opts = {})
-      opts[:root_dir] ||= is_rails? ? Rails.root : Dir.pwd
+      @is_rails = is_rails?
+      opts[:root_dir] ||= @is_rails ? Rails.root : Dir.pwd
       opts[:is_dev] ||= true
       @root_dir = opts[:root_dir]
       opts[:log] ||= true
-      log = is_rails? ? Logger.new("#{@root_dir}/log/maximus_git.log") : nil
+      log = @is_rails ? Logger.new("#{@root_dir}/log/maximus_git.log") : nil
       log = opts[:log] ? log : nil
       @g = Git.open(@root_dir, :log => log)
       @is_dev = opts[:is_dev]
       @dev_mode = false
     end
 
-    #Regular git data for POSTing
+    # Returns Hash of git data
     def export
       {
         git: {
@@ -39,23 +42,17 @@ module Maximus
     end
 
     # Compare two commits and get line number ranges of changed patches
-    # Returns hash grouped by file extension (defined in assoc) => { filename, changes: (changed line ranges) }
+    # Returns Hash grouped by file extension (defined in assoc) => { filename, changes: (changed line ranges) }
+    # Example: 'sha' => { rb: {filename: 'file.rb', changes: { ['0..4'], ['10..20'] }  }}
     def compare(sha1 = master_commit.sha, sha2 = sha)
       git_diff = `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
       diff_return = {}
       abort 'No new commits'.color(:blue) if git_diff.length == 0
       # Reverse so that we go in chronological order
       git_diff.reverse.each do |git_sha|
-        lines_added = `#{File.expand_path("../config/git-lines.sh", __FILE__)} #{git_sha}`.split("\n")
-        new_lines = {}
-        lines_added.each do |filename|
-          fsplit = filename.split(':')
-          new_lines[fsplit[0]] ||= []
-          new_lines[fsplit[0]] << fsplit[1]
-          new_lines[fsplit[0]].uniq!
-        end
-        new_lines.delete("/dev/null")
+        new_lines = lines_added(git_sha)
 
+        # Grab all files in that commit and group them by extension
         files = `git show --pretty="format:" --name-only #{git_sha}`.split("\n").group_by { |f| f.split('.').pop }
 
         files.is_a?(Array) ? files.compact! : files.delete_if { |k,v| k.nil? }
@@ -73,14 +70,7 @@ module Maximus
           related.each do |child|
             unless files[child].blank?
               files[child].each do |c|
-                unless new_lines[c].blank?
-                  files[child] = [
-                    filename: "#{@root_dir}/#{c}",
-                    changes: new_lines[c]
-                  ]
-                else
-                  files[child] = [] #hack to ignore deleted files
-                end
+                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@root_dir}/#{c}", changes: new_lines[c] ] # hack to ignore deleted files
               end
               files[ext].concat(files[child])
               files.delete(child)
@@ -96,41 +86,103 @@ module Maximus
 
     # Run appropriate lint for every sha in commit history
     # Creates new branch based on each sha, then deletes it
+    # The match_lines method here is essential
+    # Executes the LintTask after filtering it with match_lines
     def lint(git_shas = compare)
       base_branch = branch
       git_shas.each do |sha, exts|
-        quietly { `git checkout #{sha} -b maximus_#{sha}` }
-        puts sha.to_s.color(:blue) if @is_dev
+        quietly { `git checkout #{sha} -b maximus_#{sha}` } # TODO - better way to silence git, in case there's a real error?
+        puts "Commit #{sha.to_s}".color(:blue) if @is_dev
         exts.each do |ext, files|
           file_list = files.map { |f| f[:filename] }.compact
           file_list_joined = ext == :ruby ? file_list.join(' ') : file_list.join(',') #lints accept files differently
-          opts = { is_dev: @is_dev, path: "\"#{file_list_joined}\"", from_git: true }
+          opts = {
+            is_dev: @is_dev,
+            path: "\"#{file_list_joined}\"",
+            from_git: true
+          }
           case ext
             when :js
-              match_lines(LintTask.new(opts).jshint, files, 'jshint') # Is there a way to not have task explicitly declared here? Maybe attr_accessor on the LintTask? Or similar?
+              match_lines(LintTask.new(opts).jshint, files)
             when :scss
-              match_lines(LintTask.new(opts).scsslint, files, 'scsslint')
+              match_lines(LintTask.new(opts).scsslint, files)
               StatisticTask.new.stylestats unless @dev_mode
             when :ruby
-              match_lines(LintTask.new(opts).rubocop, files, 'rubocop')
-              match_lines(LintTask.new(opts).railsbp, files, 'railsbp')
-              match_lines(LintTask.new(opts).brakeman, files, 'brakeman')
+              match_lines(LintTask.new(opts).rubocop, files)
+              match_lines(LintTask.new(opts).railsbp, files)
+              match_lines(LintTask.new(opts).brakeman, files)
             when :rails
-              match_lines(LintTask.new(opts).railsbp, files, 'railsbp')
+              match_lines(LintTask.new(opts).railsbp, files)
           end
         end
         quietly {
           @g.branch(base_branch).checkout
           @g.branch("maximus_#{sha}").delete
-        }
+        } # TODO - better way to silence git, in case there's a real error?
       end
     end
 
-    private
+    # Run appropriate lint for every sha in commit history
+    # Creates new branch based on each sha, then deletes it
+    # Different from above method as it returns the entire lint, not just the lines relevant to commit
+    # Returns Hash with all data grouped by task
+    # TODO - could this be DRY'd up with the above method?
+    def raw_lint(git_shas = compare)
+      base_branch = branch
+      @lint_output = {}
+      @lint_output[:statistics] = {}
+      @lint_output[:lints] = {}
+      git_shas.each do |sha, exts|
+        quietly { `git checkout #{sha} -b maximus_#{sha}` } # TODO - better way to silence git, in case there's a real error?
+        puts sha.to_s.color(:blue) if @is_dev
+        exts.each do |ext, files|
+          opts = {
+            is_dev: @is_dev,
+            from_git: true
+          }
+          case ext
+            when :js
+              hash_for_raw_lint(LintTask.new(opts).jshint)
+            when :scss
+              hash_for_raw_lint(LintTask.new(opts).scsslint)
+              @lint_output[:statistics] << StatisticTask.new.stylestats unless @dev_mode
+            when :ruby
+              hash_for_raw_lint(LintTask.new(opts).rubocop)
+              hash_for_raw_lint(LintTask.new(opts).railsbp)
+              hash_for_raw_lint(LintTask.new(opts).brakeman)
+            when :rails
+              hash_for_raw_lint(LintTask.new(opts).railsbp)
+          end
+        end
+        quietly {
+          @g.branch(base_branch).checkout
+          @g.branch("maximus_#{sha}").delete
+        } # TODO - better way to silence git, in case there's a real error?
+        @lint_output
+      end
+    end
+
+
+    protected
+
+    # Returns array of ranges by lines added in a commit by file name
+    # {'filename' => ['0..10', '11..14']}
+    def lines_added(git_sha)
+      lines_added = `#{File.join(File.dirname(__FILE__), 'config/git-lines.sh')} #{git_sha}`.split("\n")
+      new_lines = {}
+      lines_added.each do |filename|
+        fsplit = filename.split(':')
+        new_lines[fsplit[0]] ||= [] #if file isn't already part of the array
+        new_lines[fsplit[0]] << fsplit[1]
+        new_lines[fsplit[0]].uniq! #no repeats
+      end
+      new_lines.delete("/dev/null")
+      new_lines
+    end
 
     # Compare lint output with lines changed in commit
-    # Returns array of lints that match the lines in commit
-    def match_lines(lint_task, files, task)
+    # Returns Array of lints that match the lines in commit and then refines them
+    def match_lines(lint_task, files)
       all_files = {}
       files.each do |file|
         unless lint_task[:data].blank? # sometimes data will be blank but this is good - it means no errors raised in the lint
@@ -154,37 +206,60 @@ module Maximus
           all_files[file[:filename].to_s.gsub("#{@root_dir}/", '')] = [] #it's good, but we still need to store the filename
         end
       end
-      lint_task[:lint].refine(all_files, task, @is_dev) #optionally include is_dev param
+      lint_task[:lint].refine(all_files, lint_task[:task])
     end
 
+    def hash_for_raw_lint(lint_task)
+      @lint_output[:lints] << {
+        task_name: lint_task[:task],
+        data: lint_task[:lint].refine(lint_task[:data], lint_task[:task])
+      }
+    end
+
+    # Get last commit on current branch
+    # Returns String
     def sha
       @g.object('HEAD').sha
     end
 
+    # Get branch name
+    # Returns String
     def branch
       `env -i git rev-parse --abbrev-ref HEAD`.strip!
     end
 
+    # Get last commit on the master branch
+    # Returns Git::Object
     def master_commit
       @g.branches[:master].gcommit
     end
 
+    # Store last commit as Ruby Git::Object
+    # Returns Git::Object
     def vccommit
       @g.gcommit(sha)
     end
 
+    # Get general stats of commit on HEAD versus last commit on master branch
+    # Returns Git::Diff
     def diff
       @g.diff(vccommit, master_commit).stats
     end
 
+    # Get remote URL
+    # Returns String or nil if remotes is blank
     def remote
       @g.remotes.first.url unless @g.remotes.blank?
     end
 
+    # Get git user as defined in git's global config
+    # Returns String
     def user
       @g.config('user.name')
     end
 
+    # Get git user's email as defined in git's global config
+    # Returns String
     def email
       @g.config('user.email')
     end

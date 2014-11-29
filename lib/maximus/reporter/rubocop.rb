@@ -8,7 +8,8 @@ RuboCop = Rubocop if defined?(Rubocop) && ! defined?(RuboCop)
 
 module RuboCop
   module Formatter
-    # This formatter formats the report data in JSON format.
+    # This formatter formats the report data in JSON
+    # Makes it consistent with output of other Maximus linters
     class MaximusRuboFormatter < BaseFormatter
       include PathUtil
 
