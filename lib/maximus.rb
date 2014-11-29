@@ -1,7 +1,7 @@
 require 'maximus/constants'
 require 'maximus/version'
 require 'maximus/helper'
-require 'maximus/version_control'
+require 'maximus/git_control'
 require 'maximus/lint'
 require 'maximus/lint_task'
 require 'maximus/statistic'
