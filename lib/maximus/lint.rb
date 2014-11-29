@@ -53,7 +53,6 @@ module Maximus
       lint_summarize task
       if @@is_dev
         lint_dev_format(data) unless data.blank?
-      else
         lint_ceiling(lint_all.length, task)
       end
       @@output[:raw_data] = data.to_json # Because this should be returned in the format it was received
