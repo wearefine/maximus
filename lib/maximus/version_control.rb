@@ -61,10 +61,10 @@ module Maximus
         files.is_a?(Array) ? files.compact! : files.delete_if { |k,v| k.nil? }
 
         assoc = {
-          js:     ['js'],
           scss:   ['scss', 'sass'],
-          rails:  ['slim', 'haml'],
+          js:     ['js'],
           ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc'],
+          rails:  ['slim', 'haml'],
           ignore: [nil, 'gitignore', 'scssc', 'log', 'keep', 'concern']
         }
 
@@ -106,12 +106,12 @@ module Maximus
             from_git: true
           }
           case ext
-            when :js
-              match_lines(LintTask.new(opts).jshint, files)
-              @lint_output[:statistics] << StatisticTask.new.phantomas unless @dev_mode
             when :scss
               match_lines(LintTask.new(opts).scsslint, files)
               StatisticTask.new.stylestats unless @dev_mode
+            when :js
+              match_lines(LintTask.new(opts).jshint, files)
+              @lint_output[:statistics] << StatisticTask.new.phantomas unless @dev_mode
             when :ruby
               match_lines(LintTask.new(opts).rubocop, files)
               match_lines(LintTask.new(opts).railsbp, files)
@@ -149,13 +149,13 @@ module Maximus
             from_git: false
           }
           case ext
-            when :js
-              @lint_output[:lints][:jshint] = LintTask.new(opts).jshint
-              @lint_output[:statistics][:phantomas] = StatisticTask.new({is_dev: @is_dev}).phantomas unless @dev_mode
             when :scss
               @lint_output[:lints][:scsslint] = LintTask.new(opts).scsslint
               @lint_output[:statistics][:stylestats] = StatisticTask.new({is_dev: @is_dev}).stylestats unless @dev_mode
               @lint_output[:statistics][:phantomas] ||= StatisticTask.new({is_dev: @is_dev}).phantomas unless @dev_mode # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+            when :js
+              @lint_output[:lints][:jshint] = LintTask.new(opts).jshint
+              @lint_output[:statistics][:phantomas] = StatisticTask.new({is_dev: @is_dev}).phantomas unless @dev_mode
             when :ruby
               @lint_output[:lints][:rubocop] = LintTask.new(opts).rubocop
               @lint_output[:lints][:railsbp] = LintTask.new(opts).railsbp
