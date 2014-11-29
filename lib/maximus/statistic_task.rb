@@ -16,8 +16,7 @@ module Maximus
     # This saves creating an extra method a la the phantomas double methods
     # Phantomas is done this way because passing a single, unique, undigested URL will be way more common than a .css path
     def stylestats
-      name = __method__.to_s
-      node_module_exists(name)
+      node_module_exists('stylestats')
       @path ||= @@is_rails ? "#{Rails.root}/public/assets/**/*.css" : 'source/assets/**/*'
 
       css_files = @path.is_a?(Array) ? @path : find_css_files
@@ -117,7 +116,7 @@ module Maximus
     private
 
     # Organize stat output on the @@output variable
-    # Adds @@output[:filepath] with all statistic data
+    # Adds @@output[:statistics][:filepath] with all statistic data
     def refine_stats(stats_cli, file_path)
 
       return puts stats_cli if @@is_dev # Stop right there unless you mean business
@@ -125,8 +124,8 @@ module Maximus
       return false if stats_cli.blank? # JSON.parse will throw an abortive error if it's given an empty string
 
       stats = JSON.parse(stats_cli)
-      @@output[file_path.to_sym] ||= {}
-      fp = @@output[file_path.to_sym] # TODO - is there a better way to do this?
+      @@output[:statistics][file_path.to_sym] ||= {}
+      fp = @@output[:statistics][file_path.to_sym] # TODO - is there a better way to do this?
       fp[:raw_data] = stats_cli
       stats.each do |stat, value|
         fp[stat.to_sym] = value # TODO - Can I do like a self << thing here?
@@ -136,8 +135,9 @@ module Maximus
     end
 
     # Organize stat output on the @@output variable
-    # Adds @@output[:filepath] with all statistic data
+    # Adds @@output[:statistics][:filepath] with all statistic data
     def phantomas_action(url, config_file)
+      # Phantomas doesn't actually skip the skip-modules defined in the config BUT here's to hoping for future support
       phantomas = `phantomas --config=#{config_file} #{url} #{'--reporter=json:no-skip' unless @@is_dev} #{'--colors' if @@is_dev}`
       refine_stats(phantomas, url)
     end

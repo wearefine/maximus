@@ -104,6 +104,7 @@ module Maximus
           case ext
             when :js
               match_lines(LintTask.new(opts).jshint, files)
+              @lint_output[:statistics] << StatisticTask.new.phantomas unless @dev_mode
             when :scss
               match_lines(LintTask.new(opts).scsslint, files)
               StatisticTask.new.stylestats unless @dev_mode
@@ -127,7 +128,7 @@ module Maximus
     # Different from above method as it returns the entire lint, not just the lines relevant to commit
     # Returns Hash with all data grouped by task
     # TODO - could this be DRY'd up with the above method?
-    def raw_lint(git_shas = compare)
+    def all_lints_and_stats(git_shas = compare)
       base_branch = branch
       @lint_output = {}
       @lint_output[:statistics] = {}
@@ -143,9 +144,11 @@ module Maximus
           case ext
             when :js
               hash_for_raw_lint(LintTask.new(opts).jshint)
+              @lint_output[:statistics][:phantomas] = StatisticTask.new.phantomas unless @dev_mode
             when :scss
               hash_for_raw_lint(LintTask.new(opts).scsslint)
-              @lint_output[:statistics] << StatisticTask.new.stylestats unless @dev_mode
+              @lint_output[:statistics][:stylestats] = StatisticTask.new.stylestats unless @dev_mode
+              @lint_output[:statistics][:phantomas] ||= StatisticTask.new.phantomas unless @dev_mode # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
             when :ruby
               hash_for_raw_lint(LintTask.new(opts).rubocop)
               hash_for_raw_lint(LintTask.new(opts).railsbp)
@@ -172,9 +175,9 @@ module Maximus
       new_lines = {}
       lines_added.each do |filename|
         fsplit = filename.split(':')
-        new_lines[fsplit[0]] ||= [] #if file isn't already part of the array
+        new_lines[fsplit[0]] ||= [] # if file isn't already part of the array
         new_lines[fsplit[0]] << fsplit[1]
-        new_lines[fsplit[0]].uniq! #no repeats
+        new_lines[fsplit[0]].uniq! # no repeats
       end
       new_lines.delete("/dev/null")
       new_lines
@@ -188,14 +191,14 @@ module Maximus
         unless lint_task[:data].blank? # sometimes data will be blank but this is good - it means no errors raised in the lint
           lint = lint_task[:data][file[:filename].to_s]
 
-          # convert line ranges from string to expanded array - I'm sure there's a better way of doing this
+          # TODO - convert line ranges from string to expanded array - I'm sure there's a better way of doing this
           changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
           expanded = changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
           revert_name = file[:filename].gsub("#{@root_dir}/", '')
           unless lint.blank?
             all_files[revert_name] = []
 
-            # originally I tried .map and delete_if, but this works, and the other method didn't cover all bases. Gotta be a better way to write this though
+            # TODO - originally I tried .map and delete_if, but this works, and the other method didn't cover all bases. Gotta be a better way to write this though
             lint.each do |l|
               if expanded.include?(l['line'].to_i)
                 all_files[revert_name] << l

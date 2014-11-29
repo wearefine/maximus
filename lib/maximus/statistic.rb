@@ -10,6 +10,7 @@ module Maximus
     def initialize(is_dev = true, output = {})
       @@is_dev = is_dev
       @@output = output
+      @@output[:statistics] = {}
       @@is_rails = is_rails?
     end
 
