@@ -24,7 +24,7 @@ namespace :maximus do
 
   desc "Display lint data from the last commit alone"
   task :compare, :commit do |t, args|
-    args.with_defaults(commit: 'last')
+    args.with_defaults(commit: 'working')
     Maximus::GitControl.new({commit: args[:commit]}).lints_and_stats(true)
   end
 

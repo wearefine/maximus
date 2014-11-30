@@ -29,7 +29,6 @@ namespace :maximus do
     end
     # alias by extension
     task :rb => :all
-    task :back => :all
 
   end
 

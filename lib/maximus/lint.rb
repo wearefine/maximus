@@ -74,8 +74,8 @@ module Maximus
       lint_all = []
       lint_all.concat(lint_warnings).concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
       if @is_dev
-        puts lint_summarize
         lint_dev_format data unless data.blank?
+        puts lint_summarize
         lint_ceiling lint_all.length
       else
         @@log.info lint_summarize

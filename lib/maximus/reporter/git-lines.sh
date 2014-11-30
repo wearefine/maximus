@@ -50,4 +50,8 @@ function diff-lines(){
   done
 }
 
-git diff $1^ $1 --unified=0 | lines-added
+if [ -z "$2" ]; then
+  git diff $1^ $1 --unified=0 | lines-added
+else
+  git diff --unified=0 | lines-added
+fi

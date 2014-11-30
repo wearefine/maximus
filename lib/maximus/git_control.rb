@@ -20,6 +20,7 @@ module Maximus
       @opts = opts
       @is_dev = opts[:is_dev]
 
+      @psuedo_commit = (!@opts[:commit].blank? && @opts[:commit] == 'working')
       @g = Git.open(@opts[:root_dir], :log => log)
     end
 
@@ -47,10 +48,17 @@ module Maximus
         sha1 = case @opts[:commit]
           when 'master' then master_commit.sha
           when 'last' then @g.object('HEAD^').sha
+          when 'working' then 'working'
           else @opts[:commit]
         end
       end
-      git_diff = `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
+
+      # if working directory, just have a single item array
+      # the space here is important because git-lines checks for a second arg,
+      # and if one is present, it runs git diff without a commit
+      # or a comparison to a commit
+      git_diff = @psuedo_commit ? ['working directory'] : `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
+
       if git_diff.length == 0
         if @is_dev
           puts 'No new commits'.color(:blue)
@@ -65,7 +73,9 @@ module Maximus
         new_lines = lines_added(git_sha)
 
         # Grab all files in that commit and group them by extension
-        files = `git show --pretty="format:" --name-only #{git_sha}`.split("\n").group_by { |f| f.split('.').pop }
+        # If working copy, just give the diff names of the files changed
+        files = @psuedo_commit ? `git diff --name-only` : `git show --pretty="format:" --name-only #{git_sha}`
+        files = files.split("\n").group_by { |f| f.split('.').pop }
 
         files.is_a?(Array) ? files.compact! : files.delete_if { |k,v| k.nil? }
 
@@ -108,7 +118,7 @@ module Maximus
       git_output = {}
       git_shas.each do |sha, exts|
         # TODO - better way to silence git, in case there's a real error?
-        quietly { `git checkout #{sha} -b maximus_#{sha}` }
+        quietly { `git checkout #{sha} -b maximus_#{sha}` } unless @psuedo_commit
         puts "Commit #{sha.to_s}".color(:blue) if @is_dev
         git_output[sha.to_sym] = {
           lints: {},
@@ -171,7 +181,7 @@ module Maximus
         quietly {
           @g.branch(base_branch).checkout
           @g.branch("maximus_#{sha}").delete
-        }
+        } unless @psuedo_commit
       end
       git_output
     end
@@ -190,13 +200,15 @@ module Maximus
     # Returns Array of ranges by lines added in a commit by file name
     # {'filename' => ['0..10', '11..14']}
     def lines_added(git_sha)
-      lines_added = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n")
       new_lines = {}
+      lines_added = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n")
       lines_added.each do |filename|
         fsplit = filename.split(':')
-        new_lines[fsplit[0]] ||= [] # if file isn't already part of the array
-        new_lines[fsplit[0]] << fsplit[1]
-        new_lines[fsplit[0]].uniq! # no repeats
+        # if file isn't already part of the array
+        new_lines[fsplit[0]] ||= []
+        new_lines[fsplit[0]] << fsplit[1] unless fsplit[1].nil?
+        # no repeats
+        new_lines[fsplit[0]].uniq!
       end
       new_lines.delete("/dev/null")
       new_lines

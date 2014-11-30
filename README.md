@@ -61,9 +61,10 @@ Example:
 
 `rake maximus:compare`
 
-First arg is a sha, last, or master. Does not run any statistics.
+First arg is a sha, working, last, or master. Does not run any statistics.
 
-* `maximus:compare[last]` Default. Lints based on the previous commit by `HEAD`
+* `maximus:compare[working]` Default. Lints based on your working directory
+* `maximus:compare[last]` Lints based on the previous commit by `HEAD^`
 * `maximus:compare[master]` Lints based on the commit on master
 * `maximus:compare[d96a8e23]` Lints based on commit d96a8e23
 
