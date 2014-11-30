@@ -11,7 +11,6 @@ module Maximus
     def initialize(opts = {})
       opts[:is_dev] = true if opts[:is_dev].nil?
       @path = opts[:path]
-      opts[:base_url] ||= 'http://localhost:3000'
       @base_url = opts[:base_url]
       @statistic = Statistic.new(opts[:is_dev])
     end
@@ -65,7 +64,7 @@ module Maximus
 
     # By default checks homepage
     # Requires config to be in config/wraith/history.yaml
-    # Copies a new history.yaml if not present
+    # Adds a new config/wraith/history.yaml if not present
     # Returns Hash as defined in the wraith_parse method
     def wraith
 
@@ -99,7 +98,7 @@ module Maximus
       # Look for changes if it's not the first time
       puts `wraith latest #{wraith_config_file}` if wraith_exists
 
-      wraith_parse
+      puts wraith_parse(wraith_config_file).inspect
 
     end
 
@@ -174,19 +173,20 @@ module Maximus
     end
 
     # Get a diff percentage of all changes by label and screensize
-    # { label: [ { size: percent_diff } ] }
-    # Example {:home=>[{1024=>92.62}, {1280=>93.72}, {767=>90.28}]}
+    # { label: { percent_changed: [{ size: percent_diff }] } }
+    # Example {:statistics=>{:home=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
     # Returns Hash
-    def wraith_parse
-      changes = {}
+    def wraith_parse(wraith_config_file)
+      paths = YAML.load_file("#{root_dir}/#{wraith_config_file}")['paths']
       Dir.glob("#{root_dir}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
         file_object = File.open(file, 'rb')
         label = File.dirname(file).split('/').last
-        changes[label.to_sym] ||= []
-        changes[label.to_sym] << { File.basename(file).split('_')[0].to_i => file_object.read.to_f }
+        @@output[:statistics][label.to_sym] ||= {}
+        @@output[:statistics][label.to_sym][:percent_changed] ||= []
+        @@output[:statistics][label.to_sym][:percent_changed] << { File.basename(file).split('_')[0].to_i => file_object.read.to_f }
         file_object.close
       end
-      changes
+      @@output
     end
 
   end
