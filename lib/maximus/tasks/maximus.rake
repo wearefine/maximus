@@ -15,7 +15,7 @@ namespace :maximus do
   task :statistic do
     Rake::Task['maximus:statistic:all'].invoke
   end
-  task :stat => :statistic # alias abbreviation
+  # task :stat => :statistic # alias abbreviation
 
   desc "Display lint data from the last commit alone"
   task :compare do

@@ -12,6 +12,7 @@ module Maximus
       opts[:root_dir] ||= root_dir
       opts[:port] ||= ''
       opts[:is_dev] = true if opts[:is_dev].nil?
+      opts[:base_url] ||= 'http://localhost:3000'
       @opts = opts
       @path = opts[:path]
       @statistic = Statistic.new(opts[:is_dev])
@@ -29,12 +30,14 @@ module Maximus
 
       css_files.each do |file|
 
-        # For Rails, we only want the name of the compiled asset, because we know it'll live in public/assets. If this isn't Rails, sure, give me the full path because the directory structure is likely unique
+        # For Rails, we only want the name of the compiled asset, because we know it'll live in public/assets.
+        # If this isn't Rails, sure, give me the full path because the directory structure is likely unique
         pretty_name = @@is_rails ? file.split('/').pop.gsub(/(-{1}[a-z0-9]{32}*\.{1}){1}/, '.') : file
 
         puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
 
-        stylestats = `stylestats #{file} --config=#{check_default('stylestats.json')} #{'--type=json' unless @@is_dev}` # include JSON formatter unless we're in dev
+        # include JSON formatter unless we're in dev
+        stylestats = `stylestats #{file} --config=#{check_default('stylestats.json')} #{'--type=json' unless @@is_dev}`
 
         refine_stats(stylestats, pretty_name)
 
@@ -43,7 +46,8 @@ module Maximus
 
       if @@is_rails
         if @@is_dev
-          quietly { Rake::Task['assets:clobber'].invoke } # TODO - review that this may not be best practice, but it's really noisy in the console
+          # TODO - review that this may not be best practice, but it's really noisy in the console
+          quietly { Rake::Task['assets:clobber'].invoke }
         else
           Rake::Task['assets:clobber'].invoke
         end
@@ -94,7 +98,8 @@ module Maximus
         wraith_yaml_reset
 
         # If the paths have been updated, call a timeout and run history again
-        # TODO - this doesn't work very well. It puts the new shots in the history folder, even with absolute paths. Could be a bug in wraith
+        # TODO - this doesn't work very well. It puts the new shots in the history folder,
+        # even with absolute paths. Could be a bug in wraith
         YAML.load_file(@wraith_config_file)['paths'].each do |label, url|
           edit_yaml(@wraith_config_file) do |file|
             unless File.directory?("#{@opts[:root_dir]}/wraith_history_shots/#{label}")
@@ -125,13 +130,16 @@ module Maximus
       searched_files = []
 
       if @@is_rails
-        Rails.application.load_tasks
+        # Only load tasks if we're not running a rake task
+        # http://stackoverflow.com/questions/2467208/how-can-i-tell-if-rails-code-is-being-run-via-rake-or-script-generate
+        Rails.application.load_tasks unless File.basename($0) == 'rake'
 
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)
 
         if @@is_dev
-          quietly { Rake::Task['assets:precompile'].invoke } # TODO - review that this may not be best practice, but it's really noisy in the console
+           # TODO - review that this may not be best practice, but it's really noisy in the console
+          quietly { Rake::Task['assets:precompile'].invoke }
         else
           Rake::Task['assets:precompile'].invoke
         end
