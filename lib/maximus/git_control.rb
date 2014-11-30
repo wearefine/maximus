@@ -129,7 +129,7 @@ module Maximus
     # Returns Hash with all data grouped by task
     # Example: { 'sha': { lints: { scsslint: { files_inspec... }, statisti... } }, 'sha...' }
     # TODO - could this be DRY'd up with the above method?
-    def all_lints_and_stats(git_shas = compare)
+    def all_lints_and_stats(git_shas = compare, docker = nil)
       return false if git_shas.blank?
       base_branch = branch
       @lint_output = {}
@@ -182,7 +182,7 @@ module Maximus
     # Returns array of ranges by lines added in a commit by file name
     # {'filename' => ['0..10', '11..14']}
     def lines_added(git_sha)
-      lines_added = `#{File.join(File.dirname(__FILE__), 'config/git-lines.sh')} #{git_sha}`.split("\n")
+      lines_added = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n")
       new_lines = {}
       lines_added.each do |filename|
         fsplit = filename.split(':')
