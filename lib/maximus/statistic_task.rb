@@ -12,10 +12,8 @@ module Maximus
       opts[:root_dir] ||= root_dir
       opts[:port] ||= ''
       opts[:is_dev] = true if opts[:is_dev].nil?
-      @root_dir = opts[:root_dir]
+      @opts = opts
       @path = opts[:path]
-      @port = opts[:port]
-      @base_url = opts[:base_url]
       @statistic = Statistic.new(opts[:is_dev])
     end
 
@@ -65,7 +63,7 @@ module Maximus
       # Phantomas doesn't actually skip the skip-modules defined in the config BUT here's to hoping for future support
       phantomas_cli = "phantomas --config=#{check_default('phantomas.json')} "
       phantomas_cli += @@is_dev ? '--colors' : '--reporter=json:no-skip'
-      phantomas_cli += " --proxy=#{@base_url}:#{@port}" unless @port.blank?
+      phantomas_cli += " --proxy=#{@opts[:base_url]}:#{@opts[:port]}" unless @opts[:port].blank?
       @path.is_a?(Hash) ? @path.each { |label, url| phantomas_action(url, phantomas_cli) } : phantomas_action(@path, phantomas_cli)
       @@output
     end
@@ -77,7 +75,7 @@ module Maximus
     def wraith
 
       node_module_exists('phantomjs')
-      @root_config = @@is_dev ? 'config/wraith' : "#{@root_dir}/config/wraith"
+      @root_config = @@is_dev ? 'config/wraith' : "#{@opts[:root_dir]}/config/wraith"
       wraith_exists = File.directory?(@root_config)
       @wraith_config_file = "#{@root_config}/history.yaml"
 
@@ -99,7 +97,7 @@ module Maximus
         # TODO - this doesn't work very well. It puts the new shots in the history folder, even with absolute paths. Could be a bug in wraith
         YAML.load_file(@wraith_config_file)['paths'].each do |label, url|
           edit_yaml(@wraith_config_file) do |file|
-            unless File.directory?("#{@root_dir}/wraith_history_shots/#{label}")
+            unless File.directory?("#{@opts[:root_dir]}/wraith_history_shots/#{label}")
               puts `wraith history #{@wraith_config_file}`
               break
             end
@@ -179,8 +177,8 @@ module Maximus
     # Organize stat output on the @@output variable
     # Adds @@output[:statistics][:filepath] with all statistic data
     def phantomas_action(url, phantomas_cli)
-      puts "Phantomas on #{@base_url + url}".color(:green)
-      phantomas = `#{phantomas_cli} #{@base_url + url}`
+      puts "Phantomas on #{@opts[:base_url] + url}".color(:green)
+      phantomas = `#{phantomas_cli} #{@opts[:base_url] + url}`
       refine_stats(phantomas, url)
     end
 
@@ -190,7 +188,7 @@ module Maximus
     # Returns Hash
     def wraith_parse(wraith_config_file = @wraith_config_file)
       paths = YAML.load_file(wraith_config_file)['paths']
-      Dir.glob("#{@root_dir}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
+      Dir.glob("#{@opts[:root_dir]}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
         file_object = File.open(file, 'rb')
         label = File.dirname(file).split('/').last
         label = paths[label]
@@ -207,11 +205,11 @@ module Maximus
       edit_yaml(wraith_config_file) do |file|
         unless @@is_dev
           file['snap_file'] = "#{@root_config}/javascript/snap.js"
-          file['directory'] = "#{@root_dir}/wraith_shots"
-          file['history_dir'] = "#{@root_dir}/wraith_history_shots"
+          file['directory'] = "#{@opts[:root_dir]}/wraith_shots"
+          file['history_dir'] = "#{@opts[:root_dir]}/wraith_history_shots"
         end
         # .to_s is for consistency in the yaml, but could likely be removed without causing an error
-        fresh_domain = @port.blank? ? @base_url.to_s : "#{@base_url}:#{@port}"
+        fresh_domain = @opts[:port].blank? ? @opts[:base_url].to_s : "#{@opts[:base_url]}:#{@opts[:port]}"
         file['domains']['main'] = fresh_domain
         @path.each { |label, url| file['paths'][label] = url } if @path.is_a?(Hash)
       end

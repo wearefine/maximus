@@ -18,13 +18,10 @@ module Maximus
       log = is_rails? ? Logger.new('log/maximus_git.log') : nil
       log = opts[:log] ? log : nil
 
-      @base_url = opts[:base_url]
-      @port = opts[:port]
+      @opts = opts
       @is_dev = opts[:is_dev]
-      @dev_mode = true
-      @root_dir = opts[:root_dir]
 
-      @g = Git.open(@root_dir, :log => log)
+      @g = Git.open(@opts[:root_dir], :log => log)
     end
 
     # Returns Hash of commit data
@@ -74,7 +71,7 @@ module Maximus
           related.each do |child|
             unless files[child].blank?
               files[child].each do |c|
-                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@root_dir}/#{c}", changes: new_lines[c] ] # hack to ignore deleted files
+                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@opts[:root_dir]}/#{c}", changes: new_lines[c] ] # hack to ignore deleted files
               end
               files[ext].concat(files[child])
               files.delete(child)
@@ -101,25 +98,25 @@ module Maximus
         exts.each do |ext, files|
           file_list = files.map { |f| f[:filename] }.compact
           file_list_joined = ext == :ruby ? file_list.join(' ') : file_list.join(',') #lints accept files differently
-          opts = {
+          lint_opts = {
             is_dev: @is_dev,
             path: "\"#{file_list_joined}\"",
             from_git: true
           }
           case ext
             when :scss
-              match_lines(LintTask.new(opts).scsslint, files)
-              StatisticTask.new.stylestats unless @dev_mode
-              StatisticTask.new.wraith unless @dev_mode
+              match_lines(LintTask.new(lint_opts).scsslint, files)
+              StatisticTask.new.stylestats
+              StatisticTask.new.wraith
             when :js
-              match_lines(LintTask.new(opts).jshint, files)
-              StatisticTask.new.phantomas unless @dev_mode
+              match_lines(LintTask.new(lint_opts).jshint, files)
+              StatisticTask.new.phantomas
             when :ruby
-              match_lines(LintTask.new(opts).rubocop, files)
-              match_lines(LintTask.new(opts).railsbp, files)
-              match_lines(LintTask.new(opts).brakeman, files)
+              match_lines(LintTask.new(lint_opts).rubocop, files)
+              match_lines(LintTask.new(lint_opts).railsbp, files)
+              match_lines(LintTask.new(lint_opts).brakeman, files)
             when :rails
-              match_lines(LintTask.new(opts).railsbp, files)
+              match_lines(LintTask.new(lint_opts).railsbp, files)
           end
         end
         quietly {
@@ -138,43 +135,46 @@ module Maximus
     def all_lints_and_stats(git_shas = compare, docker = nil)
       return false if git_shas.blank?
       base_branch = branch
-      @lint_output = {}
+      lint_output = {}
       git_shas.each do |sha, exts|
         quietly { `git checkout #{sha} -b maximus_#{sha}` } # TODO - better way to silence git, in case there's a real error?
         puts "Commit #{sha.to_s}".color(:blue) if @is_dev
-        @lint_output[sha.to_sym] = {
+        lint_output[sha.to_sym] = {
           lints: {},
           statistics: {}
         }
-        lints = @lint_output[sha.to_sym][:lints]
-        statistics = @lint_output[sha.to_sym][:statistics]
+        lints = lint_output[sha.to_sym][:lints]
+        statistics = lint_output[sha.to_sym][:statistics]
         exts.each do |ext, files|
-          opts = {
+          lint_opts = {
             is_dev: @is_dev,
             from_git: false
           }
+          stat_opts = {
+            is_dev: @is_dev,
+            base_url: @opts[:base_url],
+            port: @opts[:port],
+            root_dir: @opts[:root_dir]
+          }
           case ext
             when :scss
-              lints[:scsslint] = LintTask.new(opts).scsslint
-              # TODO - why is @dev_mode positive here? It prints false
-              if @dev_mode
-                # stylestat is singular here because model name in Rails is singular. This could be a TODO
-                statistics[:stylestat] = StatisticTask.new({is_dev: @is_dev}).stylestats
-                statistics[:phantomas] ||= StatisticTask.new({is_dev: @is_dev, base_url: @base_url, port: @port, root_dir: @root_dir}).phantomas # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] = StatisticTask.new({is_dev: @is_dev, base_url: @base_url, port: @port, root_dir: @root_dir}).wraith
-              end
+              lints[:scsslint] = LintTask.new(lint_opts).scsslint
+              # stylestat is singular here because model name in Rails is singular. But adding a .classify when it's converted to a model chops off the end s on 'phantomas', which breaks the model name. This could be a TODO
+              statistics[:stylestat] = StatisticTask.new({is_dev: @is_dev}).stylestats
+              # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+              statistics[:phantomas] ||= StatisticTask.new(stat_opts).phantomas
+              statistics[:wraith] = StatisticTask.new(stat_opts).wraith
             when :js
-              lints[:jshint] = LintTask.new(opts).jshint
-              if @dev_mode
-                statistics[:phantomas] = StatisticTask.new({is_dev: @is_dev, base_url: @base_url, port: @port, root_dir: @root_dir}).phantomas
-                statistics[:wraith] ||= StatisticTask.new({is_dev: @is_dev, base_url: @base_url, port: @port, root_dir: @root_dir}).wraith # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-              end
+              lints[:jshint] = LintTask.new(lint_opts).jshint
+              statistics[:phantomas] = StatisticTask.new(stat_opts).phantomas
+              # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+              statistics[:wraith] ||= StatisticTask.new(stat_opts).wraith
             when :ruby
-              lints[:rubocop] = LintTask.new(opts).rubocop
-              lints[:railsbp] = LintTask.new(opts).railsbp
-              lints[:brakeman] = LintTask.new(opts).brakeman
+              lints[:rubocop] = LintTask.new(lint_opts).rubocop
+              lints[:railsbp] = LintTask.new(lint_opts).railsbp
+              lints[:brakeman] = LintTask.new(lint_opts).brakeman
             when :rails
-              lints[:railsbp] = LintTask.new(opts).railsbp
+              lints[:railsbp] = LintTask.new(lint_opts).railsbp
           end
         end
         quietly {
@@ -182,7 +182,7 @@ module Maximus
           @g.branch("maximus_#{sha}").delete
         } # TODO - better way to silence git, in case there's a real error?
       end
-      @lint_output
+      lint_output
     end
 
 
@@ -214,7 +214,7 @@ module Maximus
           # TODO - convert line ranges from string to expanded array - I'm sure there's a better way of doing this
           changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
           expanded = changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
-          revert_name = file[:filename].gsub("#{@root_dir}/", '')
+          revert_name = file[:filename].gsub("#{@opts[:root_dir]}/", '')
           unless lint.blank?
             all_files[revert_name] = []
 
@@ -226,7 +226,7 @@ module Maximus
             end
           end
         else
-          all_files[file[:filename].to_s.gsub("#{@root_dir}/", '')] = [] #it's good, but we still need to store the filename
+          all_files[file[:filename].to_s.gsub("#{@opts[:root_dir]}/", '')] = [] #it's good, but we still need to store the filename
         end
       end
       lint_task[:lint].refine(all_files, lint_task[:task])
@@ -267,18 +267,6 @@ module Maximus
     # Returns String or nil if remotes is blank
     def remote
       @g.remotes.first.url unless @g.remotes.blank?
-    end
-
-    # Get git user as defined in git's global config
-    # Returns String
-    def user
-      @g.config('user.name')
-    end
-
-    # Get git user's email as defined in git's global config
-    # Returns String
-    def email
-      @g.config('user.email')
     end
 
   end
