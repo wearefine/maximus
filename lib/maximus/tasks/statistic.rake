@@ -4,18 +4,18 @@ namespace :maximus do
   namespace :statistic do
 
     desc "Run stylestats (node required)"
-    task :style, :path do |t, args|
-      Maximus::StatisticTask.new({path: args[:path], task: t}).stylestats
+    task :stylestats, :path do |t, args|
+      Maximus::Statistic.new({path: args[:path], task: t}).stylestats
     end
 
     desc "Run phantomas (node and phantomjs required)"
     task :phantomas, :path do |t, args|
-      Maximus::StatisticTask.new({path: args[:path], task: t}).phantomas
+      Maximus::Statistic.new({path: args[:path], task: t}).phantomas
     end
 
     desc "Run Wraith (phantomjs required)"
     task :wraith, :path do |t, args|
-      Maximus::StatisticTask.new({path: args[:path], task: t}).wraith
+      Maximus::Statistic.new({path: args[:path], task: t}).wraith
     end
 
     desc "Execute all statistics tasks"

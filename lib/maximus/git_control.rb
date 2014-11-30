@@ -103,11 +103,11 @@ module Maximus
           case ext
             when :scss
               match_lines(LintTask.new(lint_opts).scsslint, files)
-              StatisticTask.new.stylestats
-              StatisticTask.new.wraith
+              Statistic.new.stylestats
+              Statistic.new.wraith
             when :js
               match_lines(LintTask.new(lint_opts).jshint, files)
-              StatisticTask.new.phantomas
+              Statistic.new.phantomas
             when :ruby
               match_lines(LintTask.new(lint_opts).rubocop, files)
               match_lines(LintTask.new(lint_opts).railsbp, files)
@@ -157,15 +157,15 @@ module Maximus
             when :scss
               lints[:scsslint] = LintTask.new(lint_opts).scsslint
               # stylestat is singular here because model name in Rails is singular. But adding a .classify when it's converted to a model chops off the end s on 'phantomas', which breaks the model name. This could be a TODO
-              statistics[:stylestat] = StatisticTask.new({is_dev: @is_dev}).stylestats
+              statistics[:stylestat] = Statistic.new({is_dev: @is_dev}).stylestats
               # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-              statistics[:phantomas] ||= StatisticTask.new(stat_opts).phantomas
-              statistics[:wraith] = StatisticTask.new(stat_opts).wraith
+              statistics[:phantomas] ||= Statistic.new(stat_opts).phantomas
+              statistics[:wraith] = Statistic.new(stat_opts).wraith
             when :js
               lints[:jshint] = LintTask.new(lint_opts).jshint
-              statistics[:phantomas] = StatisticTask.new(stat_opts).phantomas
+              statistics[:phantomas] = Statistic.new(stat_opts).phantomas
               # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-              statistics[:wraith] ||= StatisticTask.new(stat_opts).wraith
+              statistics[:wraith] ||= Statistic.new(stat_opts).wraith
             when :ruby
               lints[:rubocop] = LintTask.new(lint_opts).rubocop
               lints[:railsbp] = LintTask.new(lint_opts).railsbp
