@@ -96,6 +96,7 @@ module Maximus
         wraith_yaml_reset
 
         # If the paths have been updated, call a timeout and run history again
+        # TODO - this doesn't work very well. It puts the new shots in the history folder, even with absolute paths. Could be a bug in wraith
         YAML.load_file(@wraith_config_file)['paths'].each do |label, url|
           edit_yaml(@wraith_config_file) do |file|
             unless File.directory?("#{@root_dir}/wraith_history_shots/#{label}")
