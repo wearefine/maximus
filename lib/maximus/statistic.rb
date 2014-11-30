@@ -8,6 +8,7 @@ module Maximus
     include Helper
 
     def initialize(is_dev = true, output = {})
+      @@log = mlog
       @@is_dev = is_dev
       @@output = output
       @@output[:statistics] = {}

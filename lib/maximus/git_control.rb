@@ -11,13 +11,12 @@ module Maximus
 
     def initialize(opts = {})
       opts[:is_dev] = true if opts[:is_dev].nil?
-      opts[:log] = true if opts[:log].nil?
+      opts[:log] = Logger.new('log/maximus_git.log') if opts[:log].nil?
       opts[:base_url] ||= 'http://localhost:3000'
       opts[:port] ||= ''
       opts[:root_dir] ||= root_dir
-      log = is_rails? ? Logger.new('log/maximus_git.log') : nil
       log = opts[:log] ? log : nil
-
+      @@log = mlog
       @opts = opts
       @is_dev = opts[:is_dev]
 
@@ -46,7 +45,7 @@ module Maximus
       diff_return = {}
       git_diff = `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
       if git_diff.length == 0
-        puts 'No new commits'.color(:blue)
+        @@log.warn 'No new commits'
         return false # Fail silently
       end
       # Reverse so that we go in chronological order
@@ -96,11 +95,9 @@ module Maximus
         quietly { `git checkout #{sha} -b maximus_#{sha}` } # TODO - better way to silence git, in case there's a real error?
         puts "Commit #{sha.to_s}".color(:blue) if @is_dev
         exts.each do |ext, files|
-          file_list = files.map { |f| f[:filename] }.compact
-          file_list_joined = ext == :ruby ? file_list.join(' ') : file_list.join(',') #lints accept files differently
           lint_opts = {
             is_dev: @is_dev,
-            path: "\"#{file_list_joined}\"",
+            path: "\"#{lint_file_paths(files, ext)}\"",
             from_git: true
           }
           case ext
@@ -132,7 +129,7 @@ module Maximus
     # Returns Hash with all data grouped by task
     # Example: { 'sha': { lints: { scsslint: { files_inspec... }, statisti... } }, 'sha...' }
     # TODO - could this be DRY'd up with the above method?
-    def all_lints_and_stats(git_shas = compare, docker = nil)
+    def all_lints_and_stats(git_shas = compare)
       return false if git_shas.blank?
       base_branch = branch
       lint_output = {}
@@ -188,7 +185,14 @@ module Maximus
 
     protected
 
-    # Returns array of ranges by lines added in a commit by file name
+    # Get list of file paths
+    # Returns String delimited by comma or space
+    def lint_file_paths(files, ext)
+      file_list = files.map { |f| f[:filename] }.compact
+      ext == :ruby ? file_list.join(' ') : file_list.join(',') #lints accept files differently
+    end
+
+    # Returns Array of ranges by lines added in a commit by file name
     # {'filename' => ['0..10', '11..14']}
     def lines_added(git_sha)
       lines_added = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n")

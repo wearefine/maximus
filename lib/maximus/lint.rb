@@ -9,6 +9,7 @@ module Maximus
     include Helper
 
     def initialize(is_dev = true, output = {})
+      @@log = mlog
       @@is_dev = is_dev
       @@output = output
       @@is_rails = is_rails?
@@ -73,7 +74,11 @@ module Maximus
       success += " " + "[#{@@output[:lint_conventions].length}]".color(:cyan) if task == 'rubocop'
       success += " " + "[#{@@output[:lint_refactors].length}]".color(:white) if task == 'rubocop'
 
-      puts success # Still put something even if not dev for the sake of logging data and task running
+      if @@is_dev
+        puts success
+      else
+        @@log.info success
+      end
     end
 
 

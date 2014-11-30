@@ -81,5 +81,13 @@ module Maximus
       STDIN.gets
     end
 
+    # Defines base log
+    # Returns @@log variable for use
+    def mlog
+      @@log ||= Logger.new(STDOUT)
+      @@log.level ||= Logger::INFO
+      @@log
+    end
+
   end
 end
