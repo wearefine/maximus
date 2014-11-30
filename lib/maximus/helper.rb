@@ -69,7 +69,7 @@ module Maximus
     # Edit and save a YAML file
     # Returns closed File
     def edit_yaml(yaml_location, &block)
-      d = YAML::load_file(yaml_location)
+      d = YAML.load_file(yaml_location)
       block.call(d)
       File.open(yaml_location, 'w') {|f| f.write d.to_yaml }
     end

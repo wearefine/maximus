@@ -5,7 +5,7 @@ browser:
   # phantomjs: "casperjs"
 
 #If you want to have multiple snapping files, set the file name here
-snap_file: "javascript/snap.js"
+snap_file: "config/wraith/javascript/snap.js"
 # snap_file: "lib/wraith/javascript/nojs.js"
 
 # Type the name of the directory that shots will be stored in
@@ -13,7 +13,7 @@ directory: 'wraith_shots'
 history_dir: 'wraith_history_shots'
 
 domains:
-  base: "http://192.168.59.103:8080"
+  main: "http://localhost:3000"
 
 #Type screen widths below, here are a couple of examples
 screen_widths:

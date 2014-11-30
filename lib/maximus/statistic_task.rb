@@ -72,15 +72,17 @@ module Maximus
       @path ||= { home: '/' }
       # Copy wraith config and run the initial baseline
       # Or, if the config is already there, just run wraith latest
-      FileUtils.copy_entry(File.join(File.dirname(__FILE__), "config/wraith"), "#{root_dir}/config/wraith") unless wraith_exists
-
+      unless wraith_exists
+        FileUtils.copy_entry(File.join(File.dirname(__FILE__), "config/wraith"), "#{root_dir}/config/wraith")
+        puts `wraith history config/wraith/history.yaml`
+      end
       edit_yaml("#{root_dir}/config/wraith/history.yaml") do |file|
-        file['domains']['base'] = @base_url
-        file['paths'] = @path if @path.is_a?(Hash)
+        file['domains']['main'] = @base_url.to_s
+        @path.each { |label, url| file['paths'][label.to_s] = url } if @path.is_a?(Hash)
       end
       # Set baseline or look for changes
-      `wraith #{wraith_exists ? 'latest' : 'history'} config/wraith/history.yaml`
-      wraith_parse
+      puts `wraith latest config/wraith/history.yaml` if wraith_exists
+      puts wraith_parse.inspect
 
     end
 
@@ -153,8 +155,20 @@ module Maximus
       refine_stats(phantomas, url)
     end
 
+    # Get a diff percentage of all changes by label and screensize
+    # { label: [ { size: percent_diff } ] }
+    # Example {:home=>[{1024=>92.62}, {1280=>93.72}, {767=>90.28}]}
+    # Returns Hash
     def wraith_parse
-
+      changes = {}
+      Dir.glob("#{root_dir}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
+        file_object = File.open(file, 'rb')
+        label = File.dirname(file).split('/').last
+        changes[label.to_sym] ||= []
+        changes[label.to_sym] << { File.basename(file).split('_')[0].to_i => file_object.read.to_f }
+        file_object.close
+      end
+      changes
     end
 
   end
