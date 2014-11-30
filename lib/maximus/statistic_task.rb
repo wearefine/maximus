@@ -56,7 +56,8 @@ module Maximus
     # By default, checks homepage
     def phantomas
       node_module_exists('phantomas')
-      @path ||= '/'
+
+      @path ||= YAML.load_file(check_default('phantomas_urls.yaml'))
       config_file = check_default('phantomas.json')
       @path.is_a?(Hash) ? @path.each { |label, url| phantomas_action(url, config_file) } : phantomas_action(@path, config_file)
       @@output
@@ -65,26 +66,43 @@ module Maximus
     # By default checks homepage
     # Requires config to be in config/wraith/history.yaml
     # Copies a new history.yaml if not present
+    # Returns Hash as defined in the wraith_parse method
     def wraith
 
       node_module_exists('phantomjs')
       wraith_exists = File.directory?("#{root_dir}/config/wraith")
-      @path ||= { home: '/' }
+      wraith_config_file = 'config/wraith/history.yaml'
+
       # Copy wraith config and run the initial baseline
       # Or, if the config is already there, just run wraith latest
       unless wraith_exists
         FileUtils.copy_entry(File.join(File.dirname(__FILE__), "config/wraith"), "#{root_dir}/config/wraith")
-        puts `wraith history config/wraith/history.yaml`
+        puts `wraith history #{wraith_config_file}`
       end
-      edit_yaml("#{root_dir}/config/wraith/history.yaml") do |file|
+
+      # If the paths have been updated, call a timeout and run history again
+      YAML.load_file("#{root_dir}/#{wraith_config_file}")['paths'].each do |label, url|
+        edit_yaml("#{root_dir}/#{wraith_config_file}") do |file|
+          unless File.directory?("#{root_dir}/wraith_history_shots/#{label}")
+            puts `wraith history #{wraith_config_file}`
+            break
+          end
+        end
+      end
+
+      # Update the root domain (docker ports and addresses may change) and set paths as defined in @path
+      edit_yaml("#{root_dir}/#{wraith_config_file}") do |file|
         file['domains']['main'] = @base_url.to_s
-        @path.each { |label, url| file['paths'][label.to_s] = url } if @path.is_a?(Hash)
+        @path.each { |label, url| file['paths'][label] = url } if @path.is_a?(Hash)
       end
-      # Set baseline or look for changes
-      puts `wraith latest config/wraith/history.yaml` if wraith_exists
-      puts wraith_parse.inspect
+
+      # Look for changes if it's not the first time
+      puts `wraith latest #{wraith_config_file}` if wraith_exists
+
+      wraith_parse
 
     end
+
 
     protected
 

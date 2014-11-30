@@ -9,8 +9,8 @@ snap_file: "config/wraith/javascript/snap.js"
 # snap_file: "lib/wraith/javascript/nojs.js"
 
 # Type the name of the directory that shots will be stored in
-directory: 'wraith_shots'
-history_dir: 'wraith_history_shots'
+directory: './wraith_shots'
+history_dir: './wraith_history_shots'
 
 domains:
   main: "http://localhost:3000"
