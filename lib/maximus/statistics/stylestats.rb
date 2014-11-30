@@ -54,8 +54,7 @@ module Maximus
 
       if @@is_rails
         # Only load tasks if we're not running a rake task
-        # http://stackoverflow.com/questions/2467208/how-can-i-tell-if-rails-code-is-being-run-via-rake-or-script-generate
-        Rails.application.load_tasks unless File.basename($0) == 'rake'
+        Rails.application.load_tasks unless @is_dev
 
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)

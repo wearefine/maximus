@@ -7,6 +7,12 @@ module Maximus
 
     include Helper
 
+    # opts - Lint options (default: {})
+    #    :is_dev - wether or not this is being called by a rake task
+    #    :root_dir - absolute path to working directory (optional)
+    #    :port - 4-digit port number (optional)
+    #    :base_url - standard domain with http:// (default: http://localhost:3000) (optional)
+    #    :path - default set in methods (optional)
     def initialize(opts = {}, output = {})
       opts[:is_dev] = true if opts[:is_dev].nil?
       opts[:root_dir] ||= root_dir
@@ -17,6 +23,9 @@ module Maximus
       @@is_rails ||= is_rails?
       @@is_dev = opts[:is_dev]
       @output = output
+      # This is different from lints
+      # A new stat is run per file or URL, so they should be stored in a child
+      # A lint just has one execution, so it's data can be stored directly in @output
       @output[:statistics] ||= {}
       @opts = opts
       @path = opts[:path]

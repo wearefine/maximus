@@ -87,7 +87,7 @@ module Maximus
     # Run appropriate lint for every sha in commit history
     # Creates new branch based on each sha, then deletes it
     # The match_lines method here is essential
-    # Executes the LintTask after filtering it with match_lines
+    # Executes the Lint after filtering it with match_lines
     def lint(git_shas = compare)
       return false if git_shas.blank?
       base_branch = branch
@@ -102,18 +102,18 @@ module Maximus
           }
           case ext
             when :scss
-              match_lines(LintTask.new(lint_opts).scsslint, files)
+              match_lines(Lint.new(lint_opts).scsslint, files)
               Statistic.new.stylestats
               Statistic.new.wraith
             when :js
-              match_lines(LintTask.new(lint_opts).jshint, files)
+              match_lines(Lint.new(lint_opts).jshint, files)
               Statistic.new.phantomas
             when :ruby
-              match_lines(LintTask.new(lint_opts).rubocop, files)
-              match_lines(LintTask.new(lint_opts).railsbp, files)
-              match_lines(LintTask.new(lint_opts).brakeman, files)
+              match_lines(Lint.new(lint_opts).rubocop, files)
+              match_lines(Lint.new(lint_opts).railsbp, files)
+              match_lines(Lint.new(lint_opts).brakeman, files)
             when :rails
-              match_lines(LintTask.new(lint_opts).railsbp, files)
+              match_lines(Lint.new(lint_opts).railsbp, files)
           end
         end
         quietly {
@@ -155,23 +155,23 @@ module Maximus
           }
           case ext
             when :scss
-              lints[:scsslint] = LintTask.new(lint_opts).scsslint
+              lints[:scsslint] = Lint.new(lint_opts).scsslint
               # stylestat is singular here because model name in Rails is singular. But adding a .classify when it's converted to a model chops off the end s on 'phantomas', which breaks the model name. This could be a TODO
               statistics[:stylestat] = Statistic.new({is_dev: @is_dev}).stylestats
               # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
               statistics[:phantomas] ||= Statistic.new(stat_opts).phantomas
               statistics[:wraith] = Statistic.new(stat_opts).wraith
             when :js
-              lints[:jshint] = LintTask.new(lint_opts).jshint
+              lints[:jshint] = Lint.new(lint_opts).jshint
               statistics[:phantomas] = Statistic.new(stat_opts).phantomas
               # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
               statistics[:wraith] ||= Statistic.new(stat_opts).wraith
             when :ruby
-              lints[:rubocop] = LintTask.new(lint_opts).rubocop
-              lints[:railsbp] = LintTask.new(lint_opts).railsbp
-              lints[:brakeman] = LintTask.new(lint_opts).brakeman
+              lints[:rubocop] = Lint.new(lint_opts).rubocop
+              lints[:railsbp] = Lint.new(lint_opts).railsbp
+              lints[:brakeman] = Lint.new(lint_opts).brakeman
             when :rails
-              lints[:railsbp] = LintTask.new(lint_opts).railsbp
+              lints[:railsbp] = Lint.new(lint_opts).railsbp
           end
         end
         quietly {

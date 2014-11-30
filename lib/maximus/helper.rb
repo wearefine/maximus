@@ -89,5 +89,12 @@ module Maximus
       @@log
     end
 
+    # Determine if current process was called by a rake task
+    # Returns Boolean
+    # http://stackoverflow.com/questions/2467208/how-can-i-tell-if-rails-code-is-being-run-via-rake-or-script-generate
+    def is_rake_task?
+      File.basename($0) == 'rake'
+    end
+
   end
 end
