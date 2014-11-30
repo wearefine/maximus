@@ -9,8 +9,12 @@ module Maximus
     # for stylestats, array of paths is suitable
     # Each public method returns complete @@output as Hash
     def initialize(opts = {})
+      opts[:root_dir] ||= root_dir
+      opts[:port] ||= ''
       opts[:is_dev] = true if opts[:is_dev].nil?
+      @root_dir = opts[:root_dir]
       @path = opts[:path]
+      @port = opts[:port]
       @base_url = opts[:base_url]
       @statistic = Statistic.new(opts[:is_dev])
     end
@@ -57,8 +61,12 @@ module Maximus
       node_module_exists('phantomas')
 
       @path ||= YAML.load_file(check_default('phantomas_urls.yaml'))
-      config_file = check_default('phantomas.json')
-      @path.is_a?(Hash) ? @path.each { |label, url| phantomas_action(url, config_file) } : phantomas_action(@path, config_file)
+
+      # Phantomas doesn't actually skip the skip-modules defined in the config BUT here's to hoping for future support
+      phantomas_cli = "phantomas --config=#{check_default('phantomas.json')} "
+      phantomas_cli += @@is_dev ? '--colors' : '--reporter=json:no-skip'
+      phantomas_cli += " --proxy=#{@base_url}:#{@port}" unless @port.blank?
+      @path.is_a?(Hash) ? @path.each { |label, url| phantomas_action(url, phantomas_cli) } : phantomas_action(@path, phantomas_cli)
       @@output
     end
 
@@ -69,36 +77,38 @@ module Maximus
     def wraith
 
       node_module_exists('phantomjs')
-      wraith_exists = File.directory?("#{root_dir}/config/wraith")
-      wraith_config_file = 'config/wraith/history.yaml'
+      @root_config = @@is_dev ? 'config/wraith' : "#{@root_dir}/config/wraith"
+      wraith_exists = File.directory?(@root_config)
+      @wraith_config_file = "#{@root_config}/history.yaml"
 
       # Copy wraith config and run the initial baseline
       # Or, if the config is already there, just run wraith latest
       unless wraith_exists
-        FileUtils.copy_entry(File.join(File.dirname(__FILE__), "config/wraith"), "#{root_dir}/config/wraith")
-        puts `wraith history #{wraith_config_file}`
-      end
 
-      # If the paths have been updated, call a timeout and run history again
-      YAML.load_file("#{root_dir}/#{wraith_config_file}")['paths'].each do |label, url|
-        edit_yaml("#{root_dir}/#{wraith_config_file}") do |file|
-          unless File.directory?("#{root_dir}/wraith_history_shots/#{label}")
-            puts `wraith history #{wraith_config_file}`
-            break
+        FileUtils.copy_entry(File.join(File.dirname(__FILE__), "config/wraith"), @root_config)
+        wraith_yaml_reset
+        puts `wraith history #{@wraith_config_file}`
+
+      else
+
+        wraith_yaml_reset
+
+        # If the paths have been updated, call a timeout and run history again
+        YAML.load_file(@wraith_config_file)['paths'].each do |label, url|
+          edit_yaml(@wraith_config_file) do |file|
+            unless File.directory?("#{@root_dir}/wraith_history_shots/#{label}")
+              puts `wraith history #{@wraith_config_file}`
+              break
+            end
           end
         end
+
+        # Look for changes if it's not the first time
+        puts `wraith latest #{@wraith_config_file}`
+
       end
 
-      # Update the root domain (docker ports and addresses may change) and set paths as defined in @path
-      edit_yaml("#{root_dir}/#{wraith_config_file}") do |file|
-        file['domains']['main'] = @base_url.to_s
-        @path.each { |label, url| file['paths'][label] = url } if @path.is_a?(Hash)
-      end
-
-      # Look for changes if it's not the first time
-      puts `wraith latest #{wraith_config_file}` if wraith_exists
-
-      puts wraith_parse(wraith_config_file).inspect
+      wraith_parse
 
     end
 
@@ -165,10 +175,9 @@ module Maximus
 
     # Organize stat output on the @@output variable
     # Adds @@output[:statistics][:filepath] with all statistic data
-    def phantomas_action(url, config_file)
-      url = @base_url + url
-      # Phantomas doesn't actually skip the skip-modules defined in the config BUT here's to hoping for future support
-      phantomas = `phantomas --config=#{config_file} #{url} #{'--reporter=json:no-skip' unless @@is_dev} #{'--colors' if @@is_dev}`
+    def phantomas_action(url, phantomas_cli)
+      puts "#{phantomas_cli} #{@base_url + url}"
+      phantomas = `#{phantomas_cli} #{@base_url + url}`
       refine_stats(phantomas, url)
     end
 
@@ -176,9 +185,9 @@ module Maximus
     # { label: { percent_changed: [{ size: percent_diff }] } }
     # Example {:statistics=>{:home=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
     # Returns Hash
-    def wraith_parse(wraith_config_file)
-      paths = YAML.load_file("#{root_dir}/#{wraith_config_file}")['paths']
-      Dir.glob("#{root_dir}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
+    def wraith_parse(wraith_config_file = @wraith_config_file)
+      paths = YAML.load_file(wraith_config_file)['paths']
+      Dir.glob("#{@root_dir}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
         file_object = File.open(file, 'rb')
         label = File.dirname(file).split('/').last
         @@output[:statistics][label.to_sym] ||= {}
@@ -187,6 +196,21 @@ module Maximus
         file_object.close
       end
       @@output
+    end
+
+    # Update the root domain (docker ports and addresses may change) and set paths as defined in @path
+    def wraith_yaml_reset(wraith_config_file = @wraith_config_file)
+      edit_yaml(wraith_config_file) do |file|
+        unless @@is_dev
+          file['snap_file'] = "#{@root_config}/javascript/snap.js"
+          file['directory'] = "#{@root_dir}/wraith_shots"
+          file['history_dir'] = "#{@root_dir}/wraith_history_shots"
+        end
+        # .to_s is for consistency in the yaml, but could likely be removed without causing an error
+        fresh_domain = @port.blank? ? @base_url.to_s : "#{@base_url}:#{@port}"
+        file['domains']['main'] = fresh_domain
+        @path.each { |label, url| file['paths'][label] = url } if @path.is_a?(Hash)
+      end
     end
 
   end

@@ -13,16 +13,18 @@ module Maximus
       opts[:is_dev] = true if opts[:is_dev].nil?
       opts[:log] = true if opts[:log].nil?
       opts[:base_url] ||= 'http://localhost:3000'
-
-      @root_dir = root_dir
-
-      log = is_rails? ? Logger.new("#{@root_dir}/log/maximus_git.log") : nil
+      opts[:port] ||= ''
+      opts[:root_dir] ||= root_dir
+      log = is_rails? ? Logger.new('log/maximus_git.log') : nil
       log = opts[:log] ? log : nil
-      @g = Git.open(@root_dir, :log => log)
 
       @base_url = opts[:base_url]
+      @port = opts[:port]
       @is_dev = opts[:is_dev]
       @dev_mode = true
+      @root_dir = opts[:root_dir]
+
+      @g = Git.open(@root_dir, :log => log)
     end
 
     # Returns Hash of commit data
@@ -108,9 +110,10 @@ module Maximus
             when :scss
               match_lines(LintTask.new(opts).scsslint, files)
               StatisticTask.new.stylestats unless @dev_mode
+              StatisticTask.new.wraith unless @dev_mode
             when :js
               match_lines(LintTask.new(opts).jshint, files)
-              statistics << StatisticTask.new.phantomas unless @dev_mode
+              StatisticTask.new.phantomas unless @dev_mode
             when :ruby
               match_lines(LintTask.new(opts).rubocop, files)
               match_lines(LintTask.new(opts).railsbp, files)
@@ -153,17 +156,18 @@ module Maximus
           case ext
             when :scss
               lints[:scsslint] = LintTask.new(opts).scsslint
+              # TODO - why is @dev_mode positive here? It prints false
               if @dev_mode
                 # stylestat is singular here because model name in Rails is singular. This could be a TODO
                 statistics[:stylestat] = StatisticTask.new({is_dev: @is_dev}).stylestats
-                statistics[:phantomas] ||= StatisticTask.new({is_dev: @is_dev, base_url: @base_url}).phantomas # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] = StatisticTask.new({is_dev: @is_dev, base_url: @base_url}).wraith
+                statistics[:phantomas] ||= StatisticTask.new({is_dev: @is_dev, base_url: @base_url, port: @port, root_dir: @root_dir}).phantomas # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+                statistics[:wraith] = StatisticTask.new({is_dev: @is_dev, base_url: @base_url, port: @port, root_dir: @root_dir}).wraith
               end
             when :js
               lints[:jshint] = LintTask.new(opts).jshint
               if @dev_mode
-                statistics[:phantomas] = StatisticTask.new({is_dev: @is_dev, base_url: @base_url}).phantomas
-                statistics[:wraith] ||= StatisticTask.new({is_dev: @is_dev, base_url: @base_url}).wraith # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+                statistics[:phantomas] = StatisticTask.new({is_dev: @is_dev, base_url: @base_url, port: @port, root_dir: @root_dir}).phantomas
+                statistics[:wraith] ||= StatisticTask.new({is_dev: @is_dev, base_url: @base_url, port: @port, root_dir: @root_dir}).wraith # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
               end
             when :ruby
               lints[:rubocop] = LintTask.new(opts).rubocop
