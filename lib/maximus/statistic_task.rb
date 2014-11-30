@@ -61,7 +61,7 @@ module Maximus
       node_module_exists('phantomas')
 
       @path ||= YAML.load_file(check_default('phantomas_urls.yaml'))
-
+      puts 'Analyzing with phantomas...'.color(:blue)
       # Phantomas doesn't actually skip the skip-modules defined in the config BUT here's to hoping for future support
       phantomas_cli = "phantomas --config=#{check_default('phantomas.json')} "
       phantomas_cli += @@is_dev ? '--colors' : '--reporter=json:no-skip'
@@ -80,6 +80,8 @@ module Maximus
       @root_config = @@is_dev ? 'config/wraith' : "#{@root_dir}/config/wraith"
       wraith_exists = File.directory?(@root_config)
       @wraith_config_file = "#{@root_config}/history.yaml"
+
+      puts 'Starting visual regression tests with wraith...'.color(:blue)
 
       # Copy wraith config and run the initial baseline
       # Or, if the config is already there, just run wraith latest
@@ -176,20 +178,21 @@ module Maximus
     # Organize stat output on the @@output variable
     # Adds @@output[:statistics][:filepath] with all statistic data
     def phantomas_action(url, phantomas_cli)
-      puts "#{phantomas_cli} #{@base_url + url}"
+      puts "Phantomas on #{@base_url + url}".color(:green)
       phantomas = `#{phantomas_cli} #{@base_url + url}`
       refine_stats(phantomas, url)
     end
 
     # Get a diff percentage of all changes by label and screensize
-    # { label: { percent_changed: [{ size: percent_diff }] } }
-    # Example {:statistics=>{:home=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
+    # { path: { percent_changed: [{ size: percent_diff }] } }
+    # Example {:statistics=>{:/=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
     # Returns Hash
     def wraith_parse(wraith_config_file = @wraith_config_file)
       paths = YAML.load_file(wraith_config_file)['paths']
       Dir.glob("#{@root_dir}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
         file_object = File.open(file, 'rb')
         label = File.dirname(file).split('/').last
+        label = paths[label]
         @@output[:statistics][label.to_sym] ||= {}
         @@output[:statistics][label.to_sym][:percent_changed] ||= []
         @@output[:statistics][label.to_sym][:percent_changed] << { File.basename(file).split('_')[0].to_i => file_object.read.to_f }
