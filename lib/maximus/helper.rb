@@ -2,6 +2,7 @@ require 'rainbow'
 require 'rainbow/ext/string'
 require 'active_support'
 require 'active_support/core_ext/object/blank'
+require 'yaml'
 
 module Maximus
   module Helper
@@ -11,6 +12,12 @@ module Maximus
     # Returns Boolean
     def is_rails?
       defined?(Rails)
+    end
+
+    # Get root directory of file being called
+    # Returns String (path)
+    def root_dir
+      is_rails? ? Rails.root : Dir.pwd
     end
 
     # Verify that node module is installed on the box before continuing
@@ -29,7 +36,6 @@ module Maximus
     # Look for a custom config in the app's config/ directory; otherwise, use the built-in one
     # Returns String
     def check_default(filename)
-      root_dir = is_rails? ? Rails.root : Dir.pwd
       user_file = "#{root_dir}/config/#{filename}"
       File.exist?(user_file) ? user_file : File.join(File.dirname(__FILE__), "config/#{filename}")
     end
@@ -58,6 +64,14 @@ module Maximus
     def truthy(str)
       return true if str == true || str =~ (/^(true|t|yes|y|1)$/i)
       return false if str == false || str.blank? || str =~ (/^(false|f|no|n|0)$/i)
+    end
+
+    # Edit and save a YAML file
+    # Returns closed File
+    def edit_yaml(yaml_location, &block)
+      d = YAML::load_file(yaml_location)
+      block.call(d)
+      File.open(yaml_location, 'w') {|f| f.write d.to_yaml }
     end
 
     # Request user input

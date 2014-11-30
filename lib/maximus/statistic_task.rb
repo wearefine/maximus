@@ -3,11 +3,16 @@ module Maximus
 
   class StatisticTask < Statistic
 
-    # @path can be array or string
+    # @path can be array or string or hash
+    # for phantomas and wraith, @path must be string or hash
+    # Example: { home: '/', wines: '/wines' }
+    # for stylestats, array of paths is suitable
     # Each public method returns complete @@output as Hash
     def initialize(opts = {})
       opts[:is_dev] = true if opts[:is_dev].nil?
       @path = opts[:path]
+      opts[:base_url] ||= 'http://localhost:3000'
+      @base_url = opts[:base_url]
       @statistic = Statistic.new(opts[:is_dev])
     end
 
@@ -48,14 +53,36 @@ module Maximus
     end
 
     # @path can be array or string of URLS. Include http://
+    # By default, checks homepage
     def phantomas
       node_module_exists('phantomas')
-      @path ||= 'http://localhost:3000'
+      @path ||= '/'
       config_file = check_default('phantomas.json')
-      @path.is_a?(Array) ? @path.each { |u| phantomas_action(u, config_file) } : phantomas_action(@path, config_file)
+      @path.is_a?(Hash) ? @path.each { |label, url| phantomas_action(url, config_file) } : phantomas_action(@path, config_file)
       @@output
     end
 
+    # By default checks homepage
+    # Requires config to be in config/wraith/history.yaml
+    # Copies a new history.yaml if not present
+    def wraith
+
+      node_module_exists('phantomjs')
+      wraith_exists = File.directory?("#{root_dir}/config/wraith")
+      @path ||= { home: '/' }
+      # Copy wraith config and run the initial baseline
+      # Or, if the config is already there, just run wraith latest
+      FileUtils.copy_entry(File.join(File.dirname(__FILE__), "config/wraith"), "#{root_dir}/config/wraith") unless wraith_exists
+
+      edit_yaml("#{root_dir}/config/wraith/history.yaml") do |file|
+        file['domains']['base'] = @base_url
+        file['paths'] = @path if @path.is_a?(Hash)
+      end
+      # Set baseline or look for changes
+      `wraith #{wraith_exists ? 'latest' : 'history'} config/wraith/history.yaml`
+      wraith_parse
+
+    end
 
     protected
 
@@ -119,28 +146,15 @@ module Maximus
 
     # Organize stat output on the @@output variable
     # Adds @@output[:statistics][:filepath] with all statistic data
-    def refine_stats(stats_cli, file_path)
-
-      return puts stats_cli if @@is_dev # Stop right there unless you mean business
-
-      return false if stats_cli.blank? # JSON.parse will throw an abortive error if it's given an empty string
-
-      stats = JSON.parse(stats_cli)
-      @@output[:statistics][file_path.to_sym] ||= {}
-      fp = @@output[:statistics][file_path.to_sym] # TODO - is there a better way to do this?
-      stats.each do |stat, value|
-        fp[stat.to_sym] = value # TODO - Can I do like a self << thing here?
-      end
-
-      @@output
-    end
-
-    # Organize stat output on the @@output variable
-    # Adds @@output[:statistics][:filepath] with all statistic data
     def phantomas_action(url, config_file)
+      url = @base_url + url
       # Phantomas doesn't actually skip the skip-modules defined in the config BUT here's to hoping for future support
       phantomas = `phantomas --config=#{config_file} #{url} #{'--reporter=json:no-skip' unless @@is_dev} #{'--colors' if @@is_dev}`
       refine_stats(phantomas, url)
+    end
+
+    def wraith_parse
+
     end
 
   end

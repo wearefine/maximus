@@ -12,9 +12,10 @@ namespace :maximus do
   end
 
   desc "Execute all statistics tasks"
-  task :stat do
-    Rake::Task['maximus:stat:all'].invoke
+  task :statistic do
+    Rake::Task['maximus:statistic:all'].invoke
   end
+  task :stat => :statistic # alias abbreviation
 
   desc "Display lint data from the last commit alone"
   task :compare do
@@ -27,6 +28,6 @@ desc "Execute all front-end, back-end and statistic tasks"
 task :maximus do
   Rake::Task['maximus:fe:all'].invoke
   Rake::Task['maximus:be:all'].invoke
-  Rake::Task['maximus:stat:all'].invoke
+  Rake::Task['maximus:statistic:all'].invoke
   Rake::Task['maximus:compare'].invoke
 end
