@@ -21,7 +21,7 @@ module Maximus
 
       @@log ||= mlog
       @@is_rails ||= is_rails?
-      @@is_dev = opts[:is_dev]
+      @is_dev = opts[:is_dev]
       @output = output
       # This is different from lints
       # A new stat is run per file or URL, so they should be stored in a child
@@ -39,7 +39,7 @@ module Maximus
     def refine_stats(stats_cli, file_path)
 
       # Stop right there unless you mean business
-      return puts stats_cli if @@is_dev
+      return puts stats_cli if @is_dev
 
       # JSON.parse will throw an abortive error if it's given an empty string
       return false if stats_cli.blank?

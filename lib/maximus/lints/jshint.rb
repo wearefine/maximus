@@ -10,8 +10,8 @@ module Maximus
 
       jshint = `jshint #{@path} --config=#{check_default('jshint.json')} --exclude-path=#{check_default('.jshintignore')} --reporter=#{reporter_path('jshint.js')}`
 
-      files_inspected('js')
-      hash_or_refine(jshint)
+      @output[:files_inspected] ||= files_inspected('js')
+      refine jshint
     end
 
   end

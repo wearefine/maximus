@@ -11,7 +11,8 @@ namespace :maximus do
     task :railsbp, :path do |t, args|
       Maximus::Lint.new({path: args[:path], task: t}).railsbp
     end
-    task :rails_best_practices => :railsbp # alias by full name
+    # alias by full name
+    task :rails_best_practices => :railsbp
 
     desc "Run brakeman"
     task :brakeman, :path do |t, args|
@@ -26,7 +27,9 @@ namespace :maximus do
         Rake::Task['maximus:be:brakeman'].invoke
       end
     end
-    task :rb => :all # alias by extension
+    # alias by extension
+    task :rb => :all
+    task :back => :all
 
   end
 

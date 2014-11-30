@@ -10,8 +10,8 @@ module Maximus
       rubo_cli += " -R" if @@is_rails
       rubo = `#{rubo_cli}`
 
-      files_inspected('rb', ' ')
-      hash_or_refine(rubo)
+      @output[:files_inspected] ||= files_inspected('rb', ' ')
+      refine rubo
     end
 
   end

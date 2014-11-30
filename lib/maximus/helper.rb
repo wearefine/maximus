@@ -96,5 +96,17 @@ module Maximus
       File.basename($0) == 'rake'
     end
 
+    # Convert the array from lines_added into spelled-out ranges
+    # Example: lines_added = {'filename' => ['0..10', '11..14']}
+    # Becomes {'filename' => {[0,1,2,3,4,5,6,7,8,9,10], [11,12,13,14]}}
+    # This is a git_control helper primarily but it's used in Lint
+    # TODO - I'm sure there's a better way of doing this
+    # TODO - figure out a better place to put this than in Helper
+    # Returns Hash of spelled-out arrays of integers
+    def lines_added_to_range(file)
+      changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
+      changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
+    end
+
   end
 end

@@ -24,8 +24,8 @@ module Maximus
         railsbp = JSON.parse(railsbp.to_json) #don't event ask
       end
 
-      files_inspected('rb', ' ', './')
-      hash_or_refine(railsbp, false)
+      @output[:files_inspected] ||= files_inspected('rb', ' ', './')
+      refine railsbp
 
     end
 

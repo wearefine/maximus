@@ -9,7 +9,7 @@ module Maximus
     def wraith
 
       node_module_exists('phantomjs')
-      @root_config = @@is_dev ? 'config/wraith' : "#{@opts[:root_dir]}/config/wraith"
+      @root_config = @is_dev ? 'config/wraith' : "#{@opts[:root_dir]}/config/wraith"
       wraith_exists = File.directory?(@root_config)
       @wraith_config_file = "#{@root_config}/history.yaml"
 
@@ -70,7 +70,7 @@ module Maximus
     # Update the root domain (docker ports and addresses may change) and set paths as defined in @path
     def wraith_yaml_reset(wraith_config_file = @wraith_config_file)
       edit_yaml(wraith_config_file) do |file|
-        unless @@is_dev
+        unless @is_dev
           file['snap_file'] = "#{@root_config}/javascript/snap.js"
           file['directory'] = "#{@opts[:root_dir]}/wraith_shots"
           file['history_dir'] = "#{@opts[:root_dir]}/wraith_history_shots"

@@ -10,15 +10,16 @@ In the development block:
 
 ## All tasks
 
-First and only arg (path): Path to target folder/file or URL if using Phantomas.
-Lint tasks can accept glob notation, i.e. `**/*.scss`
-Statistics tasks can accept an Array
+First and only arg (path): Path to target folder/file or URL if using Phantomas. The sole exception to this is `maximus:compare`
+
+* Lint tasks can accept glob notation, i.e. `**/*.scss`
+* Statistics tasks can accept an Array
 
 Example:
 
 `rake maximus:fe:scsslint[app/assets/stylesheets]`
 
-## Front End tasks
+## Front End lints
 
 `rake maximus:fe`
 
@@ -30,7 +31,7 @@ Example:
 
 `rake maximus:fe:jshint`
 
-## Back End tasks
+## Back End lints
 
 `rake maximus:be`
 
@@ -56,9 +57,15 @@ Example:
 
 `rake maximus:stat:phantomas`
 
-## Lint committed files against the master branch with git
+## Lint committed files
 
 `rake maximus:compare`
+
+First arg is a sha, last, or master. Does not run any statistics.
+
+* `maximus:compare[last]` Default. Lints based on the previous commit by `HEAD`
+* `maximus:compare[master]` Lints based on the commit on master
+* `maximus:compare[d96a8e23]` Lints based on commit d96a8e23
 
 ## Front End, Back End, Stats, Compare
 

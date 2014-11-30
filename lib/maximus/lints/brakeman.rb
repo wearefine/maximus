@@ -34,9 +34,8 @@ module Maximus
       end
       tmp.unlink
 
-      files_inspected('rb', ' ', "#{Rails.root.to_s}/")
-      hash_or_refine(brakeman, false)
-
+      @output[:files_inspected] ||= files_inspected('rb', ' ', "#{Rails.root.to_s}/")
+      refine brakeman
     end
 
 

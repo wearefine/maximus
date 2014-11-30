@@ -19,8 +19,7 @@ namespace :maximus do
     end
 
     desc "Execute all statistics tasks"
-    task :all => [:stylestats, :wraith]
-    # task :all => [:stylestats, :phantomas] # Just a little too much data
+    task :all => [:stylestats, :wraith, :phantomas]
 
   end
 

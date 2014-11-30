@@ -5,21 +5,27 @@ namespace :maximus do
   task :fe do
     Rake::Task['maximus:fe:all'].invoke
   end
+  # alias by longer name
+  task :front => :fe
 
   desc "Execute all back-end tasks"
   task :be do
     Rake::Task['maximus:be:all'].invoke
   end
+  # alias by longer name
+  task :back => :be
 
   desc "Execute all statistics tasks"
   task :statistic do
     Rake::Task['maximus:statistic:all'].invoke
   end
-  # task :stat => :statistic # alias abbreviation
+  # alias abbreviation
+  task :stat => :statistic
 
   desc "Display lint data from the last commit alone"
-  task :compare do
-    Maximus::GitControl.new.lint
+  task :compare, :commit do |t, args|
+    args.with_defaults(commit: 'last')
+    Maximus::GitControl.new({commit: args[:commit]}).lints_and_stats(true)
   end
 
 end

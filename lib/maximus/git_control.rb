@@ -43,9 +43,20 @@ module Maximus
     # Example: 'sha' => { rb: {filename: 'file.rb', changes: { ['0..4'], ['10..20'] }  }}
     def compare(sha1 = master_commit.sha, sha2 = sha)
       diff_return = {}
+      if @opts[:commit]
+        sha1 = case @opts[:commit]
+          when 'master' then master_commit.sha
+          when 'last' then @g.object('HEAD^').sha
+          else @opts[:commit]
+        end
+      end
       git_diff = `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
       if git_diff.length == 0
-        @@log.warn 'No new commits'
+        if @is_dev
+          puts 'No new commits'.color(:blue)
+        else
+          @@log.warn 'No new commits'
+        end
         # Fail silently
         return false
       end
@@ -88,90 +99,66 @@ module Maximus
 
     # Run appropriate lint for every sha in commit history
     # Creates new branch based on each sha, then deletes it
-    # The match_lines method here is essential
-    # Executes the Lint after filtering it with match_lines
-    def lint(git_shas = compare)
-      return false if git_shas.blank?
-      base_branch = branch
-      git_shas.each do |sha, exts|
-        # TODO - better way to silence git, in case there's a real error?
-        quietly { `git checkout #{sha} -b maximus_#{sha}` }
-        puts "Commit #{sha.to_s}".color(:blue) if @is_dev
-        exts.each do |ext, files|
-          lint_opts = {
-            is_dev: @is_dev,
-            path: "\"#{lint_file_paths(files, ext)}\"",
-          }
-          case ext
-            when :scss
-              match_lines(Lint.new(lint_opts).scsslint, files)
-              Statistic.new.stylestats
-              Statistic.new.wraith
-            when :js
-              match_lines(Lint.new(lint_opts).jshint, files)
-              Statistic.new.phantomas
-            when :ruby
-              match_lines(Lint.new(lint_opts).rubocop, files)
-              match_lines(Lint.new(lint_opts).railsbp, files)
-              match_lines(Lint.new(lint_opts).brakeman, files)
-            when :rails
-              match_lines(Lint.new(lint_opts).railsbp, files)
-          end
-        end
-        # TODO - better way to silence git, in case there's a real error?
-        quietly {
-          @g.branch(base_branch).checkout
-          @g.branch("maximus_#{sha}").delete
-        }
-      end
-    end
-
-    # Run appropriate lint for every sha in commit history
-    # Creates new branch based on each sha, then deletes it
     # Different from above method as it returns the entire lint, not just the lines relevant to commit
     # Returns Hash with all data grouped by task
     # Example: { 'sha': { lints: { scsslint: { files_inspec... }, statisti... } }, 'sha...' }
-    # TODO - could this be DRY'd up with the above method?
-    def all_lints_and_stats(git_shas = compare)
+    def lints_and_stats(lint_by_path = false, git_shas = compare)
       return false if git_shas.blank?
       base_branch = branch
-      lint_output = {}
+      git_output = {}
       git_shas.each do |sha, exts|
         # TODO - better way to silence git, in case there's a real error?
         quietly { `git checkout #{sha} -b maximus_#{sha}` }
         puts "Commit #{sha.to_s}".color(:blue) if @is_dev
-        lint_output[sha.to_sym] = {
+        git_output[sha.to_sym] = {
           lints: {},
           statistics: {}
         }
-        lints = lint_output[sha.to_sym][:lints]
-        statistics = lint_output[sha.to_sym][:statistics]
+        lints = git_output[sha.to_sym][:lints]
+        statistics = git_output[sha.to_sym][:statistics]
+        lint_opts = {
+          is_dev: @is_dev,
+          root_dir: @opts[:root_dir]
+        }
+        lint_opts[:commit] = true unless @opts[:commit].blank?
+        stat_opts = {
+          is_dev: @is_dev,
+          base_url: @opts[:base_url],
+          port: @opts[:port],
+          root_dir: @opts[:root_dir]
+        }
+        # This is where everything goes down
         exts.each do |ext, files|
-          lint_opts = {
-            is_dev: @is_dev,
-            from_git: false
-          }
-          stat_opts = {
-            is_dev: @is_dev,
-            base_url: @opts[:base_url],
-            port: @opts[:port],
-            root_dir: @opts[:root_dir]
-          }
+          # For relevant_lines data
+          lint_opts[:git_files] = files
+          lint_opts[:path] = lint_file_paths(files, ext) if lint_by_path
           case ext
             when :scss
               lints[:scsslint] = Lint.new(lint_opts).scsslint
-              # stylestat is singular here because model name in Rails is singular.
-              # But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
-              # which breaks the model name. This could be a TODO
-              statistics[:stylestat] = Statistic.new({is_dev: @is_dev}).stylestats
-              # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-              statistics[:phantomas] ||= Statistic.new(stat_opts).phantomas
-              statistics[:wraith] = Statistic.new(stat_opts).wraith
+
+              # Do not run statistics if called by rake task :compare
+              if lint_opts[:commit].blank?
+
+                # stylestat is singular here because model name in Rails is singular.
+                # But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
+                # which breaks the model name. This could be a TODO
+                statistics[:stylestat] = Statistic.new({is_dev: @is_dev}).stylestats
+
+                # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+                statistics[:phantomas] ||= Statistic.new(stat_opts).phantomas
+                statistics[:wraith] = Statistic.new(stat_opts).wraith
+              end
             when :js
               lints[:jshint] = Lint.new(lint_opts).jshint
-              statistics[:phantomas] = Statistic.new(stat_opts).phantomas
-              # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-              statistics[:wraith] ||= Statistic.new(stat_opts).wraith
+
+              # Do not run statistics if called by rake task :compare
+              if lint_opts[:commit].blank?
+
+                statistics[:phantomas] = Statistic.new(stat_opts).phantomas
+
+                # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+                statistics[:wraith] ||= Statistic.new(stat_opts).wraith
+              end
             when :ruby
               lints[:rubocop] = Lint.new(lint_opts).rubocop
               lints[:railsbp] = Lint.new(lint_opts).railsbp
@@ -186,7 +173,7 @@ module Maximus
           @g.branch("maximus_#{sha}").delete
         }
       end
-      lint_output
+      git_output
     end
 
 
@@ -213,39 +200,6 @@ module Maximus
       end
       new_lines.delete("/dev/null")
       new_lines
-    end
-
-    # Compare lint output with lines changed in commit
-    # Returns Array of lints that match the lines in commit
-    def match_lines(lint, files)
-      all_files = {}
-      files.each do |file|
-        # sometimes data will be blank but this is good - it means no errors raised in the lint
-        unless lint.blank?
-          lint_file = lint[file[:filename].to_s]
-
-          # TODO - convert line ranges from string to expanded array - I'm sure there's a better way of doing this
-          changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
-          expanded = changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
-          revert_name = file[:filename].gsub("#{@opts[:root_dir]}/", '')
-          unless lint_file.blank?
-            all_files[revert_name] = []
-
-            # TODO - originally I tried .map and delete_if, but this works,
-            # and the other method didn't cover all bases.
-            # Gotta be a better way to write this though
-            lint_file.each do |l|
-              if expanded.include?(l['line'].to_i)
-                all_files[revert_name] << l
-              end
-            end
-          end
-        else
-          # It's good, but we still need to store the filename
-          all_files[file[:filename].to_s.gsub("#{@opts[:root_dir]}/", '')] = []
-        end
-      end
-      all_files
     end
 
     # Get last commit on current branch

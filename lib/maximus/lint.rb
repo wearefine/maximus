@@ -9,27 +9,38 @@ module Maximus
 
     # opts - Lint options (default: {})
     #    :is_dev
-    #    :from_git
+    #    :git_files
+    #    :root_dir (only applicable to relevant_lints method)
     #    :path
+    # all lints should start with the following defined:
+    # `@task = 'name'` (__method__.to_s works fine)
+    # `@path ||= 'path/or/**/glob/to/files'` (string)
+    # they should contain the data output from the linter in JSON or JSON.parse format with the styles defined in README.md
+    # they should end with something similar to
+    # `@output[:files_inspected] ||= files_inspected(extension, delimiter, base_path_replacement)`
+    # `refine data_from_output`
     def initialize(opts = {}, output = {})
-
       opts[:is_dev] = true if opts[:is_dev].nil?
-      opts[:from_git] = false if opts[:from_git].nil?
 
       @@log ||= mlog
       @@is_rails ||= is_rails?
-      @@is_dev = opts[:is_dev]
+      @is_dev = opts[:is_dev]
       @output = output
       @@is_rails = is_rails?
 
       @opts = opts
       @path = opts[:path]
-
     end
 
     # Convert raw data into warnings, errors, conventions or refactors. Use this wisely.
     # Returns complete @output as Hash
-    def refine(data, task = @task)
+    def refine(data)
+      # Prevent abortive empty JSON.parse error
+      data = '{}' if data.blank?
+      data = data.is_a?(String) ? JSON.parse(data) : data
+      if @opts[:commit]
+        data = relevant_lints( data, @opts[:git_files] ) unless @opts[:git_files].blank?
+      end
       lint_warnings = []
       lint_errors = []
       lint_conventions = []
@@ -62,45 +73,59 @@ module Maximus
       @output[:lint_refactors] = lint_refactors
       lint_all = []
       lint_all.concat(lint_warnings).concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
-
-      lint_summarize task
-      if @@is_dev
-        lint_dev_format(data) unless data.blank?
-        lint_ceiling(lint_all.length, task)
+      if @is_dev
+        puts lint_summarize
+        lint_dev_format data unless data.blank?
+        lint_ceiling lint_all.length
+      else
+        @@log.info lint_summarize
+        @output[:relevant_lints] = relevant_lints( data, @opts[:git_files] ) unless @opts[:git_files].blank?
+        # Because this should be returned in the format it was received
+        @output[:raw_data] = data.to_json
       end
-      @output[:raw_data] = data.to_json # Because this should be returned in the format it was received
       @output
     end
 
 
     protected
 
-    # Give git a little more data to help it out
-    # If it's from git explicitly, we're looking at line numbers.
-    # There's a call in version_control.rb for all lints, and that is not considered 'from_git' because it's not filtering the results and instead taking them all indiscriminately
-    def hash_for_git(data)
-      if data.is_a? String
-        data = JSON.parse(data) unless data.blank?
-      end
-      {
-        data: data,
-        lint: @lint,
-        task: @task
-      }
-    end
-
     # List all files inspected
     # Returns Array
     def files_inspected(ext, delimiter = ',', replace = '')
-      @output[:files_inspected] = @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, replace)
+      @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, replace)
     end
 
-    # Convert export depending on execution origin
-    def hash_or_refine(data, parse_JSON = true)
-      if parse_JSON
-        data = data.blank? ? data : JSON.parse(data) # defend against blank JSON errors
+    # Compare lint output with lines changed in commit
+    # Returns Array of lints that match the lines in commit
+    def relevant_lints(lint, files)
+      all_files = {}
+      files.each do |file|
+
+        # sometimes data will be blank but this is good - it means no errors raised in the lint
+        unless lint.blank?
+          lint_file = lint[file[:filename].to_s]
+
+          expanded = lines_added_to_range(file)
+          revert_name = file[:filename].gsub("#{@opts[:root_dir]}/", '')
+          unless lint_file.blank?
+            all_files[revert_name] = []
+
+            # TODO - originally I tried .map and delete_if, but this works,
+            # and the other method didn't cover all bases.
+            # Gotta be a better way to write this though
+            lint_file.each do |l|
+              if expanded.include?(l['line'].to_i)
+                all_files[revert_name] << l
+              end
+            end
+          end
+        else
+          # It's good, but we still need to store the filename
+          all_files[file[:filename].to_s.gsub("#{@opts[:root_dir]}/", '')] = []
+        end
       end
-      @opts[:from_git] ? hash_for_git(data) : refine(data, @task)
+      @output[:files_linted] = all_files.keys
+      all_files
     end
 
 
@@ -108,32 +133,30 @@ module Maximus
 
     # Send abbreviated results to console or to the log
     # Returns console message
-    def lint_summarize(task = @task)
-      puts "\n" if @@is_dev
+    def lint_summarize
+      puts "\n" if @is_dev
 
-      puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{task.to_s}" if @output[:lint_errors].length > 0
+      puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length > 0
 
-      success = task.to_s.color(:green)
+      success = @task.to_s.color(:green)
       success += ": "
       success += "[#{@output[:lint_warnings].length}]".color(:yellow)
       success += " " + "[#{@output[:lint_errors].length}]".color(:red)
-      success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan) if task == 'rubocop'
-      success += " " + "[#{@output[:lint_refactors].length}]".color(:white) if task == 'rubocop'
-
-      if @@is_dev
-        puts success
-      else
-        @@log.info success
+      if @task == 'rubocop'
+        success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan)
+        success += " " + "[#{@output[:lint_refactors].length}]".color(:white)
       end
+
+      success
     end
 
     # If there's just too much to handle, through a warning. MySQL may not store everything and throw an abortive error if the blob is too large
     # Returns prompt if lint_length is greater than 100
     # If prompt returns truthy, execution continues
-    def lint_ceiling(lint_length, task = @task)
+    def lint_ceiling(lint_length)
       if lint_length > 100
         lint_dev_format
-        failed_task = "#{task}".color(:green)
+        failed_task = "#{@task}".color(:green)
         errors = Rainbow("#{lint_length} failures.").red
         errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
         errormsg += "\n\n"

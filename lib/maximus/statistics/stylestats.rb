@@ -21,7 +21,7 @@ module Maximus
         puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
 
         # include JSON formatter unless we're in dev
-        stylestats = `stylestats #{file} --config=#{check_default('stylestats.json')} #{'--type=json' unless @@is_dev}`
+        stylestats = `stylestats #{file} --config=#{check_default('stylestats.json')} #{'--type=json' unless @is_dev}`
 
         refine_stats(stylestats, pretty_name)
 
@@ -29,7 +29,7 @@ module Maximus
       end
 
       if @@is_rails
-        if @@is_dev
+        if @is_dev
           # TODO - review that this may not be best practice, but it's really noisy in the console
           quietly { Rake::Task['assets:clobber'].invoke }
         else
@@ -54,12 +54,12 @@ module Maximus
 
       if @@is_rails
         # Only load tasks if we're not running a rake task
-        Rails.application.load_tasks unless @@is_dev
+        Rails.application.load_tasks unless @is_dev
 
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)
 
-        if @@is_dev
+        if @is_dev
            # TODO - review that this may not be best practice, but it's really noisy in the console
           quietly { Rake::Task['assets:precompile'].invoke }
         else

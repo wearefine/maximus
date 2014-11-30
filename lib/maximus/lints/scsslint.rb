@@ -8,8 +8,8 @@ module Maximus
 
       scss = `scss-lint #{@path} -c #{check_default('scsslint.yml')}  --format=JSON`
 
-      files_inspected('scss')
-      hash_or_refine(scss)
+      @output[:files_inspected] ||= files_inspected('scss')
+      refine scss
     end
 
   end
