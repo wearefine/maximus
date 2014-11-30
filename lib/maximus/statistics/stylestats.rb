@@ -54,7 +54,7 @@ module Maximus
 
       if @@is_rails
         # Only load tasks if we're not running a rake task
-        Rails.application.load_tasks unless @is_dev
+        Rails.application.load_tasks unless @@is_dev
 
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)
