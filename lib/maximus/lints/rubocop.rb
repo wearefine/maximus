@@ -4,7 +4,7 @@ module Maximus
     # RuboCop
     def rubocop
       @task = __method__.to_s
-      @path ||= @@is_rails ? "app" : "*.rb"
+      @path ||= @@is_rails ? "#{@opts[:root_dir]}/app" : "#{@opts[:root_dir]}/*.rb"
 
       rubo_cli = "rubocop #{@path} --require #{reporter_path('rubocop')} --config #{check_default('rubocop.yml')} --format RuboCop::Formatter::MaximusRuboFormatter"
       rubo_cli += " -R" if @@is_rails

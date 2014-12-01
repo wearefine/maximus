@@ -8,7 +8,7 @@ module Maximus
     # Phantomas is done this way because passing a single, unique, undigested URL will be way more common than a .css path
     def stylestats
       node_module_exists('stylestats')
-      @path ||= @@is_rails ? "#{Rails.root}/public/assets/**/*.css" : 'source/assets/**/*'
+      @path ||= @@is_rails ? "#{@opts[:root_dir]}/public/assets/**/*.css" : "#{@opts[:root_dir]}source/assets/**/*"
 
       css_files = @path.is_a?(Array) ? @path : find_css_files
 
@@ -29,11 +29,14 @@ module Maximus
       end
 
       if @@is_rails
-        if @is_dev
-          # TODO - review that this may not be best practice, but it's really noisy in the console
-          quietly { Rake::Task['assets:clobber'].invoke }
-        else
-          Rake::Task['assets:clobber'].invoke
+        # TODO - I'd rather Rake::Task but it's not working in different directories
+        Dir.chdir(@opts[:root_dir]) do
+          if @is_dev
+            # TODO - review that this may not be best practice, but it's really noisy in the console
+            quietly { `rake assets:clobber` }
+          else
+            `rake assets:clobber`
+          end
         end
       end
 
@@ -59,11 +62,14 @@ module Maximus
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)
 
-        if @is_dev
-           # TODO - review that this may not be best practice, but it's really noisy in the console
-          quietly { Rake::Task['assets:precompile'].invoke }
-        else
-          Rake::Task['assets:precompile'].invoke
+        # TODO - I'd rather Rake::Task but it's not working in different directories
+        Dir.chdir(@opts[:root_dir]) do
+          if @is_dev
+             # TODO - review that this may not be best practice, but it's really noisy in the console
+            quietly { `rake assets:precompile` }
+          else
+            `rake assets:precompile`
+          end
         end
 
         Dir.glob(@path).select { |f| File.file? f }.each do |file|

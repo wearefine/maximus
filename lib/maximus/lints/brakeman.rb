@@ -7,7 +7,7 @@ module Maximus
       return unless @@is_rails
 
       @task = __method__.to_s
-      @path ||= Rails.root.to_s
+      @path ||= @opts[:root_dir]
 
       tmp = Tempfile.new('brakeman')
       quietly { `brakeman #{@path} -f json -o #{tmp.path} -q` }
@@ -34,7 +34,7 @@ module Maximus
       end
       tmp.unlink
 
-      @output[:files_inspected] ||= files_inspected('rb', ' ', "#{Rails.root.to_s}/")
+      @output[:files_inspected] ||= files_inspected('rb', ' ')
       refine brakeman
     end
 

@@ -10,7 +10,7 @@ module Maximus
     # opts - Lint options (default: {})
     #    :is_dev
     #    :git_files
-    #    :root_dir (only applicable to relevant_lints method)
+    #    :root_dir
     #    :path
     # all lints should start with the following defined:
     # `@task = 'name'` (__method__.to_s works fine)
@@ -21,7 +21,7 @@ module Maximus
     # `refine data_from_output`
     def initialize(opts = {}, output = {})
       opts[:is_dev] = true if opts[:is_dev].nil?
-
+      opts[:root_dir] ||= root_dir
       @@log ||= mlog
       @@is_rails ||= is_rails?
       @is_dev = opts[:is_dev]
@@ -38,8 +38,9 @@ module Maximus
       # Prevent abortive empty JSON.parse error
       data = '{}' if data.blank?
       data = data.is_a?(String) ? JSON.parse(data) : data
+      @output[:relevant_lints] = relevant_lints( data, @opts[:git_files] ) unless @opts[:git_files].blank?
       if @opts[:commit]
-        data = relevant_lints( data, @opts[:git_files] ) unless @opts[:git_files].blank?
+        data = @output[:relevant_lints]
       end
       lint_warnings = []
       lint_errors = []
@@ -79,7 +80,6 @@ module Maximus
         lint_ceiling lint_all.length
       else
         @@log.info lint_summarize
-        @output[:relevant_lints] = relevant_lints( data, @opts[:git_files] ) unless @opts[:git_files].blank?
         # Because this should be returned in the format it was received
         @output[:raw_data] = data.to_json
       end
@@ -91,7 +91,7 @@ module Maximus
 
     # List all files inspected
     # Returns Array
-    def files_inspected(ext, delimiter = ',', replace = '')
+    def files_inspected(ext, delimiter = ',', replace = @opts[:root_dir])
       @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, replace)
     end
 
@@ -172,6 +172,7 @@ module Maximus
       pretty_output = ''
       errors.each do |filename, error_list|
         pretty_output += "\n"
+        filename = filename.gsub("#{@opts[:root_dir]}/", '')
         pretty_output += filename.color(:cyan).underline
         pretty_output += "\n"
         error_list.each do |message|

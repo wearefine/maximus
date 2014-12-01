@@ -17,7 +17,7 @@ module Maximus
     # Get root directory of file being called
     # Returns String (path)
     def root_dir
-      is_rails? ? Rails.root : Dir.pwd
+      is_rails? ? Rails.root.to_s : Dir.pwd.to_s
     end
 
     # Verify that node module is installed on the box before continuing
@@ -34,9 +34,10 @@ module Maximus
     end
 
     # Look for a custom config in the app's config/ directory; otherwise, use the built-in one
+    # TODO - best practice that this inherits the @opts from the model it's being included in?
     # Returns String
     def check_default(filename)
-      user_file = "#{root_dir}/config/#{filename}"
+      user_file = "#{@opts[:root_dir]}/config/#{filename}"
       File.exist?(user_file) ? user_file : File.join(File.dirname(__FILE__), "config/#{filename}")
     end
 

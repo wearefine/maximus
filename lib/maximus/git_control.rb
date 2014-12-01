@@ -130,7 +130,7 @@ module Maximus
           is_dev: @is_dev,
           root_dir: @opts[:root_dir]
         }
-        lint_opts[:commit] = true unless @opts[:commit].blank?
+        lint_opts[:commit] = !@opts[:commit].blank?
         stat_opts = {
           is_dev: @is_dev,
           base_url: @opts[:base_url],
@@ -152,7 +152,7 @@ module Maximus
                 # stylestat is singular here because model name in Rails is singular.
                 # But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
                 # which breaks the model name. This could be a TODO
-                statistics[:stylestat] = Statistic.new({is_dev: @is_dev}).stylestats
+                statistics[:stylestat] = Statistic.new(stat_opts).stylestats
 
                 # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
                 statistics[:phantomas] ||= Statistic.new(stat_opts).phantomas

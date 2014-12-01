@@ -9,7 +9,7 @@ module Maximus
     def wraith
 
       node_module_exists('phantomjs')
-      @root_config = @is_dev ? 'config/wraith' : "#{@opts[:root_dir]}/config/wraith"
+      @root_config = "#{@opts[:root_dir]}/config/wraith"
       wraith_exists = File.directory?(@root_config)
       @wraith_config_file = "#{@root_config}/history.yaml"
 
@@ -57,9 +57,10 @@ module Maximus
       paths = YAML.load_file(wraith_config_file)['paths']
       Dir.glob("#{@opts[:root_dir]}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
         file_object = File.open(file, 'rb')
-        label = File.dirname(file).split('/').last
-        label = paths[label]
+        orig_label = File.dirname(file).split('/').last
+        label = paths[orig_label]
         @output[:statistics][label.to_sym] ||= {}
+        @output[:statistics][label.to_sym][:name] = orig_label
         @output[:statistics][label.to_sym][:percent_changed] ||= []
         @output[:statistics][label.to_sym][:percent_changed] << { File.basename(file).split('_')[0].to_i => file_object.read.to_f }
         file_object.close

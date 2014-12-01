@@ -4,7 +4,7 @@ module Maximus
     # JSHint (requires node module)
     def jshint
       @task = __method__.to_s
-      @path ||= @@is_rails ? "app/assets" : "source/assets"
+      @path ||= @@is_rails ? "#{@opts[:root_dir]}/app/assets" : "#{@opts[:root_dir]}source/assets"
 
       node_module_exists(@task)
 

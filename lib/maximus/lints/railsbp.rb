@@ -7,7 +7,7 @@ module Maximus
       return unless @@is_rails
 
       @task = __method__.to_s
-      @path ||= "."
+      @path ||= @opts[:root_dir]
       tmp = Tempfile.new('railsbp')
       `rails_best_practices #{@path} -f json --output-file #{tmp.path}`
       railsbp = tmp.read
@@ -24,7 +24,7 @@ module Maximus
         railsbp = JSON.parse(railsbp.to_json) #don't event ask
       end
 
-      @output[:files_inspected] ||= files_inspected('rb', ' ', './')
+      @output[:files_inspected] ||= files_inspected('rb', ' ')
       refine railsbp
 
     end
