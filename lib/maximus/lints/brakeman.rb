@@ -27,7 +27,9 @@ module Maximus
         ['warnings', 'errors'].each do |type|
           new_brakeman = bjson[type].group_by { |s| s['file'] }
           new_brakeman.each do |file, errors|
-            brakeman[file.to_sym] = errors.map { |e| hash_for_brakeman(e, type) }
+            if file
+              brakeman[file.to_sym] = errors.map { |e| hash_for_brakeman(e, type) }
+            end
           end
         end
         brakeman = JSON.parse(brakeman.to_json) #don't event ask
