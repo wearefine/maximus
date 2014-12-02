@@ -6,8 +6,7 @@ module Maximus
     # Adds a new config/wraith/history.yaml if not present
     # Path should be an Array defined as [{ label: url }]
     # Returns Hash as defined in the wraith_parse method
-    def initialize(opts = {})
-      super
+    def result
 
       node_module_exists('phantomjs', 'brew install')
       @root_config = "#{@opts[:root_dir]}/config/wraith"

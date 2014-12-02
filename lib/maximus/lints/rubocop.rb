@@ -2,8 +2,7 @@ module Maximus
   class Rubocop < Maximus::Lint
 
     # RuboCop
-    def initialize(opts = {})
-      super
+    def result
       @task = 'rubocop'
       @path ||= @@is_rails ? "#{@opts[:root_dir]}/app" : "#{@opts[:root_dir]}/*.rb"
 

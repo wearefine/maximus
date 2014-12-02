@@ -2,8 +2,7 @@ module Maximus
   class Railsbp < Maximus::Lint
 
     # rails_best_practice (requires Rails)
-    def initialize(opts = {})
-      super
+    def result
 
       return unless @@is_rails
 

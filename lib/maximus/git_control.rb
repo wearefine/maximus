@@ -144,7 +144,7 @@ module Maximus
           lint_opts[:path] = lint_file_paths(files, ext) if lint_by_path
           case ext
             when :scss
-              lints[:scsslint] = Scsslint.new(lint_opts).output
+              lints[:scsslint] = Scsslint.new(lint_opts).result
 
               # Do not run statistics if called by rake task :compare
               if lint_opts[:commit].blank?
@@ -152,29 +152,29 @@ module Maximus
                 # stylestat is singular here because model name in Rails is singular.
                 # But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
                 # which breaks the model name. This could be a TODO
-                statistics[:stylestat] = Stylestats.new(stat_opts).output
+                statistics[:stylestat] = Stylestats.new(stat_opts).result
 
                 # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:phantomas] ||= Phantomas.new(stat_opts).output
-                statistics[:wraith] = Wraith.new(stat_opts).output
+                statistics[:phantomas] ||= Phantomas.new(stat_opts).result
+                statistics[:wraith] = Wraith.new(stat_opts).result
               end
             when :js
-              lints[:jshint] = Jshint.new(lint_opts).output
+              lints[:jshint] = Jshint.new(lint_opts).result
 
               # Do not run statistics if called by rake task :compare
               if lint_opts[:commit].blank?
 
-                statistics[:phantomas] = Phantomas.new(stat_opts).output
+                statistics[:phantomas] = Phantomas.new(stat_opts).result
 
                 # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] ||= Wraith.new(stat_opts).output
+                statistics[:wraith] ||= Wraith.new(stat_opts).result
               end
             when :ruby
-              lints[:rubocop] = Rubocop.new(lint_opts).output
-              lints[:railsbp] = Railsbp.new(lint_opts).output
-              lints[:brakeman] = Brakeman.new(lint_opts).output
+              lints[:rubocop] = Rubocop.new(lint_opts).result
+              lints[:railsbp] = Railsbp.new(lint_opts).result
+              lints[:brakeman] = Brakeman.new(lint_opts).result
             when :rails
-              lints[:railsbp] ||= Railsbp.new(lint_opts).output
+              lints[:railsbp] ||= Railsbp.new(lint_opts).result
           end
         end
         # TODO - better way to silence git, in case there's a real error?

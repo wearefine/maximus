@@ -4,19 +4,19 @@ namespace :maximus do
 
     desc "Run rubocop"
     task :rubocop, :path do |t, args|
-      Maximus::Rubocop.new({ path: args[:path] })
+      Maximus::Rubocop.new({ path: args[:path] }).result
     end
 
     desc "Run rails_best_practices"
     task :railsbp, :path do |t, args|
-      Maximus::Railsbp.new({ path: args[:path] })
+      Maximus::Railsbp.new({ path: args[:path] }).result
     end
     # alias by full name
     task :rails_best_practices => :railsbp
 
     desc "Run brakeman"
     task :brakeman, :path do |t, args|
-      Maximus::Brakeman.new({ path: args[:path] })
+      Maximus::Brakeman.new({ path: args[:path] }).result
     end
 
     desc "Execute all back-end tasks"

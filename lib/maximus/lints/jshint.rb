@@ -2,8 +2,7 @@ module Maximus
   class Jshint < Maximus::Lint
 
     # JSHint (requires node module)
-    def initialize(opts = {})
-      super
+    def result
       @task = 'jshint'
       @path ||= @@is_rails ? "#{@opts[:root_dir]}/app/assets" : "#{@opts[:root_dir]}source/assets"
 

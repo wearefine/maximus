@@ -13,9 +13,13 @@ module Maximus
     #    :root_dir
     #    :path
     # all lints should start with the following defined:
+    # def result method to handle the actual parsing
+    # TODO - should this be def output to be more consistent?
+    # Didn't want to trip over the instance variable @output
     # `@task = 'name'` (__method__.to_s works fine)
     # `@path ||= 'path/or/**/glob/to/files'` (string)
-    # they should contain the data output from the linter in JSON or JSON.parse format with the styles defined in README.md
+    # they should contain the data output from the linter in JSON or
+    # JSON.parse format with the styles defined in README.md
     # they should end with something similar to
     # `@output[:files_inspected] ||= files_inspected(extension, delimiter, base_path_replacement)`
     # `refine data_from_output`
@@ -29,7 +33,6 @@ module Maximus
       @@is_dev = opts[:is_dev]
       @path = opts[:path]
       @opts = opts
-
       @output = opts[:output]
     end
 

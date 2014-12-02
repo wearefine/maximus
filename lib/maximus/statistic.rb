@@ -11,6 +11,10 @@ module Maximus
     #    :port - 4-digit port number (optional)
     #    :base_url - standard domain with http:// (default: http://localhost:3000) (optional)
     #    :path - default set in methods (optional)
+    # All statistics should have the following:
+    # def result method to handle the actual parsing
+    # TODO - should this be def output to be more consistent?
+    # Didn't want to trip over the instance variable @output
     def initialize(opts = {})
       opts[:is_dev] = true if opts[:is_dev].nil?
       opts[:root_dir] ||= root_dir

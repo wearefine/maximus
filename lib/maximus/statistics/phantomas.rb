@@ -3,8 +3,7 @@ module Maximus
 
     # path can be array or string of URLS. Include http://
     # By default, checks homepage
-    def initialize(opts = {})
-      super
+    def result
 
       node_module_exists('phantomjs', 'brew install')
       node_module_exists('phantomas')

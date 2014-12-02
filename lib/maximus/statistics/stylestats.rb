@@ -5,8 +5,7 @@ module Maximus
     # If stylestatting one file, pass that as an array, i.e. ['/absolute/to/public/assets/application.css']
     # This saves creating an extra method a la the phantomas double methods
     # Phantomas is done this way because passing a single, unique, undigested URL will be way more common than a .css path
-    def initialize(opts = {})
-      super
+    def result
 
       node_module_exists('stylestats')
       @path ||= @@is_rails ? "#{@opts[:root_dir]}/public/assets/**/*.css" : "#{@opts[:root_dir]}source/assets/**/*"

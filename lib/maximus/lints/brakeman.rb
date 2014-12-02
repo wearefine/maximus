@@ -2,8 +2,7 @@ module Maximus
   class Brakeman < Maximus::Lint
 
     # Brakeman (requires Rails)
-    def initialize(opts = {})
-      super
+    def result
 
       return unless @@is_rails
 

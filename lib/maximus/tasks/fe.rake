@@ -5,14 +5,14 @@ namespace :maximus do
 
     desc "Run scss-lint"
     task :scsslint, :path do |t, args|
-      Maximus::Scsslint.new({ path: args[:path] })
+      Maximus::Scsslint.new({ path: args[:path] }).result
     end
     # alias by extension
     task :scss, [:path] => :scsslint
 
     desc "Run jshint (node required)"
     task :jshint, :path do |t, args|
-      Maximus::Jshint.new({ path: args[:path] })
+      Maximus::Jshint.new({ path: args[:path] }).result
     end
     # alias by extension
     task :js, [:path] => :jshint
