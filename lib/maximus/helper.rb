@@ -51,8 +51,10 @@ module Maximus
     # Find all files that were linted by extension
     # Returns Array
     def file_list(path, ext = 'scss', remover = '')
-      collect_path = path.include?("*") ? path : "#{path}/**/*.#{ext}" #stupid, but necessary so that directories aren't counted
-      Dir[collect_path].collect { |file| file.gsub(remover, '') if File.file?(file) }
+      # Necessary so that directories aren't counted
+      collect_path = path.include?("*") ? path : "#{path}/**/*.#{ext}"
+      # Remove first slash from path if present. probably a better way to do this.
+      Dir[collect_path].collect { |file| file.gsub(remover, '').gsub(/^\/app\//, 'app/') if File.file?(file) }
     end
 
     # Count how many files were linted

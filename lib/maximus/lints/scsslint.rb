@@ -4,7 +4,7 @@ module Maximus
     # SCSS-Lint
     def initialize(opts = {})
       super
-      @task = __method__.to_s
+      @task = 'scsslint'
       @path ||= @@is_rails ? "#{@opts[:root_dir]}/app/assets/stylesheets" : "#{@opts[:root_dir]}/source/assets/stylesheets"
       scss = `scss-lint #{@path} -c #{check_default('scsslint.yml')}  --format=JSON`
 

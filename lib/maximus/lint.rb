@@ -74,12 +74,11 @@ module Maximus
       @output[:lint_warnings] = lint_warnings
       @output[:lint_conventions] = lint_conventions
       @output[:lint_refactors] = lint_refactors
-      lint_all = []
-      lint_all.concat(lint_warnings).concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
+      lint_count = (lint_errors.length + lint_warnings.length + lint_conventions.length + lint_refactors.length)
       if @@is_dev
         lint_dev_format data unless data.blank?
         puts lint_summarize
-        lint_ceiling lint_all.length
+        lint_ceiling lint_count
       else
         @@log.info lint_summarize
         # Because this should be returned in the format it was received

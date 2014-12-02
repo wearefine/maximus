@@ -1,7 +1,5 @@
 
 module Maximus
-
-  # Base Statistic class
   class Statistic
     attr_accessor :output
 
