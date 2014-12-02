@@ -22,19 +22,20 @@ module Maximus
 
     # Verify that node module is installed on the box before continuing
     # Continues if module exists
-    def node_module_exists(node_module)
+    def node_module_exists(node_module, install_instructions = 'npm install -g')
       cmd = `if hash #{node_module} 2>/dev/null; then
         echo "true"
       else
         echo "false"
       fi`
       if cmd.include? "false"
-        abort "#{'Missing node module'.color(:red)}: Please run `npm install -g #{node_module}` And try again\n"
+        command_msg = "Missing command #{node_module}".color(:red)
+        abort "#{command_msg}: Please run `#{install_instructions} #{node_module}` And try again\n"
       end
     end
 
     # Look for a custom config in the app's config/ directory; otherwise, use the built-in one
-    # TODO - best practice that this inherits the @opts from the model it's being included in?
+    # TODO - best practice that this inherits the @@opts from the model it's being included in?
     # Returns String
     def check_default(filename)
       user_file = "#{@opts[:root_dir]}/config/#{filename}"

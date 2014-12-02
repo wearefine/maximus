@@ -5,3 +5,5 @@
 * Check for custom lint or stat hooks in a lib/maximus folder
 * Use PhantomJS 2.0 with webfont support
 * Install task
+* Resolve/review TODOs
+* Tests and specs

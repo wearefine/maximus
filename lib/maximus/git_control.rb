@@ -17,8 +17,8 @@ module Maximus
       opts[:root_dir] ||= root_dir
       log = opts[:log] ? log : nil
       @@log = mlog
+      @@is_dev = opts[:is_dev]
       @opts = opts
-      @is_dev = opts[:is_dev]
 
       @psuedo_commit = (!@opts[:commit].blank? && @opts[:commit] == 'working')
       @g = Git.open(@opts[:root_dir], :log => log)
@@ -60,7 +60,7 @@ module Maximus
       git_diff = @psuedo_commit ? ['working directory'] : `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
 
       if git_diff.length == 0
-        if @is_dev
+        if @@is_dev
           puts 'No new commits'.color(:blue)
         else
           @@log.warn 'No new commits'
@@ -119,7 +119,7 @@ module Maximus
       git_shas.each do |sha, exts|
         # TODO - better way to silence git, in case there's a real error?
         quietly { `git checkout #{sha} -b maximus_#{sha}` } unless @psuedo_commit
-        puts "Commit #{sha.to_s}".color(:blue) if @is_dev
+        puts "Commit #{sha.to_s}".color(:blue) if @@is_dev
         git_output[sha.to_sym] = {
           lints: {},
           statistics: {}
@@ -127,12 +127,12 @@ module Maximus
         lints = git_output[sha.to_sym][:lints]
         statistics = git_output[sha.to_sym][:statistics]
         lint_opts = {
-          is_dev: @is_dev,
+          is_dev: @@is_dev,
           root_dir: @opts[:root_dir]
         }
         lint_opts[:commit] = !@opts[:commit].blank?
         stat_opts = {
-          is_dev: @is_dev,
+          is_dev: @@is_dev,
           base_url: @opts[:base_url],
           port: @opts[:port],
           root_dir: @opts[:root_dir]
@@ -144,7 +144,7 @@ module Maximus
           lint_opts[:path] = lint_file_paths(files, ext) if lint_by_path
           case ext
             when :scss
-              lints[:scsslint] = Lint.new(lint_opts).scsslint
+              lints[:scsslint] = Scsslint.new(lint_opts)
 
               # Do not run statistics if called by rake task :compare
               if lint_opts[:commit].blank?
@@ -152,29 +152,29 @@ module Maximus
                 # stylestat is singular here because model name in Rails is singular.
                 # But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
                 # which breaks the model name. This could be a TODO
-                statistics[:stylestat] = Statistic.new(stat_opts).stylestats
+                statistics[:stylestat] = Stylestats.new(stat_opts)
 
                 # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:phantomas] ||= Statistic.new(stat_opts).phantomas
-                statistics[:wraith] = Statistic.new(stat_opts).wraith
+                statistics[:phantomas] ||= Phantomas.new(stat_opts)
+                statistics[:wraith] = Wraith.new(stat_opts)
               end
             when :js
-              lints[:jshint] = Lint.new(lint_opts).jshint
+              lints[:jshint] = Jshint.new(lint_opts)
 
               # Do not run statistics if called by rake task :compare
               if lint_opts[:commit].blank?
 
-                statistics[:phantomas] = Statistic.new(stat_opts).phantomas
+                statistics[:phantomas] = Phantomas.new(stat_opts)
 
                 # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] ||= Statistic.new(stat_opts).wraith
+                statistics[:wraith] ||= Wraith.new(stat_opts)
               end
             when :ruby
-              lints[:rubocop] = Lint.new(lint_opts).rubocop
-              lints[:railsbp] = Lint.new(lint_opts).railsbp
-              lints[:brakeman] = Lint.new(lint_opts).brakeman
+              lints[:rubocop] = Rubocop.new(lint_opts)
+              lints[:railsbp] = Railsbp.new(lint_opts)
+              lints[:brakeman] = Brakeman.new(lint_opts)
             when :rails
-              lints[:railsbp] = Lint.new(lint_opts).railsbp
+              lints[:railsbp] ||= Railsbp.new(lint_opts)
           end
         end
         # TODO - better way to silence git, in case there's a real error?

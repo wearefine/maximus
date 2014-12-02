@@ -10,6 +10,7 @@ module Maximus
     # opts - Lint options (default: {})
     #    :is_dev
     #    :git_files
+    #    :output
     #    :root_dir
     #    :path
     # all lints should start with the following defined:
@@ -19,17 +20,18 @@ module Maximus
     # they should end with something similar to
     # `@output[:files_inspected] ||= files_inspected(extension, delimiter, base_path_replacement)`
     # `refine data_from_output`
-    def initialize(opts = {}, output = {})
+    def initialize(opts = {})
       opts[:is_dev] = true if opts[:is_dev].nil?
       opts[:root_dir] ||= root_dir
+      opts[:output] ||= {}
+
       @@log ||= mlog
       @@is_rails ||= is_rails?
-      @is_dev = opts[:is_dev]
-      @output = output
-      @@is_rails = is_rails?
-
-      @opts = opts
+      @@is_dev = opts[:is_dev]
       @path = opts[:path]
+      @opts = opts
+
+      @output = opts[:output]
     end
 
     # Convert raw data into warnings, errors, conventions or refactors. Use this wisely.
@@ -74,7 +76,7 @@ module Maximus
       @output[:lint_refactors] = lint_refactors
       lint_all = []
       lint_all.concat(lint_warnings).concat(lint_errors).concat(lint_conventions).concat(lint_refactors)
-      if @is_dev
+      if @@is_dev
         lint_dev_format data unless data.blank?
         puts lint_summarize
         lint_ceiling lint_all.length
@@ -134,7 +136,7 @@ module Maximus
     # Send abbreviated results to console or to the log
     # Returns console message
     def lint_summarize
-      puts "\n" if @is_dev
+      puts "\n" if @@is_dev
 
       puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length > 0
 

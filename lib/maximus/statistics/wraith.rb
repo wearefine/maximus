@@ -1,14 +1,15 @@
 module Maximus
-
-  class Statistic
+  class Wraith < Maximus::Statistic
 
     # By default checks homepage
     # Requires config to be in config/wraith/history.yaml
     # Adds a new config/wraith/history.yaml if not present
+    # Path should be an Array defined as [{ label: url }]
     # Returns Hash as defined in the wraith_parse method
-    def wraith
+    def initialize(opts = {})
+      super
 
-      node_module_exists('phantomjs')
+      node_module_exists('phantomjs', 'brew install')
       @root_config = "#{@opts[:root_dir]}/config/wraith"
       wraith_exists = File.directory?(@root_config)
       @wraith_config_file = "#{@root_config}/history.yaml"
@@ -71,7 +72,7 @@ module Maximus
     # Update the root domain (docker ports and addresses may change) and set paths as defined in @path
     def wraith_yaml_reset(wraith_config_file = @wraith_config_file)
       edit_yaml(wraith_config_file) do |file|
-        unless @is_dev
+        unless @@is_dev
           file['snap_file'] = "#{@root_config}/javascript/snap.js"
           file['directory'] = "#{@opts[:root_dir]}/wraith_shots"
           file['history_dir'] = "#{@opts[:root_dir]}/wraith_history_shots"

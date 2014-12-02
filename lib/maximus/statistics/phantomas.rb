@@ -1,10 +1,12 @@
 module Maximus
+  class Phantomas < Maximus::Statistic
 
-  class Statistic
-
-    # @path can be array or string of URLS. Include http://
+    # path can be array or string of URLS. Include http://
     # By default, checks homepage
-    def phantomas
+    def initialize(opts = {})
+      super
+
+      node_module_exists('phantomjs', 'brew install')
       node_module_exists('phantomas')
 
       @path ||= YAML.load_file(check_default('phantomas_urls.yaml'))

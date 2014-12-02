@@ -1,18 +1,20 @@
 module Maximus
-  class Lint
+  class Brakeman < Maximus::Lint
 
     # Brakeman (requires Rails)
-    def brakeman
+    def initialize(opts = {})
+      super
 
       return unless @@is_rails
 
-      @task = __method__.to_s
+      @task = 'brakeman'
       @path ||= @opts[:root_dir]
 
       tmp = Tempfile.new('brakeman')
       quietly { `brakeman #{@path} -f json -o #{tmp.path} -q` }
       brakeman = tmp.read
       tmp.close
+      tmp.unlink
 
       unless brakeman.blank?
         bjson = JSON.parse(brakeman)
@@ -34,7 +36,6 @@ module Maximus
         end
         brakeman = JSON.parse(brakeman.to_json) #don't event ask
       end
-      tmp.unlink
 
       @output[:files_inspected] ||= files_inspected('rb', ' ')
       refine brakeman

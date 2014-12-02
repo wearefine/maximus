@@ -1,9 +1,10 @@
 module Maximus
-  class Lint
+  class Jshint < Maximus::Lint
 
     # JSHint (requires node module)
-    def jshint
-      @task = __method__.to_s
+    def initialize(opts = {})
+      super
+      @task = 'jshint'
       @path ||= @@is_rails ? "#{@opts[:root_dir]}/app/assets" : "#{@opts[:root_dir]}source/assets"
 
       node_module_exists(@task)

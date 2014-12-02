@@ -1,14 +1,13 @@
 module Maximus
-  class Lint
+  class Rubocop < Maximus::Lint
 
     # RuboCop
-    def rubocop
-      @task = __method__.to_s
+    def initialize(opts = {})
+      super
+      @task = 'rubocop'
       @path ||= @@is_rails ? "#{@opts[:root_dir]}/app" : "#{@opts[:root_dir]}/*.rb"
 
-      rubo_cli = "rubocop #{@path} --require #{reporter_path('rubocop')} --config #{check_default('rubocop.yml')} --format RuboCop::Formatter::MaximusRuboFormatter"
-      rubo_cli += " -R" if @@is_rails
-      rubo = `#{rubo_cli}`
+      rubo = `rubocop #{@path} --require #{reporter_path('rubocop')} --config #{check_default('rubocop.yml')} --format RuboCop::Formatter::MaximusRuboFormatter #{'-R' if @@is_rails}`
 
       @output[:files_inspected] ||= files_inspected('rb', ' ')
       refine rubo
