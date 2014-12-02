@@ -7,3 +7,5 @@
 * Install task
 * Resolve/review TODOs
 * Tests and specs
+* Load config globally when starting, or something similar - calling is_dev happens too often
+* Convert ruby-git to rugged
