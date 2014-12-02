@@ -2,7 +2,6 @@ require 'json'
 
 module Maximus
   class Lint
-
     attr_accessor :output
 
     include Helper
