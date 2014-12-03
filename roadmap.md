@@ -9,3 +9,9 @@
 * Tests and specs
 * Load config globally when starting, or something similar - calling is_dev happens too often
 * Convert ruby-git to rugged
+* Add SCSS specificity graph
+* Add HAML lint (maybe)
+* Add CSS lint (maybe)
+* Add JSLint (maybe)
+* Add W3 validator (maybe)
+* Abbrieviated output option - remove 'reason', truncate other outputs like "column" to "c"
