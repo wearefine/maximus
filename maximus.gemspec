@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Tim Shedor"]
   spec.email         = ["tim@wearefine.com"]
   spec.summary       = %q{Run tests and save them to the Colosseum}
-  spec.description   = %q{Currently supports scss-lint, jshint, and stylestats}
+  spec.description   = %q{Supports scss-lint, jshint, rubocop, brakeman and rails_best_practices. Statistics include phantomas, stylestats and wraith}
   spec.homepage      = ""
   spec.license       = "MIT"
 
