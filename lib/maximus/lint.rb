@@ -9,7 +9,6 @@ module Maximus
     # opts - Lint options (default: {})
     #    :is_dev
     #    :git_files
-    #    :output
     #    :root_dir
     #    :path
     # all lints should start with the following defined:
@@ -26,14 +25,13 @@ module Maximus
     def initialize(opts = {})
       opts[:is_dev] = true if opts[:is_dev].nil?
       opts[:root_dir] ||= root_dir
-      opts[:output] ||= {}
 
       @@log ||= mlog
       @@is_rails ||= is_rails?
       @@is_dev = opts[:is_dev]
       @path = opts[:path]
       @opts = opts
-      @output = opts[:output]
+      @output = {}
     end
 
     # Convert raw data into warnings, errors, conventions or refactors. Use this wisely.

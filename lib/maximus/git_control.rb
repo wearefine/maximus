@@ -60,17 +60,8 @@ module Maximus
       # or a comparison to a commit
       git_diff = @psuedo_commit ? ['working directory'] : `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
 
-      if git_diff.length == 0
-        if @@is_dev
-          puts 'No new commits'.color(:blue)
-        else
-          @@log.warn 'No new commits'
-        end
-        # Fail silently
-        return false
-      end
-
-      # The first sha isn't included for some reason
+      # Include the first sha because rev-list is doing a traversal
+      # So sha1 is never included
       git_diff << sha1 unless @psuedo_commit
 
       # Reverse so that we go in chronological order

@@ -20,7 +20,6 @@ module Maximus
       opts[:root_dir] ||= root_dir
       opts[:port] ||= ''
       opts[:base_url] ||= 'http://localhost:3000'
-      opts[:output] ||= {}
 
       @@log ||= mlog
       @@is_rails ||= is_rails?
@@ -28,11 +27,11 @@ module Maximus
       @path = opts[:path]
       @opts = opts
 
-      @output = opts[:output]
+      @output = {}
       # This is different from lints
       # A new stat is run per file or URL, so they should be stored in a child
       # A lint just has one execution, so it's data can be stored directly in @output
-      @output[:statistics] ||= {}
+      @output[:statistics] = {}
     end
 
 
@@ -52,7 +51,7 @@ module Maximus
       @output[:statistics][file_path.to_sym] ||= {}
 
       # TODO - is there a better way to do this?
-      fp = @output[:statistics][file_path.to_sym]
+      fp = @output[:statistics][file_path.to_s.to_sym]
 
       # TODO - Can I do like a self << thing here?
       stats.each do |stat, value|

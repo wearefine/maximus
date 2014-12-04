@@ -3,8 +3,6 @@ module Maximus
 
     # @path array preferrably absolute paths, but relative should work
     # If stylestatting one file, pass that as an array, i.e. ['/absolute/to/public/assets/application.css']
-    # This saves creating an extra method a la the phantomas double methods
-    # Phantomas is done this way because passing a single, unique, undigested URL will be way more common than a .css path
     def result
 
       node_module_exists('stylestats')
@@ -20,7 +18,6 @@ module Maximus
 
         puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
 
-        puts @@is_dev
         # include JSON formatter unless we're in dev
         stylestats = `stylestats #{file} --config=#{check_default('stylestats.json')} #{'--type=json' unless @@is_dev}`
 

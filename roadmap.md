@@ -15,3 +15,4 @@
 * Add JSLint (maybe)
 * Add W3 validator (maybe)
 * Write tests
+* Regex path names on phantomas and wraith to defend against injection and bad characters
