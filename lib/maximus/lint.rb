@@ -53,7 +53,8 @@ module Maximus
       unless data.blank?
         data.each do |filename, error_list|
           error_list.each do |message|
-            message = message.clone # so that :raw_data remains unaffected
+            # so that :raw_data remains unaffected
+            message = message.clone
             message.delete('length')
             message['filename'] = filename
             if message['severity'] == 'warning'
@@ -121,10 +122,12 @@ module Maximus
                 all_files[revert_name] << l
               end
             end
+            # If there's nothing there, then it definitely isn't a relevant lint
+            all_files.delete(revert_name) if all_files[revert_name].blank?
           end
         else
-          # It's good, but we still need to store the filename
-          all_files[file[:filename].to_s.gsub("#{@opts[:root_dir]}/", '')] = []
+          # Optionally store the filename with a blank array
+          # all_files[file[:filename].to_s.gsub("#{@opts[:root_dir]}/", '')] = []
         end
       end
       @output[:files_linted] = all_files.keys

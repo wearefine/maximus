@@ -14,4 +14,4 @@
 * Add CSS lint (maybe)
 * Add JSLint (maybe)
 * Add W3 validator (maybe)
-* Abbrieviated output option - remove 'reason', truncate other outputs like "column" to "c"
+* Write tests
