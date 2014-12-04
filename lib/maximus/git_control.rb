@@ -44,6 +44,7 @@ module Maximus
     # Example: 'sha' => { rb: {filename: 'file.rb', changes: { ['0..4'], ['10..20'] }  }}
     def compare(sha1 = master_commit.sha, sha2 = sha)
       diff_return = {}
+
       if @opts[:commit]
         sha1 = case @opts[:commit]
           when 'master' then master_commit.sha
@@ -68,6 +69,10 @@ module Maximus
         # Fail silently
         return false
       end
+
+      # The first sha isn't included for some reason
+      git_diff << sha1 unless @psuedo_commit
+
       # Reverse so that we go in chronological order
       git_diff.reverse.each do |git_sha|
         new_lines = lines_added(git_sha)
@@ -77,17 +82,11 @@ module Maximus
         files = @psuedo_commit ? `git diff --name-only` : `git show --pretty="format:" --name-only #{git_sha}`
         files = files.split("\n").group_by { |f| f.split('.').pop }
 
-        files.is_a?(Array) ? files.compact! : files.delete_if { |k,v| k.nil? }
+        # Don't worry about files that we don't have a lint or a statistic for
+        flat_associations = associations.clone.flatten(2)
+        files.delete_if { |k,v| !flat_associations.include?(k) || k.nil? }
 
-        assoc = {
-          scss:   ['scss', 'sass'],
-          js:     ['js'],
-          ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc'],
-          rails:  ['slim', 'haml'],
-          ignore: [nil, 'gitignore', 'scssc', 'log', 'keep', 'concern']
-        }
-
-        assoc.each do |ext, related|
+        associations.each do |ext, related|
           files[ext] ||= []
           related.each do |child|
             unless files[child].blank?
@@ -100,7 +99,6 @@ module Maximus
             end
           end
         end
-        files.delete(:ignore)
         files.delete_if { |k,v| v.blank? }
         diff_return[git_sha.to_sym] = files
       end
@@ -119,7 +117,7 @@ module Maximus
       git_shas.each do |sha, exts|
         # TODO - better way to silence git, in case there's a real error?
         quietly { `git checkout #{sha} -b maximus_#{sha}` } unless @psuedo_commit
-        puts "Commit #{sha.to_s}".color(:blue) if @@is_dev
+        puts sha.to_s.color(:blue) if @@is_dev
         git_output[sha.to_sym] = {
           lints: {},
           statistics: {}
@@ -128,9 +126,9 @@ module Maximus
         statistics = git_output[sha.to_sym][:statistics]
         lint_opts = {
           is_dev: @@is_dev,
-          root_dir: @opts[:root_dir]
+          root_dir: @opts[:root_dir],
+          commit: !@opts[:commit].blank?
         }
-        lint_opts[:commit] = !@opts[:commit].blank?
         stat_opts = {
           is_dev: @@is_dev,
           base_url: @opts[:base_url],
@@ -144,7 +142,7 @@ module Maximus
           lint_opts[:path] = lint_file_paths(files, ext) if lint_by_path
           case ext
             when :scss
-              lints[:scsslint] = Scsslint.new(lint_opts).result
+              lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
 
               # Do not run statistics if called by rake task :compare
               if lint_opts[:commit].blank?
@@ -152,29 +150,29 @@ module Maximus
                 # stylestat is singular here because model name in Rails is singular.
                 # But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
                 # which breaks the model name. This could be a TODO
-                statistics[:stylestat] = Stylestats.new(stat_opts).result
+                statistics[:stylestat] = Maximus::Stylestats.new(stat_opts).result
 
                 # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:phantomas] ||= Phantomas.new(stat_opts).result
-                statistics[:wraith] = Wraith.new(stat_opts).result
+                statistics[:phantomas] ||= Maximus::Phantomas.new(stat_opts).result
+                statistics[:wraith] = Maximus::Wraith.new(stat_opts).result
               end
             when :js
-              lints[:jshint] = Jshint.new(lint_opts).result
+              lints[:jshint] = Maximus::Jshint.new(lint_opts).result
 
               # Do not run statistics if called by rake task :compare
               if lint_opts[:commit].blank?
 
-                statistics[:phantomas] = Phantomas.new(stat_opts).result
+                statistics[:phantomas] = Maximus::Phantomas.new(stat_opts).result
 
                 # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] ||= Wraith.new(stat_opts).result
+                statistics[:wraith] ||= Maximus::Wraith.new(stat_opts).result
               end
             when :ruby
-              lints[:rubocop] = Rubocop.new(lint_opts).result
-              lints[:railsbp] = Railsbp.new(lint_opts).result
-              lints[:brakeman] = Brakeman.new(lint_opts).result
+              lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
+              lints[:railsbp] = Maximus::Railsbp.new(lint_opts).result
+              lints[:brakeman] = Maximus::Brakeman.new(lint_opts).result
             when :rails
-              lints[:railsbp] ||= Railsbp.new(lint_opts).result
+              lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
           end
         end
         # TODO - better way to silence git, in case there's a real error?
@@ -249,6 +247,17 @@ module Maximus
     # Returns String or nil if remotes is blank
     def remote
       @g.remotes.first.url unless @g.remotes.blank?
+    end
+
+    # Define associations to linters based on file extension
+    # Returns Hash of linters and extension arrays
+    def associations
+      {
+        scss:   ['scss', 'sass'],
+        js:     ['js'],
+        ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc'],
+        rails:  ['slim', 'haml']
+      }
     end
 
   end
