@@ -6,6 +6,8 @@ module Maximus
       @task = 'jshint'
       @path ||= @@is_rails ? "#{@opts[:root_dir]}/app/assets" : "#{@opts[:root_dir]}source/assets"
 
+      return unless path_exists(@path)
+
       node_module_exists(@task)
 
       jshint = `jshint #{@path} --config=#{check_default('jshint.json')} --exclude-path=#{check_default('.jshintignore')} --reporter=#{reporter_path('jshint.js')}`

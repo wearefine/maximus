@@ -35,7 +35,7 @@ module Maximus
     end
 
     # Look for a custom config in the app's config/ directory; otherwise, use the built-in one
-    # TODO - best practice that this inherits the @@opts from the model it's being included in?
+    # TODO - best practice that this inherits the @opts from the model it's being included in?
     # Returns String
     def check_default(filename)
       user_file = "#{@opts[:root_dir]}/config/#{filename}"
@@ -110,6 +110,18 @@ module Maximus
     def lines_added_to_range(file)
       changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
       changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
+    end
+
+    # Ensure @path exists
+    # Returns Boolean
+    def path_exists(path = @path)
+      if path.is_a?(Array)
+        path.each do |p|
+          return false unless File.exist?(path)
+        end
+      else
+        return File.exist?(path)
+      end
     end
 
   end

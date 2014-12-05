@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+# Load Rails if it exists
+require "#{Dir.pwd}/config/application" if File.exists?("#{Dir.pwd}/bin/rails")
+
 begin
   require 'maximus'
   require 'maximus/cli'

@@ -9,6 +9,8 @@ module Maximus
       @task = 'brakeman'
       @path ||= @opts[:root_dir]
 
+      return unless path_exists(@path)
+
       tmp = Tempfile.new('brakeman')
       quietly { `brakeman #{@path} -f json -o #{tmp.path} -q` }
       brakeman = tmp.read

@@ -8,6 +8,9 @@ module Maximus
 
       @task = 'railsbp'
       @path ||= @opts[:root_dir]
+
+      return unless path_exists(@path)
+
       tmp = Tempfile.new('railsbp')
       `rails_best_practices #{@path} -f json --output-file #{tmp.path}`
       railsbp = tmp.read
