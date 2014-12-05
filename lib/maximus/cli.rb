@@ -103,7 +103,6 @@ class Maximus::CLI < Thor
   desc "install", "Install all dependencies"
   def install
     `npm install -g jshint phantomas stylestats`
-    `gem install wraith`
   end
 
   no_commands do
