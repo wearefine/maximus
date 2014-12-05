@@ -10,7 +10,7 @@ module Maximus
     include Helper
 
     def initialize(opts = {})
-      opts[:is_dev] = true if opts[:is_dev].nil?
+      opts[:is_dev] ||= false
       opts[:log] = Logger.new('log/maximus_git.log') if opts[:log].nil?
       opts[:base_url] ||= 'http://localhost:3000'
       opts[:port] ||= ''

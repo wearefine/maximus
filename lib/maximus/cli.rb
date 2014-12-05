@@ -12,42 +12,42 @@ class Maximus::CLI < Thor
 
   desc "scsslint", "Lint with scss-lint"
   def scsslint
-    Maximus::Scsslint.new({ path: options[:path] }).result
+    Maximus::Scsslint.new(default_options).result
   end
 
   desc "jshint", "Lint with jshint (node required)"
   def jshint
-    Maximus::Jshint.new({ path: options[:path] }).result
+    Maximus::Jshint.new(default_options).result
   end
 
   desc "rubocop", "Lint with rubocop"
   def rubocop
-    Maximus::Rubocop.new({ path: options[:path] }).result
+    Maximus::Rubocop.new(default_options).result
   end
 
   desc "railsbp", "Lint with rails_best_practices"
   def railsbp
-    Maximus::Railsbp.new({ path: options[:path] }).result
+    Maximus::Railsbp.new(default_options).result
   end
 
   desc "brakeman", "Lint with brakeman"
   def brakeman
-    Maximus::Brakeman.new({ path: options[:path] }).result
+    Maximus::Brakeman.new(default_options).result
   end
 
   desc "stylestats", "Run stylestats (node required)"
   def stylestats
-    Maximus::Stylestats.new({ path: options[:path] }).result
+    Maximus::Stylestats.new(default_options).result
   end
 
   desc "phantomas", "Run phantomas (node and phantomjs required)"
   def phantomas
-    Maximus::Phantomas.new({ path: options[:path] }).result
+    Maximus::Phantomas.new(default_options).result
   end
 
   desc "wraith", "Run Wraith (phantomjs required)"
   def wraith
-    Maximus::Wraith.new({ path: options[:path] }).result
+    Maximus::Wraith.new(default_options).result
   end
 
   desc "frontend", "Execute all front-end tasks"
@@ -91,6 +91,9 @@ class Maximus::CLI < Thor
     end
   end
 
+  # TODO - something better than just installing in whatever gemset
+  # and the global npm file
+  # and including phantomjs
   desc "install", "Install all dependencies"
   def install
     `npm install -g jshint phantomas stylestats`
@@ -105,6 +108,12 @@ class Maximus::CLI < Thor
     # Don't run command if it's present in the exlude options
     def check_exclude(opt)
       send(opt) unless options[:exclude].include?(opt)
+    end
+    def default_options
+      {
+        path: options[:path],
+        is_dev: true
+      }
     end
   end
 

@@ -16,7 +16,7 @@ module Maximus
     # TODO - should this be def output to be more consistent?
     # Didn't want to trip over the instance variable @output
     def initialize(opts = {})
-      opts[:is_dev] = true if opts[:is_dev].nil?
+      opts[:is_dev] ||= false
       opts[:root_dir] ||= root_dir
       opts[:port] ||= ''
       opts[:base_url] ||= 'http://localhost:3000'

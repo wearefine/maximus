@@ -23,7 +23,7 @@ module Maximus
     # `@output[:files_inspected] ||= files_inspected(extension, delimiter, base_path_replacement)`
     # `refine data_from_output`
     def initialize(opts = {})
-      opts[:is_dev] = true if opts[:is_dev].nil?
+      opts[:is_dev] ||= false
       opts[:root_dir] ||= root_dir
 
       @@log ||= mlog
