@@ -117,10 +117,18 @@ module Maximus
     def path_exists(path = @path)
       if path.is_a?(Array)
         path.each do |p|
-          return false unless File.exist?(path)
+          unless File.exist?(p)
+            puts "#{p} does not exist"
+            return false
+          end
         end
       else
-        return File.exist?(path)
+        if File.exist?(path)
+          return true
+        else
+          puts "#{path} does not exist"
+          return false
+        end
       end
     end
 
