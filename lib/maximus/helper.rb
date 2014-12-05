@@ -115,6 +115,7 @@ module Maximus
     # Ensure @path exists
     # Returns Boolean
     def path_exists(path = @path)
+      path = path.split(' ') if path.is_a?(String) && path.include?(' ')
       if path.is_a?(Array)
         path.each do |p|
           unless File.exist?(p)

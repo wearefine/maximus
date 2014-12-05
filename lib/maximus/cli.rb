@@ -72,6 +72,12 @@ class Maximus::CLI < Thor
     backend
   end
 
+  desc "git", "Display lint data based on working copy, last commit, master branch or specific sha"
+  method_option :commit, default: 'working', type: :string, banner: "working, last, master, or sha", aliases: ["-c", "--sha"], desc: "Lint by commit or working copy"
+  def git
+    Maximus::GitControl.new({ commit: options[:commit], is_dev: true }).lints_and_stats(true)
+  end
+
   desc "all", "Lint everything"
   def all
     all_tasks = ['frontend', 'backend', 'statistics']
