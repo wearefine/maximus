@@ -6,7 +6,7 @@ module Maximus
     def result
 
       node_module_exists('stylestats')
-      @path ||= @@is_rails ? "#{@opts[:root_dir]}/public/assets/**/*.css" : "#{@opts[:root_dir]}source/assets/**/*"
+      @path ||= @@is_rails ? "#{@opts[:root_dir]}/public/assets/**/*.css" : "#{@opts[:root_dir]}/**/*.css"
 
       css_files = @path.is_a?(Array) ? @path : find_css_files
 
@@ -84,14 +84,16 @@ module Maximus
           end
         end
 
-        Dir.glob(@path).select { |d| File.directory? d}.each do |directory|
-          Sass.load_paths << directory
-        end
+        # Shouldn't need to load paths anymore, but in case this doesn't work
+        # as it should
+        # Dir.glob(@path).select { |d| File.directory? d}.each do |directory|
+        #   Sass.load_paths << directory
+        # end
 
-        @path += ".css.scss"
+        @path += ".scss"
 
         Dir[@path].select { |f| File.file? f }.each do |file|
-
+          # TODO - don't compile file if it starts with an underscore
           scss_file = File.open(file, 'rb') { |f| f.read }
 
           output_file = File.open( file.split('.').reverse.drop(1).reverse.join('.'), "w" )
