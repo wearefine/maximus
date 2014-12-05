@@ -7,7 +7,7 @@
 * Resolve/review TODOs
 * Tests and specs
 * Load config globally when starting, or something similar - calling is_dev happens too often
-* Convert ruby-git to rugged
+* Convert ruby-git to rugged (MAYBE - rugged requires libgit2)
 * Add SCSS specificity graph
 * Add HAML lint (maybe)
 * Add CSS lint (maybe)
