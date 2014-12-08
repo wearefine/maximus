@@ -8,65 +8,48 @@ In the development block:
 
 `gem 'maximus', git: 'git@bitbucket.org:wearefine/maximus.git'`
 
-## All tasks
+## Command Line Flags
 
-First and only arg (path): Path to target folder/file or URL if using Phantomas. The sole exception to this is `maximus:compare`
+Flag                | Accepts                          | Description
+--------------------|----------------------------------|--------------------
+`-p`/`--path`       | String/Array                     | Absolute path to URLs or files
+`-f`/`--frontend`   | Boolean/Blank                    | Run all front-end lints
+`-b`/`--backend`    | Boolean/Blank                    | Run all back-end lints
+`-s`/`--statistics` | Boolean/Blank                    | Run all back-end lints
+`-a`/`--all`        | Boolean/Blank                    | Run all everything
+`-i`/`--include`    | String/Array                     | Include specific lints or statistics
+`-i`/`--exclude`    | String/Array                     | Exclude specific lints or statistics
+`-c`/`--commit`     | String/`working`/`last`/`master` |
 
 * Lint tasks can accept glob notation, i.e. `**/*.scss`
-* Statistics tasks can accept an Array
+* Arrays are space-separated, i.e. `--path=[http://localhost:3000/ http://localhost:3000/about]`
 
-Example:
+## Command Line Commands
 
-`rake maximus:fe:scsslint[app/assets/stylesheets]`
+Command               | Description
+----------------------|---------------------------
+`install`             | Installs node dependencies
+`frontend`            | Runs all front-end lints
+`backend`             | Runs all back-end lints
+`statistics`          | Runs all statistics
 
-## Front End lints
+## Example:
 
-`rake maximus:fe`
+Default. Lints based on your working directory
 
-### SCSS Lint
+`maximus -c working` 
 
-`rake maximus:fe:scsslint`
+Lints based on the previous commit by `HEAD^`
 
-### JSHint
+`maximus -c last` 
 
-`rake maximus:fe:jshint`
+Lints based on the commit on the master branch
 
-## Back End lints
+`maximus -c master`
 
-`rake maximus:be`
+Lints based on commit d96a8e23
 
-### Rubocop
-
-`rake maximus:be:rubocop`
-
-### Rails Best Practices
-
-`rake maximus:be:railsbp`
-
-### Brakeman
-
-`rake maximus:be:brakeman`
-
-## Statistics
-
-### Stylestats
-
-`rake maximus:stat:stylestats`
-
-### Phantomas
-
-`rake maximus:stat:phantomas`
-
-## Lint committed files
-
-`rake maximus:compare`
-
-First arg is a sha, working, last, or master. Does not run any statistics.
-
-* `maximus:compare[working]` Default. Lints based on your working directory
-* `maximus:compare[last]` Lints based on the previous commit by `HEAD^`
-* `maximus:compare[master]` Lints based on the commit on master
-* `maximus:compare[d96a8e23]` Lints based on commit d96a8e23
+`maximus -c d96a8e23` 
 
 ## Front End, Back End, Stats, Compare
 
@@ -74,7 +57,7 @@ First arg is a sha, working, last, or master. Does not run any statistics.
 
 ## Lint syntax:
 
-```
+```json
 [ <filename String>: {
   linter: <test_name String>
   severity: <warning | error | convention | refactor String>
