@@ -11,7 +11,7 @@ module Maximus
       node_module_exists('phantomjs', 'brew install')
       @root_config = "#{@opts[:root_dir]}/config/wraith"
       wraith_exists = File.directory?(@root_config)
-      @wraith_config_file = "#{@root_config}/history.yaml"
+      @wraith_config_file = "#{@opts[:root_dir]}/config/wraith.yaml"
 
       puts 'Starting visual regression tests with wraith...'.color(:blue)
 
@@ -20,6 +20,7 @@ module Maximus
       unless wraith_exists
 
         FileUtils.copy_entry(File.join(File.dirname(__FILE__), "../config/wraith"), @root_config)
+        FileUtils.cp(File.join(File.dirname(__FILE__), "../config/wraith.yaml"), @wraith_config_file)
         wraith_yaml_reset
         puts `wraith history #{@wraith_config_file}`
 
@@ -32,7 +33,7 @@ module Maximus
         # even with absolute paths. Could be a bug in wraith
         YAML.load_file(@wraith_config_file)['paths'].each do |label, url|
           edit_yaml(@wraith_config_file) do |file|
-            unless File.directory?("#{@opts[:root_dir]}/wraith_history_shots/#{label}")
+            unless File.directory?("#{@opts[:root_dir]}/maximus_wraith_history/#{label}")
               puts `wraith history #{@wraith_config_file}`
               break
             end
@@ -55,7 +56,7 @@ module Maximus
     # Returns Hash
     def wraith_parse(wraith_config_file = @wraith_config_file)
       paths = YAML.load_file(wraith_config_file)['paths']
-      Dir.glob("#{@opts[:root_dir]}/wraith_shots/**/*.txt").select { |f| File.file? f }.each do |file|
+      Dir.glob("#{@opts[:root_dir]}/maximus_wraith/**/*.txt").select { |f| File.file? f }.each do |file|
         file_object = File.open(file, 'rb')
         orig_label = File.dirname(file).split('/').last
         label = paths[orig_label]
@@ -72,9 +73,9 @@ module Maximus
     def wraith_yaml_reset(wraith_config_file = @wraith_config_file)
       edit_yaml(wraith_config_file) do |file|
         unless @@is_dev
-          file['snap_file'] = "#{@root_config}/javascript/snap.js"
-          file['directory'] = "#{@opts[:root_dir]}/wraith_shots"
-          file['history_dir'] = "#{@opts[:root_dir]}/wraith_history_shots"
+          file['snap_file'] = "#{@root_config}/snap.js"
+          file['directory'] = "#{@opts[:root_dir]}/maximus_wraith"
+          file['history_dir'] = "#{@opts[:root_dir]}/maximus_wraith_history"
         end
         # .to_s is for consistency in the yaml, but could likely be removed without causing an error
         fresh_domain = @opts[:port].blank? ? @opts[:base_url].to_s : "#{@opts[:base_url]}:#{@opts[:port]}"
