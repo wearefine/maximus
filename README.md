@@ -1,6 +1,6 @@
 # Maximus
 
-A warrior for the [Colosseum](https://bitbucket.org/wearefine/colosseum).
+A command-line warrior for the [Colosseum](https://bitbucket.org/wearefine/colosseum).
 
 Plays nice with Middleman and Rails.
 
@@ -22,7 +22,7 @@ Flag                | Accepts                          | Description
 `-c`/`--commit`     | String/`working`/`last`/`master` |
 
 * Lint tasks can accept glob notation, i.e. `**/*.scss`
-* Arrays are space-separated, i.e. `--path=[http://localhost:3000/ http://localhost:3000/about]`
+* Arrays are space-separated, i.e. `--path=http://localhost:3000/ http://localhost:3000/about`
 
 ## Command Line Commands
 
@@ -33,7 +33,7 @@ Command               | Description
 `backend`             | Runs all back-end lints
 `statistics`          | Runs all statistics
 
-## Example:
+## Examples
 
 Default. Lints based on your working directory
 
@@ -49,15 +49,13 @@ Lints based on the commit on the master branch
 
 Lints based on commit d96a8e23
 
-`maximus -c d96a8e23` 
+`maximus -c d96a8e23`
 
-## Front End, Back End, Stats, Compare
+## Lint syntax
 
-`rake maximus`
+When adding new lints, the JSON output should obey the following format:
 
-## Lint syntax:
-
-```json
+```
 [ <filename String>: {
   linter: <test_name String>
   severity: <warning | error | convention | refactor String>
