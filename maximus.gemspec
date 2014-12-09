@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = Maximus::VERSION
   spec.authors       = ["Tim Shedor"]
   spec.email         = ["tshedor@gmail.com"]
-  spec.summary       = %q{Run tests and save them to the Colosseum}
-  spec.description   = %q{Supports scss-lint, jshint, rubocop, brakeman and rails_best_practices. Statistics include phantomas, stylestats and wraith}
-  spec.homepage      = ""
+  spec.summary       = %q{Make your code spic and <span>}
+  spec.description   = %q{The all-in-one linting solution}
+  spec.homepage      = "https://github.com/wearefine/maximus"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
