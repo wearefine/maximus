@@ -24,6 +24,8 @@ linters:
     enabled: false
   SelectorFormat:
     enabled: false
+  DeclarationOrder:
+    enabled: false
   EmptyLineBetweenBlocks:
     enabled: false
   NestingDepth:
@@ -38,6 +40,9 @@ linters:
     enabled: false
   PropertySortOrder:
     enabled: false
+  QualifyingElement:
+    enabled: true
+    allow_element_with_attribute: true
   SpaceAfterPropertyColon:
     enabled: false
   UnnecessaryParentReference:
@@ -48,5 +53,6 @@ linters:
       - '-webkit-font-smoothing'
       - '-moz-osx-font-smoothing'
       - '-webkit-appearance'
-  FinalNewline:
-    enabled: false
+      - '-moz-placeholder'
+      - '-ms-input-placeholder'
+      - '-moz-pre-wrap'
