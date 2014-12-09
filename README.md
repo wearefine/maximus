@@ -1,5 +1,7 @@
 # Maximus
 
+[![Gem Version](https://badge.fury.io/rb/maximus.svg)](http://badge.fury.io/rb/maximus)
+
 The all-in-one linting solution.
 
 Plays nice with Middleman and Rails.
