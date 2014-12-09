@@ -1,6 +1,6 @@
 # Maximus
 
-A command-line warrior for the [Colosseum](https://bitbucket.org/wearefine/colosseum).
+The all-in-one linting solution.
 
 Plays nice with Middleman and Rails.
 

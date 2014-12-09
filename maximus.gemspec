@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.name          = "maximus"
   spec.version       = Maximus::VERSION
   spec.authors       = ["Tim Shedor"]
-  spec.email         = ["tim@wearefine.com"]
+  spec.email         = ["tshedor@gmail.com"]
   spec.summary       = %q{Run tests and save them to the Colosseum}
   spec.description   = %q{Supports scss-lint, jshint, rubocop, brakeman and rails_best_practices. Statistics include phantomas, stylestats and wraith}
   spec.homepage      = ""
