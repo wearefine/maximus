@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # http://stackoverflow.com/questions/8259851/using-git-diff-how-can-i-get-added-and-modified-lines-numbers
-# TODO - this function is tricky because I don't fully understand regex in BASH. Also, getting line hunks from git is tricky. This will likely need to be refactored
+# @todo this function is tricky because I don't fully understand regex in BASH. Also, getting line hunks from git is tricky. This will likely need to be refactored
 function lines-added(){
   local path=
   local line=

@@ -1,5 +1,6 @@
 require 'thor'
 
+# @since 0.1.0
 class Maximus::CLI < Thor
   include Thor::Actions
   class_option :path, aliases: ["-p", "-u", "\--url"], default: nil, desc: "Space-separated path(s) to URLs or files"
@@ -46,7 +47,7 @@ class Maximus::CLI < Thor
     return Maximus::GitControl.new({ commit: options[:commit], is_dev: true }).lints_and_stats(true)
   end
 
-  # TODO - something better than just installing in the global npm file
+  # @todo something better than just installing in the global npm file
   # and including phantomjs
   desc "install", "Install all dependencies"
   def install

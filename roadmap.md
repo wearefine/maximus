@@ -12,3 +12,4 @@
 * Add JSLint (maybe)
 * Add W3 validator (maybe)
 * Regex path names on phantomas and wraith to defend against injection and bad characters
+* include lines_added in this GitControll#diff output

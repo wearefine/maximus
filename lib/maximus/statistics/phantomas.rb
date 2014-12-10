@@ -1,8 +1,10 @@
 module Maximus
+  # @since 0.1.0
   class Phantomas < Maximus::Statistic
 
-    # path can be array or string of URLS. Include http://
-    # By default, checks homepage
+    # Phantomas evaluates page performance with phantomjs and node
+    #
+    # @see Statistic#initialize
     def result
 
       node_module_exists('phantomjs', 'brew install')
@@ -22,6 +24,7 @@ module Maximus
 
     # Organize stat output on the @output variable
     # Adds @output[:statistics][:filepath] with all statistic data
+    # @return [void] goes to refine statistics
     def phantomas_by_url(url, phantomas_cli)
       puts "Phantomas on #{@opts[:base_url] + url}".color(:green)
       phantomas = `#{phantomas_cli} #{@opts[:base_url] + url}`

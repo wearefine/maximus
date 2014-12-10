@@ -1,6 +1,7 @@
 require 'json'
 
 module Maximus
+  # @since 0.1.0
   class Lint
     attr_accessor :output
 
@@ -11,7 +12,6 @@ module Maximus
     # All defined lints require a "result" method
     # @example the result method in the child class
     #   def result(opts = {})
-    #     super
     #     @task = __method__.to_s
     #     @path ||= 'path/or/**/glob/to/files''
     #     lint_data = JSON.parse(`some-command-line-linter`)
@@ -19,12 +19,12 @@ module Maximus
     #     refine data_from_output
     #  end
     #
-    # @param [Hash] opts the options to create a lint with.
-    # @option opts [Boolean] :is_dev whether or not the class was initialized from the command line
+    # @param opts [Hash] the options to create a lint with
+    # @option opts [Boolean] :is_dev (false) whether or not the class was initialized from the command line
     # @option opts [Array<String, Symbol>] :git_files files returned from the commit
     # @option opts [String] :root_dir base directory
     # @option opts [String, Array] :path ('') path to files. Accepts glob notation
-    # @returns output [Hash] combined and refined data from lint
+    # @return @output [Hash] combined and refined data from lint
     def initialize(opts = {})
       opts[:is_dev] ||= false
       opts[:root_dir] ||= root_dir
@@ -38,7 +38,9 @@ module Maximus
     end
 
     # Convert raw data into warnings, errors, conventions or refactors. Use this wisely.
-    # Returns complete @output as Hash
+    #
+    # @param data [Hash] unfiltered lint data
+    # @return [Hash] refined lint data and all the other bells and whistles
     def refine(data)
       # Prevent abortive empty JSON.parse error
       data = '{}' if data.blank?
@@ -80,7 +82,7 @@ module Maximus
       @output[:lint_refactors] = lint_refactors
       lint_count = (lint_errors.length + lint_warnings.length + lint_conventions.length + lint_refactors.length)
       if @@is_dev
-        lint_dev_format data unless data.blank?
+        puts lint_dev_format(data) unless data.blank?
         puts lint_summarize
         lint_ceiling lint_count
       else
@@ -95,13 +97,18 @@ module Maximus
     protected
 
     # List all files inspected
-    # Returns Array
-    def files_inspected(ext, delimiter = ',', replace = @opts[:root_dir])
-      @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, replace)
+    #
+    # @param ext [String] extension to search for
+    # @param delimiter [String] comma or space separated
+    # @param remove [String] remove from all file names
+    # @return all_files [Array<string>] list of file names
+    def files_inspected(ext, delimiter = ',', remove = @opts[:root_dir])
+      @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, remove)
     end
 
     # Compare lint output with lines changed in commit
-    # Returns Array of lints that match the lines in commit
+    #
+    # @return [Array] lints that match the lines in commit
     def relevant_lints(lint, files)
       all_files = {}
       files.each do |file|
@@ -115,7 +122,7 @@ module Maximus
           unless lint_file.blank?
             all_files[revert_name] = []
 
-            # TODO - originally I tried .map and delete_if, but this works,
+            # @todo originally I tried .map and delete_if, but this works,
             # and the other method didn't cover all bases.
             # Gotta be a better way to write this though
             lint_file.each do |l|
@@ -139,7 +146,8 @@ module Maximus
     private
 
     # Send abbreviated results to console or to the log
-    # Returns console message
+    #
+    # @return [String] console message to display
     def lint_summarize
       puts "\n" if @@is_dev
 
@@ -157,9 +165,12 @@ module Maximus
       success
     end
 
-    # If there's just too much to handle, through a warning. MySQL may not store everything and throw an abortive error if the blob is too large
-    # Returns prompt if lint_length is greater than 100
+    # If there's just too much to handle, through a warning.
+    # MySQL may not store all the data and throw an abortive error if the blob is too large
     # If prompt returns truthy, execution continues
+    #
+    # @param lint_length [Integer] count of how many lints
+    # @return [String] console message to display
     def lint_ceiling(lint_length)
       if lint_length > 100
         lint_dev_format
@@ -173,8 +184,10 @@ module Maximus
       end
     end
 
-    # Dev display, used for the rake task
-    # Returns console message
+    # Dev display, executed only when called from command line
+    #
+    # @param errors [Hash] data from lint
+    # @return [String] console message to display
     def lint_dev_format(errors = @output[:raw_data])
       pretty_output = ''
       errors.each do |filename, error_list|
@@ -197,7 +210,7 @@ module Maximus
           pretty_output += "\n"
         end
       end
-      puts pretty_output
+      pretty_output
     end
 
   end

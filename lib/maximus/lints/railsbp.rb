@@ -1,7 +1,10 @@
 module Maximus
+  # @since 0.1.0
   class Railsbp < Maximus::Lint
 
     # rails_best_practice (requires Rails)
+    #
+    # @see Lint#initialize
     def result
 
       return unless @@is_rails
@@ -26,7 +29,10 @@ module Maximus
             railsbp[file.gsub(Rails.root.to_s, '')[1..-1].to_sym] = errors.map { |o| hash_for_railsbp(o) }
           end
         end
-        railsbp = JSON.parse(railsbp.to_json) #don't event ask
+        # The output of railsbp is a mix of strings and symbols
+        #   but resetting the JSON like this standardizes everything.
+        # @todo Better way to get around this?
+        railsbp = JSON.parse(railsbp.to_json)
       end
 
       @output[:files_inspected] ||= files_inspected('rb', ' ')
@@ -36,7 +42,10 @@ module Maximus
 
     private
 
-    # Convert to maximus format
+    # Convert to {file:README.md Maximus format}
+    #
+    # @param error [Hash] lint error
+    # @return [Hash]
     def hash_for_railsbp(error)
       {
         linter: error['message'].gsub(/\((.*)\)/, '').strip.parameterize('_').camelize,

@@ -1,7 +1,10 @@
 module Maximus
+  # @since 0.1.0
   class Scsslint < Maximus::Lint
 
     # SCSS-Lint
+    #
+    # @see Lint#initialize
     def result
       @task = 'scsslint'
       @path ||= @@is_rails ? "#{@opts[:root_dir]}/app/assets/stylesheets" : "#{@opts[:root_dir]}/source/assets/stylesheets"

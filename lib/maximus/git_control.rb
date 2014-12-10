@@ -5,10 +5,23 @@ require 'rainbow'
 require 'rainbow/ext/string'
 
 module Maximus
+  # @since 0.1.0
   class GitControl
 
     include Helper
 
+    # Git management
+    #
+    # @param opts [Hash] the options to initialize and pass to other classes
+    # @option opts [Boolean] :is_dev whether or not the class was initialized from the command line
+    # @option opts [String] :log ('log/maximus_git.log') path to log file
+    # @option opts [String] :root_dir base directory
+    # @option opts [String] :base_url ('http://localhost:3000') the host - used for Statistics
+    # @option opts [String, Integer] :port port number - used for Statistics
+    # @option opts [String, Array] :path ('') path to files. Accepts glob notation
+    # @option opts [String] :commit accepts sha, "working", "last", or "master".
+    #   Used in the command line
+    # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
       opts[:is_dev] ||= false
       opts[:log] = Logger.new('log/maximus_git.log') if opts[:log].nil?
@@ -26,7 +39,7 @@ module Maximus
 
     # 30,000 foot view of a commit
     #
-    # @param [string] commitsha the sha of the commit
+    # @param commitsha [String] the sha of the commit
     # @return [Hash] commit data
     def commit_export(commitsha = sha)
       ce_commit = vccommit(commitsha)
@@ -70,10 +83,10 @@ module Maximus
         end
       end
 
-      # if working directory, just have a single item array
-      # the space here is important because git-lines checks for a second arg,
-      # and if one is present, it runs git diff without a commit
-      # or a comparison to a commit
+      # If working directory, just have a single item array.
+      #   The space here is important because git-lines checks for a second arg,
+      #   and if one is present, it runs git diff without a commit
+      #   or a comparison to a commit.
       git_diff = @psuedo_commit ? ['working directory'] : `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
 
       # Include the first sha because rev-list is doing a traversal
@@ -112,16 +125,29 @@ module Maximus
       diff_return
     end
 
-    # Run appropriate lint for every sha in commit history
-    # Creates new branch based on each sha, then deletes it
+    # Run appropriate lint for every sha in commit history.
+    # For each sha a new branch is created then deleted
+    #
+    # @example sample output
+    #   {
+    #     'sha': {
+    #       lints: {
+    #         scsslint: {
+    #           files_inspec...
+    #         },
+    #       },
+    #       statisti...
+    #     },
+    #     'sha'...
+    #   }
+    #
     # @return [Hash] data all data grouped by task
-    # Example: { 'sha': { lints: { scsslint: { files_inspec... }, statisti... } }, 'sha...' }
     def lints_and_stats(lint_by_path = false, git_shas = compare)
       return false if git_shas.blank?
       base_branch = branch
       git_output = {}
       git_shas.each do |sha, exts|
-        # TODO - better way to silence git, in case there's a real error?
+        # @todo better way to silence git, in case there's a real error?
         quietly { `git checkout #{sha} -b maximus_#{sha}` } unless @psuedo_commit
         puts sha.to_s.color(:blue) if @@is_dev
         git_output[sha.to_sym] = {
@@ -141,6 +167,7 @@ module Maximus
           port: @opts[:port],
           root_dir: @opts[:root_dir]
         }
+
         # This is where everything goes down
         exts.each do |ext, files|
           # For relevant_lines data
@@ -150,27 +177,27 @@ module Maximus
             when :scss
               lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
 
-              # Do not run statistics if called by rake task :compare
+              # Do not run statistics if called from command line
               if lint_opts[:commit].blank?
 
-                # stylestat is singular here because model name in Rails is singular.
-                # But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
-                # which breaks the model name. This could be a TODO
+                # @todo stylestat is singular here because model name in Rails is singular.
+                #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
+                #   which breaks the model name.
                 statistics[:stylestat] = Maximus::Stylestats.new(stat_opts).result
 
-                # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+                # @todo double pipe here is best way to say, if it's already run, don't run again, right?
                 statistics[:phantomas] ||= Maximus::Phantomas.new(stat_opts).result
                 statistics[:wraith] = Maximus::Wraith.new(stat_opts).result
               end
             when :js
               lints[:jshint] = Maximus::Jshint.new(lint_opts).result
 
-              # Do not run statistics if called by rake task :compare
+              # Do not run statistics if called from command line
               if lint_opts[:commit].blank?
 
                 statistics[:phantomas] = Maximus::Phantomas.new(stat_opts).result
 
-                # TODO - double pipe here is best way to say, if it's already run, don't run again, right?
+                # @todo double pipe here is best way to say, if it's already run, don't run again, right?
                 statistics[:wraith] ||= Maximus::Wraith.new(stat_opts).result
               end
             when :ruby
@@ -181,7 +208,7 @@ module Maximus
               lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
           end
         end
-        # TODO - better way to silence git, in case there's a real error?
+        # @todo better way to silence git, in case there's a real error?
         quietly {
           @g.branch(base_branch).checkout
           @g.branch("maximus_#{sha}").delete
@@ -195,8 +222,8 @@ module Maximus
 
     # Get list of file paths
     #
-    # @param [Hash] files hash of files denoted by key 'filename'
-    # @param [String] ext different extensions are joined different ways
+    # @param files [Hash] hash of files denoted by key 'filename'
+    # @param ext [String] file extension - different extensions are joined different ways
     # @return [String] file paths delimited by comma or space
     def lint_file_paths(files, ext)
       file_list = files.map { |f| f[:filename] }.compact
@@ -214,7 +241,7 @@ module Maximus
     #     ]
     #   }
     #
-    # @param [String] git_sha sha of the commit
+    # @param git_sha [String] sha of the commit
     # @return [Hash] ranges by lines added in a commit by file name
     def lines_added(git_sha)
       new_lines = {}
@@ -253,14 +280,14 @@ module Maximus
     end
 
     # Store last commit as Ruby Git::Object
-    # @param [String]
+    # @param commitsha [String]
     # @return [Git::Object]
     def vccommit(commitsha = sha)
       @g.gcommit(commitsha)
     end
 
     # Get general stats of commit on HEAD versus last commit on master branch
-    # Roadmap - include lines_added in this method's output
+    #
     # @return [Git::Diff]
     def diff(new_commit = vccommit, old_commit = master_commit)
       @g.diff(new_commit, old_commit).stats

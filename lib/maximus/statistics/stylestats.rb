@@ -1,8 +1,14 @@
 module Maximus
+  # @since 0.1.0
   class Stylestats < Maximus::Statistic
 
     # @path array preferrably absolute paths, but relative should work
-    # If stylestatting one file, pass that as an array, i.e. ['/absolute/to/public/assets/application.css']
+    # If stylestatting one file, pass that as an array
+    #
+    # @example stylestat one file
+    #   Maximus::Stylestats.new({path: ['/absolute/to/public/assets/application.css']}).result
+    #
+    # @see Statistic#initialize
     def result
 
       node_module_exists('stylestats')
@@ -27,10 +33,10 @@ module Maximus
       end
 
       if @@is_rails
-        # TODO - I'd rather Rake::Task but it's not working in different directories
+        # @todo I'd rather Rake::Task but it's not working in different directories
         Dir.chdir(@opts[:root_dir]) do
           if @@is_dev
-            # TODO - review that this may not be best practice, but it's really noisy in the console
+            # @todo review that this may not be best practice, but it's really noisy in the console
             quietly { `rake assets:clobber` }
           else
             `rake assets:clobber`
@@ -45,11 +51,11 @@ module Maximus
 
     private
 
-    # Find all CSS files
-    # Will compile using sprockets if Rails
-    # Will compile using built-in Sass engine otherwise
-    # Compass friendly
-    # Returns Array of CSS files
+    # Find all CSS files or compile.
+    # Uses sprockets if Rails; Sass engine otherwise.
+    # Compass is supported
+    #
+    # @return [Array] CSS files
     def find_css_files
       searched_files = []
 
@@ -60,10 +66,10 @@ module Maximus
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)
 
-        # TODO - I'd rather Rake::Task but it's not working in different directories
+        # @todo I'd rather Rake::Task but it's not working in different directories
         Dir.chdir(@opts[:root_dir]) do
           if @@is_dev
-             # TODO - review that this may not be best practice, but it's really noisy in the console
+             # @todo review that this may not be best practice, but it's really noisy in the console
             quietly { `rake assets:precompile` }
           else
             `rake assets:precompile`
@@ -93,7 +99,7 @@ module Maximus
         @path += ".scss"
 
         Dir[@path].select { |f| File.file? f }.each do |file|
-          # TODO - don't compile file if it starts with an underscore
+          # @todo don't compile file if it starts with an underscore
           scss_file = File.open(file, 'rb') { |f| f.read }
 
           output_file = File.open( file.split('.').reverse.drop(1).reverse.join('.'), "w" )

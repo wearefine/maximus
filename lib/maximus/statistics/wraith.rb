@@ -1,11 +1,12 @@
 module Maximus
+  # @since 0.1.0
   class Wraith < Maximus::Statistic
 
     # By default checks homepage
     # Requires config to be in config/wraith/history.yaml
     # Adds a new config/wraith/history.yaml if not present
     # Path should be an Array defined as [{ label: url }]
-    # Returns Hash as defined in the wraith_parse method
+    # @see Statistic#initialize
     def result
 
       node_module_exists('phantomjs', 'brew install')
@@ -29,7 +30,7 @@ module Maximus
         wraith_yaml_reset
 
         # If the paths have been updated, call a timeout and run history again
-        # TODO - this doesn't work very well. It puts the new shots in the history folder,
+        # @todo this doesn't work very well. It puts the new shots in the history folder,
         # even with absolute paths. Could be a bug in wraith
         YAML.load_file(@wraith_config_file)['paths'].each do |label, url|
           edit_yaml(@wraith_config_file) do |file|
@@ -53,7 +54,7 @@ module Maximus
     # Get a diff percentage of all changes by label and screensize
     # { path: { percent_changed: [{ size: percent_diff }] } }
     # Example {:statistics=>{:/=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
-    # Returns Hash
+    # @return [Hash]
     def wraith_parse(wraith_config_file = @wraith_config_file)
       paths = YAML.load_file(wraith_config_file)['paths']
       Dir.glob("#{@opts[:root_dir]}/maximus_wraith/**/*.txt").select { |f| File.file? f }.each do |file|
@@ -69,7 +70,10 @@ module Maximus
       @output
     end
 
-    # Update the root domain (docker ports and addresses may change) and set paths as defined in @path
+    # Update the root domain (docker ports and addresses may change)
+    # and set paths as defined in @path
+    #
+    # @return [void] but updates instance variables
     def wraith_yaml_reset(wraith_config_file = @wraith_config_file)
       edit_yaml(wraith_config_file) do |file|
         unless @@is_dev

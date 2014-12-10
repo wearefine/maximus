@@ -1,7 +1,10 @@
 module Maximus
+  # @since 0.1.0
   class Brakeman < Maximus::Lint
 
     # Brakeman (requires Rails)
+    #
+    # @see Lint#initialize
     def result
 
       return unless @@is_rails
@@ -35,7 +38,10 @@ module Maximus
             end
           end
         end
-        brakeman = JSON.parse(brakeman.to_json) #don't event ask
+        # The output of brakeman is a mix of strings and symbols
+        #   but resetting the JSON like this standardizes everything.
+        # @todo Better way to get around this?
+        brakeman = JSON.parse(brakeman.to_json)
       end
 
       @output[:files_inspected] ||= files_inspected('rb', ' ')
@@ -45,7 +51,10 @@ module Maximus
 
     private
 
-    # Convert to maximus format
+    # Convert to {file:README.md Maximus format}
+    #
+    # @param error [Hash] lint error
+    # @return [Hash]
     def hash_for_brakeman(error, type)
       {
         linter: error['warning_type'],
