@@ -24,7 +24,10 @@ module Maximus
       @g = Git.open(@opts[:root_dir], :log => log)
     end
 
-    # Returns Hash of commit data
+    # 30,000 foot view of a commit
+    #
+    # @param [string] commitsha the sha of the commit
+    # @return [Hash] commit data
     def commit_export(commitsha = sha)
       ce_commit = vccommit(commitsha)
       ce_diff = diff(ce_commit, @g.object('HEAD^'))
@@ -40,8 +43,21 @@ module Maximus
     end
 
     # Compare two commits and get line number ranges of changed patches
-    # Returns Hash grouped by file extension (defined in assoc) => { filename, changes: (changed line ranges) }
-    # Example: 'sha' => { rb: {filename: 'file.rb', changes: { ['0..4'], ['10..20'] }  }}
+    #
+    # @example output from the method
+    #   {
+    #     'sha': {
+    #       rb: {
+    #         filename: 'file.rb',
+    #         changes: {
+    #           ['0..4'],
+    #           ['10..20']
+    #         }
+    #       }
+    #     }
+    #   }
+    #
+    # @return [Hash] diff_return files changed grouped by file extension and line number
     def compare(sha1 = master_commit.sha, sha2 = sha)
       diff_return = {}
 
@@ -98,8 +114,7 @@ module Maximus
 
     # Run appropriate lint for every sha in commit history
     # Creates new branch based on each sha, then deletes it
-    # Different from above method as it returns the entire lint, not just the lines relevant to commit
-    # Returns Hash with all data grouped by task
+    # @return [Hash] data all data grouped by task
     # Example: { 'sha': { lints: { scsslint: { files_inspec... }, statisti... } }, 'sha...' }
     def lints_and_stats(lint_by_path = false, git_shas = compare)
       return false if git_shas.blank?
@@ -179,15 +194,28 @@ module Maximus
     protected
 
     # Get list of file paths
-    # Returns String delimited by comma or space
+    #
+    # @param [Hash] files hash of files denoted by key 'filename'
+    # @param [String] ext different extensions are joined different ways
+    # @return [String] file paths delimited by comma or space
     def lint_file_paths(files, ext)
       file_list = files.map { |f| f[:filename] }.compact
       # Lints accept files differently
       ext == :ruby ? file_list.join(' ') : file_list.join(',')
     end
 
-    # Returns Array of ranges by lines added in a commit by file name
-    # {'filename' => ['0..10', '11..14']}
+    # Determine which lines were added (where and how many) in a commit
+    #
+    # @example output from method
+    #   {
+    #     'filename': [
+    #       '0..10',
+    #       '11..14'
+    #     ]
+    #   }
+    #
+    # @param [String] git_sha sha of the commit
+    # @return [Hash] ranges by lines added in a commit by file name
     def lines_added(git_sha)
       new_lines = {}
       lines_added = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n")
@@ -204,44 +232,50 @@ module Maximus
     end
 
     # Get last commit on current branch
-    # Returns String
+    #
+    # @return [String] sha
     def sha
       @g.object('HEAD').sha
     end
 
-    # Get branch name
-    # Returns String
+    # Get current branch name
+    #
+    # @return [String]
     def branch
       `env -i git rev-parse --abbrev-ref HEAD`.strip!
     end
 
     # Get last commit on the master branch
-    # Returns Git::Object
+    #
+    # @return [Git::Object]
     def master_commit
       @g.branches[:master].gcommit
     end
 
     # Store last commit as Ruby Git::Object
-    # Returns Git::Object
+    # @param [String]
+    # @return [Git::Object]
     def vccommit(commitsha = sha)
       @g.gcommit(commitsha)
     end
 
     # Get general stats of commit on HEAD versus last commit on master branch
     # Roadmap - include lines_added in this method's output
-    # Returns Git::Diff
+    # @return [Git::Diff]
     def diff(new_commit = vccommit, old_commit = master_commit)
       @g.diff(new_commit, old_commit).stats
     end
 
     # Get remote URL
-    # Returns String or nil if remotes is blank
+    #
+    # @return [String, nil] nil returns if remotes is blank
     def remote
       @g.remotes.first.url unless @g.remotes.blank?
     end
 
     # Define associations to linters based on file extension
-    # Returns Hash of linters and extension arrays
+    #
+    # @return [Hash] linters and extension arrays
     def associations
       {
         scss:   ['scss', 'sass'],

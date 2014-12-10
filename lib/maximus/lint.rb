@@ -6,22 +6,25 @@ module Maximus
 
     include Helper
 
-    # opts - Lint options (default: {})
-    #    :is_dev
-    #    :git_files
-    #    :root_dir
-    #    :path
-    # all lints should start with the following defined:
-    # def result method to handle the actual parsing
-    # TODO - should this be def output to be more consistent?
-    # Didn't want to trip over the instance variable @output
-    # `@task = 'name'` (__method__.to_s works fine)
-    # `@path ||= 'path/or/**/glob/to/files'` (string)
-    # they should contain the data output from the linter in JSON or
-    # JSON.parse format with the styles defined in README.md
-    # they should end with something similar to
-    # `@output[:files_inspected] ||= files_inspected(extension, delimiter, base_path_replacement)`
-    # `refine data_from_output`
+    # Perform a lint of relevant code
+    #
+    # All defined lints require a "result" method
+    # @example the result method in the child class
+    #   def result(opts = {})
+    #     super
+    #     @task = __method__.to_s
+    #     @path ||= 'path/or/**/glob/to/files''
+    #     lint_data = JSON.parse(`some-command-line-linter`)
+    #     @output[:files_inspected] ||= files_inspected(extension, delimiter, base_path_replacement)
+    #     refine data_from_output
+    #  end
+    #
+    # @param [Hash] opts the options to create a lint with.
+    # @option opts [Boolean] :is_dev whether or not the class was initialized from the command line
+    # @option opts [Array<String, Symbol>] :git_files files returned from the commit
+    # @option opts [String] :root_dir base directory
+    # @option opts [String, Array] :path ('') path to files. Accepts glob notation
+    # @returns output [Hash] combined and refined data from lint
     def initialize(opts = {})
       opts[:is_dev] ||= false
       opts[:root_dir] ||= root_dir

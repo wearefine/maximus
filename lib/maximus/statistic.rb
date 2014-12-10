@@ -5,16 +5,24 @@ module Maximus
 
     include Helper
 
-    # opts - Lint options (default: {})
-    #    :is_dev - wether or not this is being called by a rake task
-    #    :root_dir - absolute path to working directory (optional)
-    #    :port - 4-digit port number (optional)
-    #    :base_url - standard domain with http:// (default: http://localhost:3000) (optional)
-    #    :path - default set in methods (optional)
-    # All statistics should have the following:
-    # def result method to handle the actual parsing
-    # TODO - should this be def output to be more consistent?
-    # Didn't want to trip over the instance variable @output
+    # Gather info about how the code performs
+    #
+    # All defined lints require a "result" method
+    # @example the result method in the child class
+    #   def result(opts = {})
+    #     super
+    #     @path ||= 'path/or/**/glob/to/files''
+    #     stat_data = JSON.parse(`some-command-line-stat-runner`)
+    #     @output
+    #  end
+    #
+    # @param [Hash] opts the options to create a lint with.
+    # @option opts [Boolean] :is_dev whether or not the class was initialized from the command line
+    # @option opts [String] :root_dir base directory
+    # @option opts [String] :base_url the host
+    # @option opts [String, Integer] :post port number
+    # @option opts [String, Array] :path ('') path to files. Accepts glob notation
+    # @returns output [Hash] combined and refined data from statistic
     def initialize(opts = {})
       opts[:is_dev] ||= false
       opts[:root_dir] ||= root_dir

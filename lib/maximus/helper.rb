@@ -93,13 +93,6 @@ module Maximus
       @@log
     end
 
-    # Determine if current process was called by a rake task
-    # Returns Boolean
-    # http://stackoverflow.com/questions/2467208/how-can-i-tell-if-rails-code-is-being-run-via-rake-or-script-generate
-    def is_rake_task?
-      File.basename($0) == 'rake'
-    end
-
     # Convert the array from lines_added into spelled-out ranges
     # Example: lines_added = {'filename' => ['0..10', '11..14']}
     # Becomes {'filename' => {[0,1,2,3,4,5,6,7,8,9,10], [11,12,13,14]}}
