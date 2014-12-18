@@ -6,9 +6,9 @@ The all-in-one linting solution.
 
 Plays nice with Middleman and Rails.
 
-In the development block:
-
-`gem 'maximus', git: 'git@bitbucket.org:wearefine/maximus.git'`
+Gemfile: `gem 'maximus', group: :development`
+Elsewhere/command line: `gem install maximus`
+Globally with RVM (~/.rvm/gemsets/global.gems): `maximus` 
 
 ## Command Line Flags
 
