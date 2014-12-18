@@ -17,8 +17,8 @@ Flag                | Accepts                          | Description
 `-p`/`--path`       | String/Array                     | Absolute path to URLs or files
 `-f`/`--frontend`   | Boolean/Blank                    | Run all front-end lints
 `-b`/`--backend`    | Boolean/Blank                    | Run all back-end lints
-`-s`/`--statistics` | Boolean/Blank                    | Run all back-end lints
-`-a`/`--all`        | Boolean/Blank                    | Run all everything
+`-s`/`--statistics` | Boolean/Blank                    | Run all statistics
+`-a`/`--all`        | Boolean/Blank                    | Run everything
 `-i`/`--include`    | String/Array                     | Include specific lints or statistics
 `-i`/`--exclude`    | String/Array                     | Exclude specific lints or statistics
 `-c`/`--commit`     | String/`working`/`last`/`master` |
