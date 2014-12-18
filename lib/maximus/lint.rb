@@ -189,6 +189,7 @@ module Maximus
     # @param errors [Hash] data from lint
     # @return [String] console message to display
     def lint_dev_format(errors = @output[:raw_data])
+      return if errors.blank?
       pretty_output = ''
       errors.each do |filename, error_list|
         pretty_output += "\n"
