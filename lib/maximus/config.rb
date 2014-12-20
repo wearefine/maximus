@@ -17,6 +17,7 @@ module Maximus
         unless lint_data.is_a?(FalseClass)
           lint_data = {} if lint_data.is_a?(TrueClass)
           case lint
+
             when 'jshint', 'JSHint', 'JShint'
               if yaml_data[lint]['ignore']
                 jshintignore_file = []
@@ -24,17 +25,21 @@ module Maximus
                 @configs[:jshintignore] = temp_it('.jshintignore', jshintignore_file)
               end
               @configs[:jshint] = temp_it('jshint.json', lint_data.to_json)
+
             when 'scsslint', 'scss-lint', 'SCSSLint'
               lint_data['format'] = 'JSON'
               @configs[:scsslint] = temp_it('scsslint.yml', lint_data.to_yaml)
+
             when 'rubocop'
               @configs[:rubocop] = temp_it('rubocop.yml', lint_data.to_yaml)
+
             when 'stylestats'
               @configs[:stylestats] = temp_it('stylestats.json', lint_data.to_json)
+
             when 'phantomas'
               @configs[:phantomas] = temp_it('phantomas.json', lint_data.to_json)
-            when 'wraith'
 
+            when 'wraith'
               @configs[:wraith] = {}
               if lint_data.include?('browser')
                 lint_data['browser'].each do |browser, browser_value|
@@ -67,11 +72,15 @@ module Maximus
                 lint_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/snap.js")
                 @configs[:wraith] << wraith_setup(lint_data)
               end
+
+            # Configuration important to all of maximus
             when 'base_url', 'paths', 'root_dir'
               @configs[lint.to_sym] = yaml_data[lint]
           end
         end
       end
+
+      # Finally, we're done
       @configs
     end
 
