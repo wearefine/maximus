@@ -1,4 +1,3 @@
-require 'maximus/constants'
 require 'maximus/version'
 require 'maximus/helper'
 require 'maximus/git_control'
