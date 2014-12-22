@@ -18,7 +18,7 @@ class Maximus::CLI < Thor
   class_option :include, aliases: ['-i'], type: :array, default: [], desc: "Include only specific lints or statistics"
   class_option :exclude, aliases: ['-e'], type: :array, default: [], desc: "Exlude specific lints or statistics"
 
-  class_option :commit, aliases: ['-c', '--sha'], type: :string, default: 'working', banner: "working, last, master, or sha", desc: "Lint by commit or working copy"
+  class_option :git, aliases: ['-g', '--sha'], type: :string, default: 'working', banner: "working, last, master, or sha", desc: "Lint by commit or working copy"
 
   def initialize(*args)
     super
@@ -57,7 +57,7 @@ class Maximus::CLI < Thor
     # If include flag is enabled, run based on what's included
     return options[:include].each { |i| send(i) } unless options[:include].blank?
     # If all flag is not enabled, lint working copy as it's supposed to be
-    @config.settings[:commit] = options[:commit]
+    @config.settings[:commit] = options[:git]
     return Maximus::GitControl.new({config: @config}).lints_and_stats(true)
   end
 

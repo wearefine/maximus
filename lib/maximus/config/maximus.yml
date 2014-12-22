@@ -1,8 +1,2 @@
-scsslint: true
-jshint: true
-rubocop: true
-railsbp: true
-brakeman: true
-phantomas: true
-stylestats: true
-wraith: true
+lints: true
+statistics: true

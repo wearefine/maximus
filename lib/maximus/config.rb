@@ -52,6 +52,8 @@ module Maximus
       @yaml['domain'] ||= @settings[:domain]
       @yaml['paths'] ||= @settings[:paths]
       @yaml['port'] ||= @settings[:port]
+      set_families('lints', ['jshint', 'scsslint', 'rubocop', 'brakeman', 'railsbp'])
+      set_families('statistics', ['phantomas', 'stylestats', 'wraith'])
 
       # Override options with any defined in a discovered config file
       evaluate_yaml
@@ -92,9 +94,11 @@ module Maximus
 
               @settings[:rubocop] = temp_it('rubocop.yml', value.to_yaml)
 
-            # For lints that don't have config options
-            when 'brakeman', 'rails_best_practice'
-              @settings[key.to_sym] = yaml_data[key]
+            when 'brakeman'
+              @settings[:brakeman] = yaml_data[key]
+
+            when 'rails_best_practice', 'railsbp'
+              @settings[:railsbp] = yaml_data[key]
 
             when 'stylestats', 'Stylestats'
               value = load_config(value)
@@ -195,6 +199,21 @@ module Maximus
 
 
     private
+
+    # Allow shorthand to be declared for groups Maximus executions
+    #
+    # @example disable statistics
+    #   @yaml['statistics'] = false
+    #   set_families('statistics', ['phantomas', 'stylestats', 'wraith'])
+    #
+    # @param head_of_house [String] @yaml key and group label
+    # @param family [Array] group of other @yaml keys to be disabled
+    # @return [void] modified @yaml
+    def set_families(head_of_house, family)
+      if @yaml.has_key?(head_of_house)
+        family.each { |f| @yaml[f] = @yaml[head_of_house].is_a?(TrueClass) }
+      end
+    end
 
     # Load config files if filename supplied
     #

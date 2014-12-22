@@ -13,7 +13,7 @@ module Maximus
 
       return unless temp_config(@task)
 
-      @path = @@settings[:root_dir] if @path.blank?
+      @path = @settings[:root_dir] if @path.blank?
 
       return unless path_exists(@path)
 
