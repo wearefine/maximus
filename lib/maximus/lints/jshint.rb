@@ -10,7 +10,7 @@ module Maximus
 
       return unless check_default(@task)
 
-      @path ||= @@is_rails ? "#{@@settings[:root_dir]}/app/assets" : "#{@@settings[:root_dir]}source/assets"
+      @path ||= is_rails? ? "#{@@settings[:root_dir]}/app/assets" : "#{@@settings[:root_dir]}source/assets"
 
       return unless path_exists(@path)
 

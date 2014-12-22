@@ -4,7 +4,7 @@ module Maximus
   # @since 0.1.0
   # @attr_accessor output [Hash] result of a lint parsed by Lint#refine
   class Lint
-    attr_accessor :output
+    attr_accessor :output, :config
 
     include Helper
 
@@ -27,13 +27,16 @@ module Maximus
     #   @see GitControl#lints_and_stats
     # @option file_paths [Array, String] lint only specific files or directories
     #   Accepts globs too
-    #   Could inherit from @@settings (i.e. if passed from command line)
-    #   Note: this is different from @@settings[:paths]
     #   which is used to define paths from the URL
+    # @option opts [Config object] :config custom Maximus::Config object
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
+      # only run the config once
+      @@config ||= opts[:config] || Maximus::Config.new
+      @settings ||= @@config.settings
+
       @git_files = opts[:git_files]
-      @path = opts[:file_paths] || @@settings[:file_paths]
+      @path = opts[:file_paths] || @settings[:file_paths]
       @output = {}
     end
 
@@ -44,11 +47,15 @@ module Maximus
     def refine(data)
       # Prevent abortive empty JSON.parse error
       data = '{}' if data.blank?
+      return puts "Error from #{@task}: #{data}" if data.is_a?(String) && data.include?('No such')
+
       data = data.is_a?(String) ? JSON.parse(data) : data
+
       @output[:relevant_lints] = relevant_lints( data, @git_files ) unless @git_files.blank?
-      if @@settings[:commit]
+      unless @settings[:commit].blank?
         data = @output[:relevant_lints]
       end
+
       lint_warnings = []
       lint_errors = []
       lint_conventions = []
@@ -81,16 +88,16 @@ module Maximus
       @output[:lint_conventions] = lint_conventions
       @output[:lint_refactors] = lint_refactors
       lint_count = (lint_errors.length + lint_warnings.length + lint_conventions.length + lint_refactors.length)
-      if @@is_dev
+      if @@config.is_dev?
         puts lint_dev_format(data) unless data.blank?
         puts lint_summarize
         lint_ceiling lint_count
       else
-        @@log.info lint_summarize
+        @@config.log.info lint_summarize
         # Because this should be returned in the format it was received
         @output[:raw_data] = data.to_json
       end
-      @config.destroy_temp(@task)
+      @@config.destroy_temp(@task)
       @output
     end
 
@@ -103,7 +110,7 @@ module Maximus
     # @param delimiter [String] comma or space separated
     # @param remove [String] remove from all file names
     # @return all_files [Array<string>] list of file names
-    def files_inspected(ext, delimiter = ',', remove = @@settings[:root_dir])
+    def files_inspected(ext, delimiter = ',', remove = @settings[:root_dir])
       @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, remove)
     end
 
@@ -121,7 +128,7 @@ module Maximus
           lint_file = lint[file[:filename].to_s]
 
           expanded = lines_added_to_range(file)
-          revert_name = file[:filename].gsub("#{@@settings[:root_dir]}/", '')
+          revert_name = file[:filename].gsub("#{@settings[:root_dir]}/", '')
           unless lint_file.blank?
             all_files[revert_name] = []
 
@@ -138,11 +145,20 @@ module Maximus
           end
         else
           # Optionally store the filename with a blank array
-          #   @example all_files[file[:filename].to_s.gsub("#{@@settings[:root_dir]}/", '')] = []
+          #   @example all_files[file[:filename].to_s.gsub("#{@settings[:root_dir]}/", '')] = []
         end
       end
       @output[:files_linted] = all_files.keys
       all_files
+    end
+
+    # Look for a config defined from Config#initialize
+    #
+    # @param search_for [String]
+    # @return [String, Boolean] path to temp file
+    def check_default(search_for)
+      return false if @settings.nil?
+      @settings[search_for.to_sym].blank? ? false : @settings[search_for.to_sym]
     end
 
 
@@ -152,7 +168,7 @@ module Maximus
     #
     # @return [String] console message to display
     def lint_summarize
-      puts "\n" if @@is_dev
+      puts "\n" if @@config.is_dev?
 
       puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length > 0
 
@@ -196,7 +212,7 @@ module Maximus
       pretty_output = ''
       errors.each do |filename, error_list|
         pretty_output += "\n"
-        filename = filename.gsub("#{@@settings[:root_dir]}/", '')
+        filename = filename.gsub("#{@settings[:root_dir]}/", '')
         pretty_output += filename.color(:cyan).underline
         pretty_output += "\n"
         error_list.each do |message|

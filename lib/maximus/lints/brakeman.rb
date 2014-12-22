@@ -7,10 +7,12 @@ module Maximus
     # @see Lint#initialize
     def result
 
-      return unless @@is_rails
-      return unless check_default(@task)
+      return unless is_rails?
 
       @task = 'brakeman'
+
+      return unless check_default(@task)
+
       @path ||= @@settings[:root_dir]
 
       return unless path_exists(@path)

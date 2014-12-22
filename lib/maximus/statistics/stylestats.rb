@@ -5,14 +5,13 @@ module Maximus
     # @path array preferrably absolute paths, but relative should work
     # If stylestatting one file, pass that as an array
     #
-    # @example stylestat one file
-    #   Maximus::Stylestats.new({path: ['/absolute/to/public/assets/application.css']}).result
-    #
     # @see Statistic#initialize
     def result
 
+      return if @settings[:stylestats].blank?
+
       node_module_exists('stylestats')
-      @path ||= @@is_rails ? "#{@@settings[:root_dir]}/public/assets/**/*.css" : "#{@@settings[:root_dir]}/**/*.css"
+      @path ||= is_rails? ? "#{@settings[:root_dir]}/public/assets/**/*.css" : "#{@settings[:root_dir]}/**/*.css"
 
       css_files = @path.is_a?(Array) ? @path : find_css_files
 
@@ -20,22 +19,22 @@ module Maximus
 
         # For Rails, we only want the name of the compiled asset, because we know it'll live in public/assets.
         # If this isn't Rails, sure, give me the full path because the directory structure is likely unique
-        pretty_name = @@is_rails ? file.split('/').pop.gsub(/(-{1}[a-z0-9]{32}*\.{1}){1}/, '.') : file
+        pretty_name = is_rails? ? file.split('/').pop.gsub(/(-{1}[a-z0-9]{32}*\.{1}){1}/, '.') : file
 
         puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
 
         # include JSON formatter unless we're in dev
-        stylestats = `stylestats #{file} --config=#{check_default('stylestats')} #{'--type=json' unless @@is_dev}`
+        stylestats = `stylestats #{file} --config=#{check_default('stylestats')} #{'--type=json' unless @@config.is_dev?}`
 
         refine_stats(stylestats, pretty_name)
 
         File.delete(file)
       end
 
-      if @@is_rails
+      if is_rails?
         # @todo I'd rather Rake::Task but it's not working in different directories
-        Dir.chdir(@@settings[:root_dir]) do
-          if @@is_dev
+        Dir.chdir(@settings[:root_dir]) do
+          if @@config.is_dev?
             # @todo review that this may not be best practice, but it's really noisy in the console
             quietly { `rake assets:clobber` }
           else
@@ -52,23 +51,23 @@ module Maximus
     private
 
     # Find all CSS files or compile.
+    #
     # Uses sprockets if Rails; Sass engine otherwise.
     # Compass is supported
-    #
     # @return [Array] CSS files
     def find_css_files
       searched_files = []
 
-      if @@is_rails
+      if is_rails?
         # Only load tasks if we're not running a rake task
-        Rails.application.load_tasks unless @@is_dev
+        Rails.application.load_tasks unless @@config.is_dev?
 
         puts "\n"
         puts 'Compiling assets for stylestats...'.color(:blue)
 
         # @todo I'd rather Rake::Task but it's not working in different directories
-        Dir.chdir(@@settings[:root_dir]) do
-          if @@is_dev
+        Dir.chdir(@settings[:root_dir]) do
+          if @@config.is_dev?
              # @todo review that this may not be best practice, but it's really noisy in the console
             quietly { `rake assets:precompile` }
           else

@@ -9,10 +9,8 @@ module Maximus
   module Helper
 
     # See if project linted is a Rails app
-    # This will usually be stored as a class variable in the inherited class
-    # @example class variable
-    #   @@is_rails = is_rails?
     #
+    # This will usually be stored as a class variable in the inherited class
     # @return [Boolean]
     def is_rails?
       defined?(Rails)
@@ -43,12 +41,12 @@ module Maximus
       end
     end
 
-    # Look for a config defined from Config#initialize
+    # Look for a file in the config directory
     #
-    # @param filename [String]
-    # @return [String] absolute path to the reporter file
-    def check_default(search_for)
-      @@settings[search_for.to_sym].blank? ? false : @config.temp_files[search_for.to_sym]
+    # @param file [String] filename with extension to search for
+    # @return [String] path to default config file or file in user's directory
+    def check_default_config_path(file)
+      File.exist?(file) ? file : File.join(File.dirname(__FILE__), "config/#{file}")
     end
 
     # Grab the absolute path of the reporter file
@@ -91,6 +89,7 @@ module Maximus
 
     # Edit and save a YAML file
     #
+    # @param yaml_location [String] YAML absolute file path
     # @return [void]
     def edit_yaml(yaml_location, &block)
       d = YAML.load_file(yaml_location)
@@ -105,18 +104,6 @@ module Maximus
     def prompt(*args)
       print(*args)
       STDIN.gets
-    end
-
-    # Defines base logger
-    #
-    # @param out [String, STDOUT] location for logging
-    #   Accepts file path
-    # @return [Logger] @@log for logging use
-    def mlog(out)
-      out ||= STDOUT
-      @@log ||= Logger.new(out)
-      @@log.level ||= Logger::INFO
-      @@log
     end
 
     # Convert the array from lines_added into spelled-out ranges

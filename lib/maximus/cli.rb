@@ -2,6 +2,8 @@ require 'thor'
 
 # @since 0.1.0
 class Maximus::CLI < Thor
+
+  attr_reader :config
   include Thor::Actions
   class_option :frontend, aliases: ['-f', '--front-end'], type: :boolean, default: false, lazy_default: false, desc: "Do front-end lints"
   class_option :backend, aliases: ['-b', '--back-end'], type: :boolean, default: false, lazy_default: false, desc: "Do back-end lints"
@@ -18,7 +20,8 @@ class Maximus::CLI < Thor
 
   class_option :commit, aliases: ['-c', '--sha'], type: :string, default: 'working', banner: "working, last, master, or sha", desc: "Lint by commit or working copy"
 
-  def initialize
+  def initialize(*args)
+    super
     @config ||= Maximus::Config.new(default_options)
   end
 
@@ -54,7 +57,8 @@ class Maximus::CLI < Thor
     # If include flag is enabled, run based on what's included
     return options[:include].each { |i| send(i) } unless options[:include].blank?
     # If all flag is not enabled, lint working copy as it's supposed to be
-    return Maximus::GitControl.new.lints_and_stats(true)
+    @config.settings[:commit] = options[:commit]
+    return Maximus::GitControl.new({config: @config}).lints_and_stats(true)
   end
 
   # @todo something better than just installing in the global npm file
@@ -78,41 +82,40 @@ class Maximus::CLI < Thor
         url: options[:paths],
         domain: options[:domain],
         port: options[:port],
-        commit: options[:commit],
         is_dev: true
       }
     end
 
     def scsslint
-      Maximus::Scsslint.new.result
+      Maximus::Scsslint.new({config: @config}).result
     end
 
     def jshint
-      Maximus::Jshint.new.result
+      Maximus::Jshint.new({config: @config}).result
     end
 
     def rubocop
-      Maximus::Rubocop.new.result
+      Maximus::Rubocop.new({config: @config}).result
     end
 
     def railsbp
-      Maximus::Railsbp.new.result
+      Maximus::Railsbp.new({config: @config}).result
     end
 
     def brakeman
-      Maximus::Brakeman.new.result
+      Maximus::Brakeman.new({config: @config}).result
     end
 
     def stylestats
-      Maximus::Stylestats.new.result
+      Maximus::Stylestats.new({config: @config}).result
     end
 
     def phantomas
-      Maximus::Phantomas.new.result
+      Maximus::Phantomas.new({config: @config}).result
     end
 
     def wraith
-      Maximus::Wraith.new.result
+      Maximus::Wraith.new({config: @config}).result
     end
   end
 

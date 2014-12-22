@@ -1,6 +1,6 @@
-require 'maximus/config'
 require 'maximus/version'
 require 'maximus/helper'
+require 'maximus/config'
 require 'maximus/git_control'
 require 'maximus/lint'
 require 'maximus/statistic'

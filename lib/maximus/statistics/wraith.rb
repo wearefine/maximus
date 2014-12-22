@@ -9,7 +9,7 @@ module Maximus
     # @see Statistic#initialize
     def result
 
-      return if @@settings[:wraith].blank?
+      return if @settings[:wraith].blank?
 
       node_module_exists('phantomjs', 'brew install')
 
@@ -22,16 +22,16 @@ module Maximus
       #
       # @yieldparam browser [String] headless browser name
       # @yieldparam configpath [String] path to temp config file (see Config#wraith_setup)
-      @@settings[:wraith].each do |browser, configpath|
-        @wraith_yaml = YAML.load_file(filepath)
-        if File.directory?("#{@@settings[:root_dir]}/#{@wraith_yaml['history_dir']}")
+      @settings[:wraith].each do |browser, configpath|
+        @wraith_yaml = YAML.load_file(configpath)
+        if File.directory?("#{@settings[:root_dir]}/#{@wraith_yaml['history_dir']}")
           puts `wraith latest #{configpath}`
         else
           puts `wraith history #{configpath}`
         end
 
         @config.destroy_temp(browser)
-        wraith_parse(browser, filepath)
+        wraith_parse(browser, configpath)
       end
 
     end
@@ -44,10 +44,10 @@ module Maximus
     # Example {:statistics=>{:/=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
     # @return [Hash] { path: { percent_changed: [{ size: percent_diff }] } }
     def wraith_parse(browser, wraith_filename)
-      Dir.glob("#{@@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.txt").select { |f| File.file? f }.each do |file|
+      Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.txt").select { |f| File.file? f }.each do |file|
         file_object = File.open(file, 'rb')
         orig_label = File.dirname(file).split('/').last
-        label = @@settings[:paths][orig_label]
+        label = @settings[:paths][orig_label]
         @output[:statistics][browser.to_sym] ||= {}
         @output[:statistics][browser.to_sym][label.to_sym] ||= {}
         browser_output = @output[:statistics][browser.to_sym][label.to_sym]

@@ -9,12 +9,13 @@ module Maximus
       @task = 'scsslint'
 
       return unless check_default(@task)
-
-      @path ||= @@is_rails ? "#{@@settings[:root_dir]}/app/assets/stylesheets" : "#{@@settings[:root_dir]}/source/assets/stylesheets"
+      if @path.blank?
+        @path = is_rails? ? "#{@settings[:root_dir]}/app/assets/stylesheets" : "#{@settings[:root_dir]}/source/assets/stylesheets"
+      end
 
       return unless path_exists(@path)
 
-      scss = `scss-lint #{@path} -c #{check_default(@task)}`
+      scss = `scss-lint #{@path} -c #{check_default(@task)} --format=JSON`
       @output[:files_inspected] ||= files_inspected('scss')
       refine scss
     end

@@ -20,12 +20,16 @@ module Maximus
     # @param opts [Hash] ({}) options passed directly to statistic
     # @option file_paths [Array, String] lint only specific files or directories
     #   Accepts globs too
-    #   Could inherit from @@settings (i.e. if passed from command line)
-    #   Note: this is different from @@settings[:paths]
     #   which is used to define paths from the URL (see Statistics#initialize)
+    # @option opts [Config object] :config custom Maximus::Config object
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
-      @path = opts[:file_paths] || @@settings[:file_paths]
+
+      opts[:config] ||= Maximus::Config.new
+      @@config ||= opts[:config]
+      @settings ||= @@config.settings
+
+      @path = opts[:file_paths] || @settings[:file_paths]
 
       @output = {}
 
@@ -44,7 +48,7 @@ module Maximus
     def refine_stats(stats_cli, file_path)
 
       # Stop right there unless you mean business
-      return puts stats_cli if @@is_dev
+      return puts stats_cli if @@config.is_dev?
 
       # JSON.parse will throw an abortive error if it's given an empty string
       return false if stats_cli.blank?

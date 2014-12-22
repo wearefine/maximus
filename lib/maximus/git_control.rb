@@ -12,12 +12,17 @@ module Maximus
     # @param opts [Hash] options passed directly to config
     # @option opts [Boolean] :is_dev (false) whether or not the class was initialized from the command line
     #   This is set here again in case only GitControl needs to be directly called (outside of command line)
+    # @option opts [Config object] :config custom Maximus::Config object
+    # @option opts [String] :commit accepts sha, "working", "last", or "master".
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
       opts[:is_dev] ||= false
-      @config ||= Maximus::Config.new({is_dev: opts[:is_dev]})
-      @psuedo_commit = (!@@settings[:commit].blank? && @@settings[:commit] == 'working')
-      @g = Git.open(@@settings[:root_dir], :log => log)
+
+      opts[:config] ||= Maximus::Config.new({commit: opts[:commit], is_dev: opts[:is_dev] })
+      @config ||= opts[:config]
+      @settings ||= @config.settings
+      @psuedo_commit = (!@settings[:commit].blank? && (@settings[:commit] == 'working' || @settings[:commit] == 'last' || @settings[:commit] == 'master') )
+      @g = Git.open(@settings[:root_dir], :log => @settings[:git_log])
     end
 
     # 30,000 foot view of a commit
@@ -57,12 +62,12 @@ module Maximus
     def compare(sha1 = master_commit.sha, sha2 = sha)
       diff_return = {}
 
-      if @@settings[:commit]
-        sha1 = case @@settings[:commit]
+      if @settings[:commit]
+        sha1 = case @settings[:commit]
           when 'master' then master_commit.sha
           when 'last' then @g.object('HEAD^').sha
           when 'working' then 'working'
-          else @@settings[:commit]
+          else @settings[:commit]
         end
       end
 
@@ -95,7 +100,7 @@ module Maximus
             unless files[child].blank?
               files[child].each do |c|
                 # hack to ignore deleted files
-                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@@settings[:root_dir]}/#{c}", changes: new_lines[c] ]
+                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@settings[:root_dir]}/#{c}", changes: new_lines[c] ]
               end
               files[ext].concat(files[child])
               files.delete(child)
@@ -132,7 +137,7 @@ module Maximus
       git_shas.each do |sha, exts|
         # @todo better way to silence git, in case there's a real error?
         quietly { `git checkout #{sha} -b maximus_#{sha}` } unless @psuedo_commit
-        puts sha.to_s.color(:blue) if @@is_dev
+        puts sha.to_s.color(:blue) if @config.is_dev?
         git_output[sha.to_sym] = {
           lints: {},
           statistics: {}
@@ -144,7 +149,10 @@ module Maximus
         # This is where everything goes down
         exts.each do |ext, files|
           # For relevant_lines data
-          lint_opts[:git_files] = files
+          lint_opts = {
+            git_files: files,
+            config: @config
+          }
           lint_opts[:file_paths] = lint_file_paths(files, ext) if lint_by_path
           case ext
             when :scss
@@ -156,11 +164,11 @@ module Maximus
                 # @todo stylestat is singular here because model name in Rails is singular.
                 #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
                 #   which breaks the model name.
-                statistics[:stylestat] = Maximus::Stylestats.new.result
+                statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
 
                 # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:phantomas] ||= Maximus::Phantomas.new(stat_opts).result
-                statistics[:wraith] ||= Maximus::Wraith.new(stat_opts).result
+                statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
+                statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
               end
             when :js
               lints[:jshint] = Maximus::Jshint.new(lint_opts).result
@@ -168,10 +176,10 @@ module Maximus
               # Do not run statistics if called from command line
               if lint_opts[:commit].blank?
 
-                statistics[:phantomas] ||= Maximus::Phantomas.new.result
+                statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
 
                 # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] ||= Maximus::Wraith.new.result
+                statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
               end
             when :ruby
               lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
