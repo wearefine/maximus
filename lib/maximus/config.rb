@@ -54,7 +54,7 @@ module Maximus
       # Match defaults
       @yaml['domain'] ||= @settings[:domain]
       @yaml['paths'] ||= @settings[:paths]
-      puts @settings[:paths]
+
       # Override options with any defined in a discovered config file
       evaluate_yaml
     end
