@@ -75,7 +75,7 @@ Flag                | Accepts                          | Description
 `-a`/`--all`        | Boolean/Blank                    | Run everything
 `-i`/`--include`    | String/Array                     | Include specific lints or statistics
 `-i`/`--exclude`    | String/Array                     | Exclude specific lints or statistics
-`-git`/`--sha`      | String/`working`/`last`/`master` | Run maximus based on a git commit or your working copy
+`-git`/`--sha`      | String                           | Run maximus based on a git commit, working copy (`working`, default), the last commit (`last` or `HEAD^`), or the master branch (`master`)
 `-c`/`--config`     | String                           | Path to config file
 
 
@@ -91,23 +91,23 @@ Command               | Description
 `backend`             | Runs all back-end lints
 `statistics`          | Runs all statistics
 
-## Examples
+### Examples
 
 Default. Lints based on your working directory
 
-`maximus -c working` 
+`maximus -g working` 
 
 Lints based on the previous commit by `HEAD^`
 
-`maximus -c last` 
+`maximus -g last` 
 
 Lints based on the commit on the master branch
 
-`maximus -c master`
+`maximus -g master`
 
 Lints based on commit d96a8e23
 
-`maximus -c d96a8e23`
+`maximus -g d96a8e23`
 
 ## Lint syntax
 
