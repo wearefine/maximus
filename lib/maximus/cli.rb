@@ -10,13 +10,15 @@ class Maximus::CLI < Thor
   class_option :statistics, aliases: ['-s'], type: :boolean, default: false, lazy_default: false, desc: "Do statistics"
   class_option :all, aliases: ['-a'], type: :boolean,  default: false, lazy_default: false, desc: "Do everything"
 
-  class_option :filepath, aliases: ['-p'], type: :array, default: [], desc: "Space-separated path(s) to files"
-  class_option :paths, aliases: ['-u'], type: :array, default: ['/'], desc: "Statistics only - Space-separated path(s) to relative URL paths"
+  class_option :filepath, aliases: ['-fp'], type: :array, default: [], desc: "Space-separated path(s) to files"
+  class_option :urls, aliases: ['-u'], type: :array, default: ['/'], desc: "Statistics only - Space-separated path(s) to relative URL paths"
   class_option :domain, aliases: ['-d'], type: :string, default: 'http://localhost', desc: "Statistics only - Web address (prepended to paths)"
-  class_option :port, aliases: ['-po'], type: :numeric, default: 3000, desc: 'Statistics only - Port to use if required (appended to domain)'
+  class_option :port, aliases: ['-po'], type: :numeric, default: nil, desc: 'Statistics only - Port to use if required (appended to domain)'
 
   class_option :include, aliases: ['-i'], type: :array, default: [], desc: "Include only specific lints or statistics"
   class_option :exclude, aliases: ['-e'], type: :array, default: [], desc: "Exlude specific lints or statistics"
+
+  class_option :config, aliases: ['-c'], type: :string, default: 'maximus.yml', desc: 'Path to config file'
 
   class_option :git, aliases: ['-g', '--sha'], type: :string, default: 'working', banner: "working, last, master, or sha", desc: "Lint by commit or working copy"
 
@@ -79,10 +81,11 @@ class Maximus::CLI < Thor
     def default_options
       {
         file_paths: options[:filepath],
-        url: options[:paths],
+        paths: options[:urls],
         domain: options[:domain],
         port: options[:port],
-        is_dev: true
+        is_dev: true,
+        config_file: options[:config]
       }
     end
 

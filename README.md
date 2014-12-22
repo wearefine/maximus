@@ -6,25 +6,34 @@ The all-in-one linting solution.
 
 Plays nice with Middleman and Rails.
 
-Gemfile: `gem 'maximus', group: :development`
-Elsewhere/command line: `gem install maximus`
-Globally with RVM (~/.rvm/gemsets/global.gems): `maximus` 
+## Install
+
+* Gemfile: `gem 'maximus', group: :development`
+* Elsewhere/command line: `gem install maximus`
+* Globally with RVM (~/.rvm/gemsets/global.gems): `maximus` 
+
+Maximus has several node dependencies that can be installed with a `npm install -g jshint phantomas stylestats` or a `maximus install` once the gem is successfully installed.
 
 ## Command Line Flags
 
 Flag                | Accepts                          | Description
 --------------------|----------------------------------|--------------------
-`-p`/`--path`       | String/Array                     | Absolute path to URLs or files
+`-fp`/`--filepaths` | String/Array                     | Space-separated path(s) to files
+`-u`/`--urls`       | String/Array                     | Statistics only - Space-separated path(s) to relative URL paths
+`-d`/`--domain`     | String                           | Statistics only - Web address (prepended to paths)
+`-po`/`--port`      | String/Numeric                   | Statistics only - Port to use if required (appended to domain)
 `-f`/`--frontend`   | Boolean/Blank                    | Run all front-end lints
 `-b`/`--backend`    | Boolean/Blank                    | Run all back-end lints
 `-s`/`--statistics` | Boolean/Blank                    | Run all statistics
 `-a`/`--all`        | Boolean/Blank                    | Run everything
 `-i`/`--include`    | String/Array                     | Include specific lints or statistics
 `-i`/`--exclude`    | String/Array                     | Exclude specific lints or statistics
-`-c`/`--commit`     | String/`working`/`last`/`master` |
+`-git`/`--sha`      | String/`working`/`last`/`master` | Run maximus based on a git commit or your working copy
+`-c`/`--config`     | String                           | Path to config file
+
 
 * Lint tasks can accept glob notation, i.e. `**/*.scss`
-* Arrays are space-separated, i.e. `--path=http://localhost:3000/ http://localhost:3000/about`
+* Arrays are space-separated, i.e. `--urls=/ /about`
 
 ## Command Line Commands
 
@@ -66,3 +75,34 @@ When adding new lints, the JSON output should obey the following format:
   line: <position Integer>
 } ]
 ```
+
+## Changelog
+
+### 0.1.3
+
+Features:
+
+* Options are defined once in Config class
+* `maximus.yml` can be loaded to set the config
+* All lint and statistic options can be in the maximus config file
+* More command line flags
+
+### 0.1.2 (December 18, 2014)
+
+Features: 
+
+* Better inline documentation
+
+Bugfixes:
+
+* Resolve exiting error when no lint errors are preset (0efef67)
+
+### 0.1.1 (December 9, 2014)
+
+* Description and homepage update
+
+### 0.1.0 (December 9, 2014)
+
+* Initial
+
+

@@ -24,6 +24,7 @@ module Maximus
     # @option opts [String, Array] :file_paths ('') path to files. Accepts glob notation
     # @option opts [Hash] :paths ({home: '/'}) labeled relative path to URLs. Statistics only
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
+    # @option opts [String] :config_file ('maximus.yml') path to config file
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
       opts[:is_dev] ||= false
@@ -37,16 +38,32 @@ module Maximus
 
       # @see Helper#root_dir
       opts[:root_dir] ||= root_dir
-      opts[:domain] ||= 'http://localhost:3000'
-      opts[:port] ||= ''
+      opts[:domain] ||= 'http://localhost'
+      opts[:port] ||= is_rails? ? 3000 : ''
       opts[:paths] ||= { 'home' => '/' }
+
+      # Accounting for space-separated command line arrays
+      if opts[:paths].is_a?(Array)
+        new_paths = {}
+        opts[:paths].each do |p|
+          if p.split('/').length > 1
+            new_paths[p.split('/').last.to_s] = p
+          else
+            new_paths['home'] = '/'
+          end
+        end
+        opts[:paths] = new_paths
+      end
 
       # What we're really interested in
       @settings = opts
 
       # Instance variables for Config class only
       @temp_files = {}
-      @yaml = YAML.load_file(find_config)
+
+      conf_location = (opts[:config_file] && File.exist?(opts[:config_file])) ? opts[:config] : find_config
+
+      @yaml = YAML.load_file(conf_location)
 
       # Match defaults
       @yaml['domain'] ||= @settings[:domain]
