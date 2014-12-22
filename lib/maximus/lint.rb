@@ -21,6 +21,7 @@ module Maximus
     #  end
     #
     # Inherits settings from {Config#initialize}
+    # @see Config#initialize
     #
     # @param opts [Hash] ({}) options passed directly to the lint
     # @option git_files [Hash] filename: file location

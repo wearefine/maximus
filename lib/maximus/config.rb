@@ -69,6 +69,8 @@ module Maximus
       @yaml['domain'] ||= @settings[:domain]
       @yaml['paths'] ||= @settings[:paths]
       @yaml['port'] ||= @settings[:port]
+
+      # @todo the command line options are overriden here and it should be the other way around
       set_families('lints', ['jshint', 'scsslint', 'rubocop', 'brakeman', 'railsbp'])
       set_families('frontend', ['jshint', 'scsslint', 'phantomas', 'stylestats', 'wraith'])
       set_families('backend', ['rubocop', 'brakeman', 'railsbp'])
@@ -175,6 +177,9 @@ module Maximus
       @settings
     end
 
+    # If output should be returned to console
+    #   in a pretty display
+    #
     # @return [Boolean]
     def is_dev?
       @settings[:is_dev]
@@ -194,8 +199,7 @@ module Maximus
 
     # Remove all or one created temporary config file
     #
-    # @see #temp_it
-    # @see #yaml_evaluate
+    # @see temp_it
     #
     # @param filename [String] (nil) file to destroy
     #   If nil, destroy all temp files
@@ -283,7 +287,7 @@ module Maximus
 
     # See if a config file exists
     #
-    # @see #find_config
+    # @see find_config
     #
     # This is used exclusively for the find_config method
     # @param file [String] file name
@@ -295,8 +299,8 @@ module Maximus
 
     # Wraith is a complicated gem with significant configuration
     #
-    # @see #yaml_evaluate
-    # @see #temp_it
+    # @see yaml_evaluate
+    # @see temp_it
     #
     # @param value [Hash] modified data from a wraith config or injected data
     # @param name [String] ('wraith') config file name to write and eventually load

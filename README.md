@@ -12,7 +12,17 @@ Plays nice with Middleman and Rails.
 * Elsewhere/command line: `gem install maximus`
 * Globally with RVM (~/.rvm/gemsets/global.gems): `maximus` 
 
-Maximus has several node dependencies that can be installed with a `npm install -g jshint phantomas stylestats` or a `maximus install` once the gem is successfully installed.
+Maximus has several node dependencies that can be installed via the command line:
+
+```bash
+$ npm install -g jshint phantomas stylestats
+```
+
+or once the gem is successfully installed:
+
+```bash
+$ maximus install
+```
 
 ## Config
 

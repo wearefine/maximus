@@ -17,6 +17,9 @@ module Maximus
     #  end
     #
     # Inherits settings from {Config#initialize}
+    #
+    # @see Config#initialize
+    #
     # @param opts [Hash] ({}) options passed directly to statistic
     # @option file_paths [Array, String] stat only specific files or directories
     #   Accepts globs too
