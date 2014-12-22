@@ -1,5 +1,5 @@
 module Maximus
-  # @since 0.1.2
+  # @since 0.1.3
   # @attr_reader settings [Hash] all the options
   # @attr_reader temp_files [Hash] Filename without extension => path to temp file
   class Config
