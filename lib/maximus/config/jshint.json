@@ -1,9 +1,0 @@
-{
-  "browser": true,
-  "esnext": true,
-  "globals": {},
-  "globalstrict": true,
-  "undef": true,
-  "unused": true,
-  "jquery": true
-}

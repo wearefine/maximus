@@ -1,0 +1,124 @@
+# Config for all
+domain: 'http://localhost:3000'
+paths:
+  home: '/'
+
+# Lints
+scsslint:
+  scss_files: 'app/assets/stylesheets/'
+
+  # output format will always be JSON, so don't bother setting
+  # Format: whatever
+
+  linters:
+    Compass::*:
+      enabled: true
+    Compass::PropertyWithMixin:
+      ignore:
+        - 'inline-block'
+        - 'border-radius'
+        - 'box-shadow'
+        - 'opacity'
+        - 'text-shadow'
+    Indentation:
+      enabled: false
+      character: tab
+      severity: warning
+      width: 1
+    NameFormat:
+      convention: BEM
+      enabled: false
+    SelectorFormat:
+      enabled: false
+    DeclarationOrder:
+      enabled: false
+    EmptyLineBetweenBlocks:
+      enabled: false
+    NestingDepth:
+      max_depth: 6
+      severity: error
+    SelectorDepth:
+      max_depth: 5
+      severity: error
+    LeadingZero:
+      enabled: false
+    PlaceholderInExtend:
+      enabled: false
+    PropertySortOrder:
+      enabled: false
+    QualifyingElement:
+      enabled: true
+      allow_element_with_attribute: true
+    SpaceAfterPropertyColon:
+      enabled: false
+    UnnecessaryParentReference:
+      severity: error
+    VendorPrefixes:
+      exclude:
+        - '-webkit-tap-highlight-color'
+        - '-webkit-font-smoothing'
+        - '-moz-osx-font-smoothing'
+        - '-webkit-appearance'
+        - '-moz-placeholder'
+        - '-ms-input-placeholder'
+        - '-moz-pre-wrap'
+
+jshint:
+  browser: true
+  esnext: true
+  globals: {}
+  globalstrict: true
+  undef: true
+  unused: true
+  jquery: true
+
+rubocop: 'rubocop.yml'
+
+brakeman: true
+
+rails_best_practice: false
+
+# Statistics
+phantomas:
+  block-domain: 'google-analytics.com'
+  skip-modules:
+    - 'Caching'
+    - 'localStorage'
+    - 'Cookies'
+    - 'assetsWithQueryString'
+    - 'nodesWithInlineCSS'
+
+stylestats:
+  published: false
+  paths: false
+  stylesheets: false
+  styleElements: true
+  size: true
+  dataUriSize: true
+  ratioOfDataUriSize: true
+  gzippedSize: false
+  simplicity: true
+  rules: true
+  selectors: true
+  mostIdentifier: true
+  mostIdentifierSelector: true
+  lowestCohesion: true
+  lowestCohesionSelector: true
+  totalUniqueFontSizes: true
+  uniqueFontSize: true
+  totalUniqueColors: true
+  uniqueColor: true
+  idSelectors: true
+  universalSelectors: true
+  unqualifiedAttributeSelectors: true
+  javascriptSpecificSelectors: "[#\\.]js\\-"
+  importantKeywords: true
+  floatProperties: true
+  mediaQueries: true
+  propertiesCount: 10
+  requestOptions: {}
+
+wraith:
+  browser:
+    phantomjs: phantomjs
+    casperjs: casperjs

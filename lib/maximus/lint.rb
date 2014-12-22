@@ -2,6 +2,7 @@ require 'json'
 
 module Maximus
   # @since 0.1.0
+  # @attr_accessor output [Hash] result of a lint parsed by Lint#refine
   class Lint
     attr_accessor :output
 
@@ -11,7 +12,7 @@ module Maximus
     #
     # All defined lints require a "result" method
     # @example the result method in the child class
-    #   def result(opts = {})
+    #   def result
     #     @task = __method__.to_s
     #     @path ||= 'path/or/**/glob/to/files''
     #     lint_data = JSON.parse(`some-command-line-linter`)
@@ -19,21 +20,20 @@ module Maximus
     #     refine data_from_output
     #  end
     #
-    # @param opts [Hash] the options to create a lint with
-    # @option opts [Boolean] :is_dev (false) whether or not the class was initialized from the command line
-    # @option opts [Array<String, Symbol>] :git_files files returned from the commit
-    # @option opts [String] :root_dir base directory
-    # @option opts [String, Array] :path ('') path to files. Accepts glob notation
-    # @return @output [Hash] combined and refined data from lint
+    # Inherits settings from {Config#initialize}
+    #
+    # @param opts [Hash] ({}) options passed directly to the lint
+    # @option git_files [Hash] filename: file location
+    #   @see GitControl#lints_and_stats
+    # @option file_paths [Array, String] lint only specific files or directories
+    #   Accepts globs too
+    #   Could inherit from @@settings (i.e. if passed from command line)
+    #   Note: this is different from @@settings[:paths]
+    #   which is used to define paths from the URL
+    # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
-      opts[:is_dev] ||= false
-      opts[:root_dir] ||= root_dir
-
-      @@log ||= mlog
-      @@is_rails ||= is_rails?
-      @@is_dev = opts[:is_dev]
-      @path = opts[:path]
-      @opts = opts
+      @git_files = opts[:git_files]
+      @path = opts[:file_paths] || @@settings[:file_paths]
       @output = {}
     end
 
@@ -45,8 +45,8 @@ module Maximus
       # Prevent abortive empty JSON.parse error
       data = '{}' if data.blank?
       data = data.is_a?(String) ? JSON.parse(data) : data
-      @output[:relevant_lints] = relevant_lints( data, @opts[:git_files] ) unless @opts[:git_files].blank?
-      if @opts[:commit]
+      @output[:relevant_lints] = relevant_lints( data, @git_files ) unless @git_files.blank?
+      if @@settings[:commit]
         data = @output[:relevant_lints]
       end
       lint_warnings = []
@@ -90,6 +90,7 @@ module Maximus
         # Because this should be returned in the format it was received
         @output[:raw_data] = data.to_json
       end
+      @config.destroy_temp(@task)
       @output
     end
 
@@ -102,12 +103,14 @@ module Maximus
     # @param delimiter [String] comma or space separated
     # @param remove [String] remove from all file names
     # @return all_files [Array<string>] list of file names
-    def files_inspected(ext, delimiter = ',', remove = @opts[:root_dir])
+    def files_inspected(ext, delimiter = ',', remove = @@settings[:root_dir])
       @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, remove)
     end
 
     # Compare lint output with lines changed in commit
     #
+    # @param lint [Hash] output lint data
+    # @param files [Hash<String: String>] filename: filepath
     # @return [Array] lints that match the lines in commit
     def relevant_lints(lint, files)
       all_files = {}
@@ -118,13 +121,13 @@ module Maximus
           lint_file = lint[file[:filename].to_s]
 
           expanded = lines_added_to_range(file)
-          revert_name = file[:filename].gsub("#{@opts[:root_dir]}/", '')
+          revert_name = file[:filename].gsub("#{@@settings[:root_dir]}/", '')
           unless lint_file.blank?
             all_files[revert_name] = []
 
             # @todo originally I tried .map and delete_if, but this works,
-            # and the other method didn't cover all bases.
-            # Gotta be a better way to write this though
+            #   and the other method didn't cover all bases.
+            #   Gotta be a better way to write this though
             lint_file.each do |l|
               if expanded.include?(l['line'].to_i)
                 all_files[revert_name] << l
@@ -135,7 +138,7 @@ module Maximus
           end
         else
           # Optionally store the filename with a blank array
-          # all_files[file[:filename].to_s.gsub("#{@opts[:root_dir]}/", '')] = []
+          #   @example all_files[file[:filename].to_s.gsub("#{@@settings[:root_dir]}/", '')] = []
         end
       end
       @output[:files_linted] = all_files.keys
@@ -193,7 +196,7 @@ module Maximus
       pretty_output = ''
       errors.each do |filename, error_list|
         pretty_output += "\n"
-        filename = filename.gsub("#{@opts[:root_dir]}/", '')
+        filename = filename.gsub("#{@@settings[:root_dir]}/", '')
         pretty_output += filename.color(:cyan).underline
         pretty_output += "\n"
         error_list.each do |message|

@@ -1,5 +1,6 @@
 module Maximus
   # @since 0.1.0
+  # @attr_accessor output [Hash] result of a lint parsed by Lint#refine
   class Statistic
     attr_accessor :output
 
@@ -9,36 +10,28 @@ module Maximus
     #
     # All defined statistics require a "result" method
     # @example the result method in the child class
-    #   def result(opts = {})
+    #   def result
     #     @path ||= 'path/or/**/glob/to/files''
     #     stat_data = JSON.parse(`some-command-line-stat-runner`)
     #     @output
     #  end
     #
-    # @param opts [Hash] the options to create a lint with.
-    # @option opts [Boolean] :is_dev (false) whether or not the class was initialized from the command line
-    # @option opts [String] :root_dir base directory
-    # @option opts [String] :base_url ('http://localhost:3000/') the host
-    # @option opts [String, Integer] :port port number
-    # @option opts [String, Array] :path ('') path to files. Accepts glob notation
-    #
-    # @return output [Hash] combined and refined data from statistic
+    # Inherits settings from {Config#initialize}
+    # @param opts [Hash] ({}) options passed directly to statistic
+    # @option file_paths [Array, String] lint only specific files or directories
+    #   Accepts globs too
+    #   Could inherit from @@settings (i.e. if passed from command line)
+    #   Note: this is different from @@settings[:paths]
+    #   which is used to define paths from the URL (see Statistics#initialize)
+    # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
-      opts[:is_dev] ||= false
-      opts[:root_dir] ||= root_dir
-      opts[:port] ||= ''
-      opts[:base_url] ||= 'http://localhost:3000'
-
-      @@log ||= mlog
-      @@is_rails ||= is_rails?
-      @@is_dev = opts[:is_dev]
-      @path = opts[:path]
-      @opts = opts
+      @path = opts[:file_paths] || @@settings[:file_paths]
 
       @output = {}
+
       # This is different from lints
-      # A new stat is run per file or URL, so they should be stored in a child
-      # A lint just has one execution, so it's data can be stored directly in @output
+      #   A new stat is run per file or URL, so they should be stored in a child
+      #   A lint just has one execution, so it's data can be stored directly in @output
       @output[:statistics] = {}
     end
 

@@ -12,7 +12,7 @@ module Maximus
     def result
 
       node_module_exists('stylestats')
-      @path ||= @@is_rails ? "#{@opts[:root_dir]}/public/assets/**/*.css" : "#{@opts[:root_dir]}/**/*.css"
+      @path ||= @@is_rails ? "#{@@settings[:root_dir]}/public/assets/**/*.css" : "#{@@settings[:root_dir]}/**/*.css"
 
       css_files = @path.is_a?(Array) ? @path : find_css_files
 
@@ -25,7 +25,7 @@ module Maximus
         puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
 
         # include JSON formatter unless we're in dev
-        stylestats = `stylestats #{file} --config=#{check_default('stylestats.json')} #{'--type=json' unless @@is_dev}`
+        stylestats = `stylestats #{file} --config=#{check_default('stylestats')} #{'--type=json' unless @@is_dev}`
 
         refine_stats(stylestats, pretty_name)
 
@@ -34,7 +34,7 @@ module Maximus
 
       if @@is_rails
         # @todo I'd rather Rake::Task but it's not working in different directories
-        Dir.chdir(@opts[:root_dir]) do
+        Dir.chdir(@@settings[:root_dir]) do
           if @@is_dev
             # @todo review that this may not be best practice, but it's really noisy in the console
             quietly { `rake assets:clobber` }
@@ -67,7 +67,7 @@ module Maximus
         puts 'Compiling assets for stylestats...'.color(:blue)
 
         # @todo I'd rather Rake::Task but it's not working in different directories
-        Dir.chdir(@opts[:root_dir]) do
+        Dir.chdir(@@settings[:root_dir]) do
           if @@is_dev
              # @todo review that this may not be best practice, but it's really noisy in the console
             quietly { `rake assets:precompile` }

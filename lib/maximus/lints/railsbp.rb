@@ -8,9 +8,10 @@ module Maximus
     def result
 
       return unless @@is_rails
+      return unless check_default(@task)
 
       @task = 'railsbp'
-      @path ||= @opts[:root_dir]
+      @path ||= @@settings[:root_dir]
 
       return unless path_exists(@path)
 

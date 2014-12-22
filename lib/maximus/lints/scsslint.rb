@@ -7,11 +7,14 @@ module Maximus
     # @see Lint#initialize
     def result
       @task = 'scsslint'
-      @path ||= @@is_rails ? "#{@opts[:root_dir]}/app/assets/stylesheets" : "#{@opts[:root_dir]}/source/assets/stylesheets"
+
+      return unless check_default(@task)
+
+      @path ||= @@is_rails ? "#{@@settings[:root_dir]}/app/assets/stylesheets" : "#{@@settings[:root_dir]}/source/assets/stylesheets"
 
       return unless path_exists(@path)
 
-      scss = `scss-lint #{@path} -c #{check_default('scsslint.yml')}  --format=JSON`
+      scss = `scss-lint #{@path} -c #{check_default(@task)}`
       @output[:files_inspected] ||= files_inspected('scss')
       refine scss
     end

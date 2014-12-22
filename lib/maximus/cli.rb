@@ -3,14 +3,24 @@ require 'thor'
 # @since 0.1.0
 class Maximus::CLI < Thor
   include Thor::Actions
-  class_option :path, aliases: ["-p", "-u", "\--url"], default: nil, desc: "Space-separated path(s) to URLs or files"
-  class_option :frontend, default: false, lazy_default: false, type: :boolean, desc: "Do front-end lints", aliases: ["-f", "--front-end"]
-  class_option :backend, default: false, lazy_default: false, type: :boolean, desc: "Do back-end lints", aliases: ["-b", "--back-end"]
-  class_option :statistics, default: false, lazy_default: false, type: :boolean, desc: "Do statistics", aliases: ["-s"]
-  class_option :all, default: false, lazy_default: false, type: :boolean, desc: "Do everything", aliases: ["-a"]
-  class_option :include, default: [], type: :array, aliases: ["-i"], desc: "Include only specific lints or statistics"
-  class_option :exclude, default: [], type: :array, aliases: ["-e"], desc: "Exlude specific lints or statistics"
-  class_option :commit, default: 'working', type: :string, banner: "working, last, master, or sha", aliases: ["-c", "--sha"], desc: "Lint by commit or working copy"
+  class_option :frontend, aliases: ['-f', '--front-end'], type: :boolean, default: false, lazy_default: false, desc: "Do front-end lints"
+  class_option :backend, aliases: ['-b', '--back-end'], type: :boolean, default: false, lazy_default: false, desc: "Do back-end lints"
+  class_option :statistics, aliases: ['-s'], type: :boolean, default: false, lazy_default: false, desc: "Do statistics"
+  class_option :all, aliases: ['-a'], type: :boolean,  default: false, lazy_default: false, desc: "Do everything"
+
+  class_option :filepath, aliases: ['-p'], type: :array, default: [], desc: "Space-separated path(s) to files"
+  class_option :paths, aliases: ['-u'], type: :array, default: ['/'], desc: "Statistics only - Space-separated path(s) to relative URL paths"
+  class_option :domain, aliases: ['-d'], type: :string, default: 'http://localhost', desc: "Statistics only - Web address (prepended to paths)"
+  class_option :port, aliases: ['-po'], type: :numeric, default: 3000, desc: 'Statistics only - Port to use if required (appended to domain)'
+
+  class_option :include, aliases: ['-i'], type: :array, default: [], desc: "Include only specific lints or statistics"
+  class_option :exclude, aliases: ['-e'], type: :array, default: [], desc: "Exlude specific lints or statistics"
+
+  class_option :commit, aliases: ['-c', '--sha'], type: :string, default: 'working', banner: "working, last, master, or sha", desc: "Lint by commit or working copy"
+
+  def initialize
+    @config ||= Maximus::Config.new(default_options)
+  end
 
   desc "frontend", "Execute all front-end tasks"
   def frontend
@@ -44,11 +54,10 @@ class Maximus::CLI < Thor
     # If include flag is enabled, run based on what's included
     return options[:include].each { |i| send(i) } unless options[:include].blank?
     # If all flag is not enabled, lint working copy as it's supposed to be
-    return Maximus::GitControl.new({ commit: options[:commit], is_dev: true }).lints_and_stats(true)
+    return Maximus::GitControl.new.lints_and_stats(true)
   end
 
   # @todo something better than just installing in the global npm file
-  # and including phantomjs
   desc "install", "Install all dependencies"
   def install
     `npm install -g jshint phantomas stylestats`
@@ -65,41 +74,45 @@ class Maximus::CLI < Thor
     end
     def default_options
       {
-        path: options[:path],
+        file_paths: options[:filepath],
+        url: options[:paths],
+        domain: options[:domain],
+        port: options[:port],
+        commit: options[:commit],
         is_dev: true
       }
     end
 
     def scsslint
-      Maximus::Scsslint.new(default_options).result
+      Maximus::Scsslint.new.result
     end
 
     def jshint
-      Maximus::Jshint.new(default_options).result
+      Maximus::Jshint.new.result
     end
 
     def rubocop
-      Maximus::Rubocop.new(default_options).result
+      Maximus::Rubocop.new.result
     end
 
     def railsbp
-      Maximus::Railsbp.new(default_options).result
+      Maximus::Railsbp.new.result
     end
 
     def brakeman
-      Maximus::Brakeman.new(default_options).result
+      Maximus::Brakeman.new.result
     end
 
     def stylestats
-      Maximus::Stylestats.new(default_options).result
+      Maximus::Stylestats.new.result
     end
 
     def phantomas
-      Maximus::Phantomas.new(default_options).result
+      Maximus::Phantomas.new.result
     end
 
     def wraith
-      Maximus::Wraith.new(default_options).result
+      Maximus::Wraith.new.result
     end
   end
 

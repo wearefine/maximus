@@ -1,102 +1,192 @@
 module Maximus
+  # @since 0.1.2
+  # @attr_reader settings [Hash]
+  # @attr_reader is_dev [Boolean]
+  # @attr_reader log [Logger]
+  # @attr_reader temp_files [Hash]
   class Config
 
-    def initialize
-      @configs = {}
-      @temp_files = []
+    include Helper
+
+    attr_reader :settings, :is_dev, :log, :temp_files
+
+    # Globally-accessible options to all of maximus
+    #
+    # @param opts [Hash] options passed directly to config
+    # @option opts [Boolean] :is_dev (false) whether or not the class was initialized from the command line
+    # @option opts [String, Boolean, nil] :log ('log/maximus_git.log') path to log file
+    #   If not set, logger outputs to STDOUT
+    # @option opts [String] :root_dir base directory
+    # @option opts [String] :domain ('http://localhost:3000') the host - used for Statistics
+    # @option opts [String, Integer] :port ('') port number - used for Statistics
+    #   and appended to domain. If blank (false, empty string, etc.), will not
+    #   append to domain
+    # @option opts [String, Array] :file_paths ('') path to files. Accepts glob notation
+    # @option opts [Hash] :paths ({home: '/'}) labeled relative path to URLs. Statistics only
+    # @option opts [String] :commit accepts sha, "working", "last", or "master".
+    #   Used primarily in the command line
+    # @return [void] this method is used to set up instance variables
+    def initialize(opts = {})
+      opts[:is_dev] ||= false
+
+      # Only set log file if it's set to true.
+      #   Otherwise, allow it to be nil or a path
+      opts[:log] = 'log/maximus_git.log' if opts[:log].is_a?(TrueClass)
+
+      # @see Helper#root_dir
+      opts[:root_dir] ||= root_dir
+      opts[:domain] ||= 'http://localhost:3000'
+      opts[:port] ||= ''
+      opts[:path] ||= { home: '/' }
+
+      # @see Helper#mlog
+      @@log = mlog(opts[:log])
+
+      @@is_dev = opts[:is_dev]
+
+      # @see Helper#is_rails?
+      @@is_rails = is_rails?
+
+      # What we're really interested in
+      @@settings = opts
+
+      # Instance variables for Config class only
+      @temp_files = {}
       @yaml = YAML.load_file(find_config)
+
+      # Match defaults
+      @yaml['domain'] ||= @@settings[:domain]
+      @yaml['paths'] ||= @@settings[:paths]
+
+      # Override options with any defined in a discovered config file
+      evaluate_yaml
     end
 
-    # Generate appropriate config files for lints or statistics
+    # Set global options or generate appropriate config files for lints or statistics
     #
-    # @param yaml_data [Hash] loaded data from the discovered maximus config file
-    # @return [Hash] paths to temp config files
-    #   These should be deleted with destroy_all_temp after read and loaded
-    def evaluate_yaml(yaml_data = yaml_data)
-      yaml_data.each do |lint, lint_data|
-        unless lint_data.is_a?(FalseClass)
-          lint_data = {} if lint_data.is_a?(TrueClass)
-          case lint
+    # @param yaml_data [Hash] (@yaml) loaded data from the discovered maximus config file
+    # @return [Hash] paths to temp config files and static options
+    #   These should be deleted with destroy_temp after read and loaded
+    def evaluate_yaml(yaml_data = @yaml)
+      yaml_data.each do |key, value|
+        unless value.is_a?(FalseClass)
+          value = {} if value.is_a?(TrueClass)
+
+          case key
 
             when 'jshint', 'JSHint', 'JShint'
-              if yaml_data[lint]['ignore']
+
+              # @todo DRY this up, but can't call it at the start because of the
+              #   global config variables (last when statement in this switch)
+              value = YAML.load_file(value) if value.is_a?(String)
+
+              if yaml_data[key]['ignore']
                 jshintignore_file = []
-                yaml_data[lint]['ignore'].each { |i| jshintignore_file << "#{i}\n" }
-                @configs[:jshintignore] = temp_it('.jshintignore', jshintignore_file)
+                yaml_data[key]['ignore'].each { |i| jshintignore_file << "#{i}\n" }
+                @@settings[:jshintignore] = temp_it('jshintignore.json', jshintignore_file)
               end
-              @configs[:jshint] = temp_it('jshint.json', lint_data.to_json)
+              @@settings[:jshint] = temp_it('jshint.json', value.to_json)
 
-            when 'scsslint', 'scss-lint', 'SCSSLint'
-              lint_data['format'] = 'JSON'
-              @configs[:scsslint] = temp_it('scsslint.yml', lint_data.to_yaml)
+            when 'scsslint', 'scss-lint', 'SCSSlint'
+              value = YAML.load_file(value) if value.is_a?(String)
 
-            when 'rubocop'
-              @configs[:rubocop] = temp_it('rubocop.yml', lint_data.to_yaml)
+              value['format'] = 'JSON'
+              @@settings[:scsslint] = temp_it('scsslint.yml', value.to_yaml)
 
-            when 'stylestats'
-              @configs[:stylestats] = temp_it('stylestats.json', lint_data.to_json)
+            when 'rubocop', 'Rubocop', 'RuboCop'
+              value = YAML.load_file(value) if value.is_a?(String)
 
-            when 'phantomas'
-              @configs[:phantomas] = temp_it('phantomas.json', lint_data.to_json)
+              @@settings[:rubocop] = temp_it('rubocop.yml', value.to_yaml)
 
-            when 'wraith'
-              @configs[:wraith] = {}
-              if lint_data.include?('browser')
-                lint_data['browser'].each do |browser, browser_value|
+            # For lints that don't have config options
+            when 'brakeman', 'rails_best_practice'
+              @@settings[key.to_sym] = yaml_data[key]
+
+            when 'stylestats', 'Stylestats'
+              value = YAML.load_file(value) if value.is_a?(String)
+
+              @@settings[:stylestats] = temp_it('stylestats.json', value.to_json)
+
+            when 'phantomas', 'Phantomas'
+              value = YAML.load_file(value) if value.is_a?(String)
+
+              @@settings[:phantomas] = temp_it('phantomas.json', value.to_json)
+
+            when 'wraith', 'Wraith'
+              value = YAML.load_file(value) if value.is_a?(String)
+
+              @@settings[:wraith] = {}
+              if value.include?('browser')
+                value['browser'].each do |browser, browser_value|
                   unless browser_value.is_a?(FalseClass)
                     new_data = {}
                     new_data['browser'] = []
                     new_data['browser'] << { browser.to_sym => browser.to_s }
 
-                    new_data['directory'] = "maximus_#{browser}_wraith"
-                    new_data['history_dir'] = "maximus_#{browser}_wraith_history"
-                    puts browser
-                    if browser == 'casperjs'
-                      new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/casper.js")
-                    elsif browser == 'nojs'
-                      new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/nojs.js")
-                    elsif browser == 'phantomjs'
-                      new_data['directory'] = "maximus_wraith"
-                      new_data['history_dir'] = "maximus_wraith_history"
-                      new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/snap.js")
-                    end
+                    new_data['directory'] = "maximus_wraith_#{browser}"
+                    new_data['history_dir'] = "maximus_wraith_history_#{browser}"
 
-                    @configs[:wraith] << wraith_setup(new_data, "wraith_#{browser}")
+                    snap_file = case browser
+                      when 'casperjs' then 'casper'
+                      when 'nojs' then 'nojs'
+                      else 'snap'
+                    end
+                    new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
+
+                    @@settings[:wraith] << wraith_setup(new_data, "wraith_#{browser}")
                   end
                 end
               else
-                lint_data['browser'] = []
-                lint_data['browser'] << { phantomjs: 'phantomjs' }
-                lint_data['directory'] = 'maximus_wraith'
-                lint_data['history_dir'] = 'maximus_wraith_history'
-                lint_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/snap.js")
-                @configs[:wraith] << wraith_setup(lint_data)
+                value['browser'] = []
+                value['browser'] << { phantomjs: 'phantomjs' }
+                value['directory'] = 'maximus_wraith_phantomjs'
+                value['history_dir'] = 'maximus_wraith_history_phantomjs'
+                value['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/snap.js")
+                @@settings[:wraith] << wraith_setup(value)
               end
 
             # Configuration important to all of maximus
-            when 'base_url', 'paths', 'root_dir'
-              @configs[lint.to_sym] = yaml_data[lint]
+            when 'is_dev', 'log', 'root_dir', 'domain', 'port', 'paths', 'commit'
+              @@settings[key.to_sym] = yaml_data[key]
           end
         end
       end
 
       # Finally, we're done
-      @configs
+      @@settings
     end
 
-    # Remove all created temporary config files
+    # Remove all or one created temporary config file
     #
     # @see Config#temp_it
     # @see Config#yaml_evaluate
+    # @param filename [String] (nil) file to destroy
+    #   If nil, destroy all temp files
     # @return [void]
-    def destroy_all_temp
-      @temp_files.each do |temp|
-        temp.close
-        temp.unlink
+    def destroy_temp(filename = nil)
+      if filename.nil?
+        @temp_files.each { |filename, file| file.close.unlink }
+      else
+        @temp_files[filename.to_sym].close.unlink
       end
     end
 
+
     private
+
+    # Create a temp file with config data
+    #
+    # Stores all temp files in @temp_files or self.temp_files
+    #   In Hash with filename minus extension as the key.
+    # @param filename [String] the preferred name/identifier of the file
+    # @param data [Mixed] config data important to each lint or statistic
+    # @return [String] absolute path to new config file
+    def temp_it(filename, data)
+      file = Tempfile.new(filename)
+      file.write(data)
+      @temp_files << { filename.split('.')[0].to_sym => file }
+      file.path
+    end
 
     # Look for a maximus config file
     #
@@ -121,40 +211,23 @@ module Maximus
       File.exist?(File.join(File.dirname(__FILE__), file)) ? File.join(File.dirname(__FILE__), file) : false
     end
 
-    # Create a temp file with config data
-    #
-    # @param filename [String] the preferred name/identifier of the file
-    # @param data [Mixed] config data important to each lint or statistic
-    # @return [String] absolute path to new config file
-    def temp_it(filename, data)
-      file = Tempfile.new(filename)
-      file.write(data)
-      @temp_files << file
-      file.path
-    end
-
     # Wraith is a complicated gem with significant configuration
     #
     # @see Config#yaml_evaluate
     # @see Config#temp_if
     #
-    # @param lint_data [Hash] modified data from a wraith config or injected data
-    # @param name [String] config file name to write and eventually load
+    # @param value [Hash] modified data from a wraith config or injected data
+    # @param name [String] ('wraith') config file name to write and eventually load
     # @return [String] temp file path
-    def wraith_setup(lint_data, name = 'wraith')
-      if yaml_data.include?('urls')
-        lint_data['domains'] = yaml_data['urls']
+    def wraith_setup(value, name = 'wraith')
+      if @yaml.include?('urls')
+        value['domains'] = yaml_data['urls']
       else
-        lint_data['domains'] = {}
-        lint_data['domains']['main'] = yaml_data['base_url'] ? yaml_data['base_url'] : 'http://localhost:3000'
+        value['domains'] = {}
+        value['domains']['main'] = @yaml['domain']
       end
-      if yaml_data.include?('paths')
-        lint_data['paths'] = yaml_data['paths']
-      else
-        lint_data['paths'] = {}
-        lint_data['paths']['home'] = '/'
-      end
-      temp_it("#{name}.yml", lint_data.to_yaml)
+      value['paths'] = @yaml['paths']
+      temp_it("#{name}.yml", value.to_yaml)
     end
 
   end

@@ -1,8 +1,4 @@
 require 'git'
-require 'active_support'
-require 'active_support/core_ext/object/blank'
-require 'rainbow'
-require 'rainbow/ext/string'
 
 module Maximus
   # @since 0.1.0
@@ -12,29 +8,16 @@ module Maximus
 
     # Git management
     #
-    # @param opts [Hash] the options to initialize and pass to other classes
-    # @option opts [Boolean] :is_dev whether or not the class was initialized from the command line
-    # @option opts [String] :log ('log/maximus_git.log') path to log file
-    # @option opts [String] :root_dir base directory
-    # @option opts [String] :base_url ('http://localhost:3000') the host - used for Statistics
-    # @option opts [String, Integer] :port port number - used for Statistics
-    # @option opts [String, Array] :path ('') path to files. Accepts glob notation
-    # @option opts [String] :commit accepts sha, "working", "last", or "master".
-    #   Used in the command line
+    # Inherits settings from {Config#initialize}
+    # @param opts [Hash] options passed directly to config
+    # @option opts [Boolean] :is_dev (false) whether or not the class was initialized from the command line
+    #   This is set here again in case only GitControl needs to be directly called (outside of command line)
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
       opts[:is_dev] ||= false
-      opts[:log] = Logger.new('log/maximus_git.log') if opts[:log].nil?
-      opts[:base_url] ||= 'http://localhost:3000'
-      opts[:port] ||= ''
-      opts[:root_dir] ||= root_dir
-      log = opts[:log] ? log : nil
-      @@log = mlog
-      @@is_dev = opts[:is_dev]
-      @opts = opts
-
-      @psuedo_commit = (!@opts[:commit].blank? && @opts[:commit] == 'working')
-      @g = Git.open(@opts[:root_dir], :log => log)
+      @config ||= Maximus::Config.new({is_dev: opts[:is_dev]})
+      @psuedo_commit = (!@@settings[:commit].blank? && @@settings[:commit] == 'working')
+      @g = Git.open(@@settings[:root_dir], :log => log)
     end
 
     # 30,000 foot view of a commit
@@ -74,12 +57,12 @@ module Maximus
     def compare(sha1 = master_commit.sha, sha2 = sha)
       diff_return = {}
 
-      if @opts[:commit]
-        sha1 = case @opts[:commit]
+      if @@settings[:commit]
+        sha1 = case @@settings[:commit]
           when 'master' then master_commit.sha
           when 'last' then @g.object('HEAD^').sha
           when 'working' then 'working'
-          else @opts[:commit]
+          else @@settings[:commit]
         end
       end
 
@@ -112,7 +95,7 @@ module Maximus
             unless files[child].blank?
               files[child].each do |c|
                 # hack to ignore deleted files
-                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@opts[:root_dir]}/#{c}", changes: new_lines[c] ]
+                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@@settings[:root_dir]}/#{c}", changes: new_lines[c] ]
               end
               files[ext].concat(files[child])
               files.delete(child)
@@ -156,23 +139,13 @@ module Maximus
         }
         lints = git_output[sha.to_sym][:lints]
         statistics = git_output[sha.to_sym][:statistics]
-        lint_opts = {
-          is_dev: @@is_dev,
-          root_dir: @opts[:root_dir],
-          commit: !@opts[:commit].blank?
-        }
-        stat_opts = {
-          is_dev: @@is_dev,
-          base_url: @opts[:base_url],
-          port: @opts[:port],
-          root_dir: @opts[:root_dir]
-        }
+        lint_opts = {}
 
         # This is where everything goes down
         exts.each do |ext, files|
           # For relevant_lines data
           lint_opts[:git_files] = files
-          lint_opts[:path] = lint_file_paths(files, ext) if lint_by_path
+          lint_opts[:file_paths] = lint_file_paths(files, ext) if lint_by_path
           case ext
             when :scss
               lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
@@ -183,11 +156,11 @@ module Maximus
                 # @todo stylestat is singular here because model name in Rails is singular.
                 #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
                 #   which breaks the model name.
-                statistics[:stylestat] = Maximus::Stylestats.new(stat_opts).result
+                statistics[:stylestat] = Maximus::Stylestats.new.result
 
                 # @todo double pipe here is best way to say, if it's already run, don't run again, right?
                 statistics[:phantomas] ||= Maximus::Phantomas.new(stat_opts).result
-                statistics[:wraith] = Maximus::Wraith.new(stat_opts).result
+                statistics[:wraith] ||= Maximus::Wraith.new(stat_opts).result
               end
             when :js
               lints[:jshint] = Maximus::Jshint.new(lint_opts).result
@@ -195,14 +168,14 @@ module Maximus
               # Do not run statistics if called from command line
               if lint_opts[:commit].blank?
 
-                statistics[:phantomas] = Maximus::Phantomas.new(stat_opts).result
+                statistics[:phantomas] ||= Maximus::Phantomas.new.result
 
                 # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] ||= Maximus::Wraith.new(stat_opts).result
+                statistics[:wraith] ||= Maximus::Wraith.new.result
               end
             when :ruby
               lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
-              lints[:railsbp] = Maximus::Railsbp.new(lint_opts).result
+              lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
               lints[:brakeman] = Maximus::Brakeman.new(lint_opts).result
             when :rails
               lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result

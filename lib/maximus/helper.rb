@@ -13,8 +13,6 @@ module Maximus
     # @example class variable
     #   @@is_rails = is_rails?
     #
-    # @see Lint#initialize
-    #
     # @return [Boolean]
     def is_rails?
       defined?(Rails)
@@ -45,15 +43,12 @@ module Maximus
       end
     end
 
-    # Look for a custom config in the app's config/ directory;
-    # otherwise, use the built-in one.
-    # @todo best practice that this inherits the @opts from the model it's being included in?
+    # Look for a config defined from Config#initialize
     #
     # @param filename [String]
     # @return [String] absolute path to the reporter file
-    def check_default(filename)
-      user_file = "#{@opts[:root_dir]}/config/#{filename}"
-      File.exist?(user_file) ? user_file : File.join(File.dirname(__FILE__), "config/#{filename}")
+    def check_default(search_for)
+      @@settings[search_for.to_sym].blank? ? false : @config.temp_files[search_for.to_sym]
     end
 
     # Grab the absolute path of the reporter file
@@ -114,9 +109,12 @@ module Maximus
 
     # Defines base logger
     #
+    # @param out [String, STDOUT] location for logging
+    #   Accepts file path
     # @return [Logger] @@log for logging use
-    def mlog
-      @@log ||= Logger.new(STDOUT)
+    def mlog(out)
+      out ||= STDOUT
+      @@log ||= Logger.new(out)
       @@log.level ||= Logger::INFO
       @@log
     end
