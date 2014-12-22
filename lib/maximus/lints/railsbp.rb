@@ -11,9 +11,9 @@ module Maximus
 
       @task = 'railsbp'
 
-      return unless check_default(@task)
+      return unless temp_config(@task)
 
-      @path ||= @@settings[:root_dir]
+      @path = @@settings[:root_dir] if @path.blank?
 
       return unless path_exists(@path)
 

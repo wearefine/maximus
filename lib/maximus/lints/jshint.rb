@@ -8,15 +8,17 @@ module Maximus
     def result
       @task = 'jshint'
 
-      return unless check_default(@task)
+      return unless temp_config(@task)
 
-      @path ||= is_rails? ? "#{@@settings[:root_dir]}/app/assets" : "#{@@settings[:root_dir]}source/assets"
+      @path = is_rails? ? "#{@settings[:root_dir]}/app/assets" : "#{@settings[:root_dir]}source/assets" if @path.blank?
 
       return unless path_exists(@path)
 
       node_module_exists(@task)
 
-      jshint = `jshint #{@path} --config=#{check_default(@task)} --exclude-path=#{check_default(@@settings[:jshintignore])} --reporter=#{reporter_path('jshint.js')}`
+      jshint_cli = "jshint #{@path} --config=#{temp_config(@task)} --reporter=#{reporter_path('jshint.js')}"
+      jshint_cli += " --exclude-path=#{temp_config(@settings[:jshintignore])}" if @settings.has_key?(:jshintignore)
+      jshint = `#{jshint_cli}`
 
       @output[:files_inspected] ||= files_inspected('js')
       refine jshint

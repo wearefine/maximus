@@ -3,6 +3,7 @@ require 'rainbow/ext/string'
 require 'active_support'
 require 'active_support/core_ext/object/blank'
 require 'yaml'
+require 'tempfile'
 
 module Maximus
   # @since 0.1.0
@@ -43,6 +44,7 @@ module Maximus
 
     # Look for a file in the config directory
     #
+    # @since 0.1.0
     # @param file [String] filename with extension to search for
     # @return [String] path to default config file or file in user's directory
     def check_default_config_path(file)

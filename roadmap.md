@@ -1,7 +1,7 @@
 # Roadmap
 
-* Check for a maximus.yml config file (for base_url, config_url, etc.) and load config globally when starting, or something similar - calling is_dev happens too often
 * Check for custom lint or stat hooks in a lib/maximus folder
+* Add custom lint path and script execution support to maximus.yml config file
 * Use PhantomJS 2.0 with webfont support
 * Resolve/review TODOs
 * Tests and specs
@@ -13,3 +13,4 @@
 * Add W3 validator (maybe)
 * Regex path names on phantomas and wraith to defend against injection and bad characters
 * include lines_added in this GitControll#diff output
+* Test for < ruby 2.0 or require 2.0 < in gemspec

@@ -4,7 +4,7 @@ module Maximus
   # @since 0.1.0
   # @attr_accessor output [Hash] result of a lint parsed by Lint#refine
   class Lint
-    attr_accessor :output, :config
+    attr_accessor :output
 
     include Helper
 
@@ -31,8 +31,9 @@ module Maximus
     # @option opts [Config object] :config custom Maximus::Config object
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
-      # only run the config once
-      @@config ||= opts[:config] || Maximus::Config.new
+
+      # Only run the config once
+      @@config ||= opts[:config] || Maximus::Config.new(opts)
       @settings ||= @@config.settings
 
       @git_files = opts[:git_files]
@@ -154,9 +155,10 @@ module Maximus
 
     # Look for a config defined from Config#initialize
     #
+    # @since 0.1.2
     # @param search_for [String]
     # @return [String, Boolean] path to temp file
-    def check_default(search_for)
+    def temp_config(search_for)
       return false if @settings.nil?
       @settings[search_for.to_sym].blank? ? false : @settings[search_for.to_sym]
     end

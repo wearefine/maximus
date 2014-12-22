@@ -3,7 +3,7 @@ module Maximus
   class Stylestats < Maximus::Statistic
 
     # @path array preferrably absolute paths, but relative should work
-    # If stylestatting one file, pass that as an array
+    #   If stylestatting one file, pass that as an array
     #
     # @see Statistic#initialize
     def result
@@ -11,22 +11,22 @@ module Maximus
       return if @settings[:stylestats].blank?
 
       node_module_exists('stylestats')
-      @path ||= is_rails? ? "#{@settings[:root_dir]}/public/assets/**/*.css" : "#{@settings[:root_dir]}/**/*.css"
+      @path = is_rails? ? "#{@settings[:root_dir]}/public/assets/**/*.css" : "#{@settings[:root_dir]}/**/*.css" if @path.blank?
 
       css_files = @path.is_a?(Array) ? @path : find_css_files
 
       css_files.each do |file|
 
         # For Rails, we only want the name of the compiled asset, because we know it'll live in public/assets.
-        # If this isn't Rails, sure, give me the full path because the directory structure is likely unique
+        #   If this isn't Rails, sure, give me the full path because the directory structure is likely unique
         pretty_name = is_rails? ? file.split('/').pop.gsub(/(-{1}[a-z0-9]{32}*\.{1}){1}/, '.') : file
 
         puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
 
         # include JSON formatter unless we're in dev
-        stylestats = `stylestats #{file} --config=#{check_default('stylestats')} #{'--type=json' unless @@config.is_dev?}`
-
-        refine_stats(stylestats, pretty_name)
+        stylestats = `stylestats #{file} --config=#{@settings[:stylestats]} #{'--type=json' unless @@config.is_dev?}`
+        puts stylestats
+        refine(stylestats, pretty_name)
 
         File.delete(file)
       end
@@ -42,7 +42,7 @@ module Maximus
           end
         end
       end
-
+      @@config.destroy_temp('stylestats')
       @output
 
     end
@@ -81,7 +81,7 @@ module Maximus
 
       else
 
-        # Load Compass paths if it exists
+        # Load Compass paths if the gem exists
         if Gem::Specification::find_all_by_name('compass').any?
           require 'compass'
           Compass.sass_engine_options[:load_paths].each do |path|
@@ -90,7 +90,7 @@ module Maximus
         end
 
         # Shouldn't need to load paths anymore, but in case this doesn't work
-        # as it should
+        #   as it should, try the func below
         # Dir.glob(@path).select { |d| File.directory? d}.each do |directory|
         #   Sass.load_paths << directory
         # end

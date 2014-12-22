@@ -3,8 +3,8 @@ require 'thor'
 # @since 0.1.0
 class Maximus::CLI < Thor
 
-  attr_reader :config
   include Thor::Actions
+
   class_option :frontend, aliases: ['-f', '--front-end'], type: :boolean, default: false, lazy_default: false, desc: "Do front-end lints"
   class_option :backend, aliases: ['-b', '--back-end'], type: :boolean, default: false, lazy_default: false, desc: "Do back-end lints"
   class_option :statistics, aliases: ['-s'], type: :boolean, default: false, lazy_default: false, desc: "Do statistics"

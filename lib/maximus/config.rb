@@ -1,17 +1,14 @@
 module Maximus
   # @since 0.1.2
-  # @attr_reader settings [Hash]
-  # @attr_reader is_dev [Boolean]
-  # @attr_reader log [Logger]
-  # @attr_reader temp_files [Hash]
+  # @attr_reader settings [Hash] all the options
+  # @attr_reader temp_files [Hash] Filename without extension => path to temp file
   class Config
 
     include Helper
 
-
     attr_reader :settings, :temp_files
 
-    # Globally-accessible options to all of maximus
+    # Global options for all of maximus
     #
     # @param opts [Hash] options passed directly to config
     # @option opts [Boolean] :is_dev (false) whether or not the class was initialized from the command line
@@ -42,18 +39,19 @@ module Maximus
       opts[:root_dir] ||= root_dir
       opts[:domain] ||= 'http://localhost:3000'
       opts[:port] ||= ''
-      opts[:paths] ||= { home: '/' }
+      opts[:paths] ||= { 'home' => '/' }
 
       # What we're really interested in
       @settings = opts
 
       # Instance variables for Config class only
-      @temp_files = []
+      @temp_files = {}
       @yaml = YAML.load_file(find_config)
 
       # Match defaults
       @yaml['domain'] ||= @settings[:domain]
       @yaml['paths'] ||= @settings[:paths]
+      @yaml['port'] ||= @settings[:port]
 
       # Override options with any defined in a discovered config file
       evaluate_yaml
@@ -75,7 +73,7 @@ module Maximus
 
               # @todo DRY this up, but can't call it at the start because of the
               #   global config variables (last when statement in this switch)
-              value = YAML.load_file(value) if value.is_a?(String)
+              value = load_config(value)
 
               if yaml_data[key].is_a?(Hash) && yaml_data[key].has_key?['ignore']
                 jshintignore_file = []
@@ -85,12 +83,12 @@ module Maximus
               @settings[:jshint] = temp_it('jshint.json', value.to_json)
 
             when 'scsslint', 'scss-lint', 'SCSSlint'
-              value = YAML.load_file(value) if value.is_a?(String)
+              value = load_config(value)
 
               @settings[:scsslint] = temp_it('scsslint.yml', value.to_yaml)
 
             when 'rubocop', 'Rubocop', 'RuboCop'
-              value = YAML.load_file(value) if value.is_a?(String)
+              value = load_config(value)
 
               @settings[:rubocop] = temp_it('rubocop.yml', value.to_yaml)
 
@@ -99,29 +97,30 @@ module Maximus
               @settings[key.to_sym] = yaml_data[key]
 
             when 'stylestats', 'Stylestats'
-              value = YAML.load_file(value) if value.is_a?(String)
-
+              value = load_config(value)
               @settings[:stylestats] = temp_it('stylestats.json', value.to_json)
 
             when 'phantomas', 'Phantomas'
-              value = YAML.load_file(value) if value.is_a?(String)
-
+              value = load_config(value)
               @settings[:phantomas] = temp_it('phantomas.json', value.to_json)
 
             when 'wraith', 'Wraith'
-              value = YAML.load_file(value) if value.is_a?(String)
+              value = load_config(value)
 
-              @settings[:wraith] = []
+              @settings[:wraith] = {}
               if value.include?('browser')
                 value['browser'].each do |browser, browser_value|
                   unless browser_value.is_a?(FalseClass)
                     new_data = {}
                     new_data['browser'] = []
-                    new_data['browser'] << { browser.to_sym => browser.to_s }
+                    new_data['browser'] << { browser.to_s => browser.to_s }
 
+                    # Regardless of what's in the config, override with maximus,
+                    #   predictable namespacing
                     new_data['directory'] = "maximus_wraith_#{browser}"
                     new_data['history_dir'] = "maximus_wraith_history_#{browser}"
 
+                    # @todo a snap file cannot be set in the config
                     snap_file = case browser
                       when 'casperjs' then 'casper'
                       when 'nojs' then 'nojs'
@@ -129,16 +128,15 @@ module Maximus
                     end
                     new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
 
-                    @settings[:wraith] << wraith_setup(new_data, "wraith_#{browser}")
+                    @settings[:wraith][browser.to_sym] = wraith_setup(new_data, "wraith_#{browser}")
                   end
                 end
               else
-                value['browser'] = []
-                value['browser'] << { phantomjs: 'phantomjs' }
+                value['browser'] = { 'phantomjs' => 'phantomjs' }
                 value['directory'] = 'maximus_wraith_phantomjs'
                 value['history_dir'] = 'maximus_wraith_history_phantomjs'
                 value['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/snap.js")
-                @settings[:wraith] << wraith_setup(value)
+                @settings[:wraith][:phantomjs] = wraith_setup(value)
               end
 
             # Configuration important to all of maximus
@@ -171,42 +169,62 @@ module Maximus
 
     # Remove all or one created temporary config file
     #
-    # @see Config#temp_it
-    # @see Config#yaml_evaluate
+    # @see #temp_it
+    # @see #yaml_evaluate
+    #
     # @param filename [String] (nil) file to destroy
     #   If nil, destroy all temp files
     # @return [void]
     def destroy_temp(filename = nil)
+      return if @temp_files[filename.to_sym].blank?
       if filename.nil?
-        @temp_files[0].each { |filename, file| file.close.unlink }
+        @temp_files.each { |filename, file| file.unlink }
+        @temp_files = {}
       else
-        @temp_files[0][filename.to_sym].unlink
+        @temp_files[filename.to_sym].unlink
+        @temp_files.delete(filename.to_sym)
       end
     end
 
+    # Combine domain with port if necessary
+    #
+    # @return [String] complete domain/host address
+    def domain
+      (!@settings[:port].blank? || @settings[:domain].include?(':')) ? "#{@settings[:domain]}:#{@settings[:port]}" : @settings[:domain]
+    end
 
-    protected
-
-    attr_reader :yaml
 
     private
+
+    # Load config files if filename supplied
+    #
+    # @param value [Mixed] value from base config file
+    # @param [Hash] return blank hash if file not found so
+    #   the reset of the process doesn't break
+    def load_config(value)
+      return value unless value.is_a?(String)
+      if File.exist?(value)
+        return YAML.load_file(value)
+      else
+        puts "#{value} not found"
+        return {}
+      end
+    end
 
     # Create a temp file with config data
     #
     # Stores all temp files in @temp_files or self.temp_files
     #   In Hash with filename minus extension as the key.
+    #
     # @param filename [String] the preferred name/identifier of the file
     # @param data [Mixed] config data important to each lint or statistic
     # @return [String] absolute path to new config file
     def temp_it(filename, data)
-      # file = File.write(filename, data)
-      # file = File.open(filename, 'w')
-      # file.write(data)
-      # file.close
-
-      file = Tempfile.new(filename)
+      ext = filename.split('.')
+      file = Tempfile.new([filename, ".#{ext[1]}"])
       file.write(data)
-      @temp_files << { filename.split('.')[0].to_sym => file }
+      file.close
+      @temp_files[ext[0].to_sym] = file
       file.path
     end
 
@@ -216,6 +234,7 @@ module Maximus
     #   If there hasn't been a file discovered yet, checks ./config/maximus.yml
     #   and if there still isn't a file, load the default one included with the
     #   maximus gem.
+    #
     # @return [String] absolute path to config file
     def find_config
       config_exists('maximus.yml') || config_exists('maximus.yaml') || config_exists('config/maximus.yaml') || check_default_config_path('maximus.yml')
@@ -223,7 +242,7 @@ module Maximus
 
     # See if a config file exists
     #
-    # @see Config#find_config
+    # @see #find_config
     #
     # This is used exclusively for the find_config method
     # @param file [String] file name
@@ -235,21 +254,33 @@ module Maximus
 
     # Wraith is a complicated gem with significant configuration
     #
-    # @see Config#yaml_evaluate
-    # @see Config#temp_if
+    # @see #yaml_evaluate
+    # @see #temp_it
     #
     # @param value [Hash] modified data from a wraith config or injected data
     # @param name [String] ('wraith') config file name to write and eventually load
     # @return [String] temp file path
-    def wraith_setup(value, name = 'wraith')
+    def wraith_setup(value, name = 'phantomjs')
+
       if @yaml.include?('urls')
         value['domains'] = yaml_data['urls']
       else
         value['domains'] = {}
-        value['domains']['main'] = @yaml['domain']
+        # @see #domain
+        value['domains']['main'] = domain
       end
+
+      # Wraith requires this screen_width config to be present
+      value['screen_widths'] ||= [767, 1024, 1280]
+
       value['paths'] = @yaml['paths']
-      temp_it("#{name}.yml", value.to_yaml)
+
+      # Wraith requires config files have .yaml extensions
+      # https://github.com/BBC-News/wraith/blob/2aff771eba01b76e61600cccb2113869bfe16479/lib/wraith/wraith.rb
+      file = Tempfile.new([name, '.yaml'])
+      file.write(value.to_yaml)
+      file.close
+      file.path
     end
 
   end

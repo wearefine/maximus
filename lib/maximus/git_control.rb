@@ -261,6 +261,7 @@ module Maximus
     end
 
     # Store last commit as Ruby Git::Object
+    #
     # @param commitsha [String]
     # @return [Git::Object]
     def vccommit(commitsha = sha)

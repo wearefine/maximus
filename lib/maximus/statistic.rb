@@ -18,15 +18,14 @@ module Maximus
     #
     # Inherits settings from {Config#initialize}
     # @param opts [Hash] ({}) options passed directly to statistic
-    # @option file_paths [Array, String] lint only specific files or directories
+    # @option file_paths [Array, String] stat only specific files or directories
     #   Accepts globs too
     #   which is used to define paths from the URL (see Statistics#initialize)
     # @option opts [Config object] :config custom Maximus::Config object
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
 
-      opts[:config] ||= Maximus::Config.new
-      @@config ||= opts[:config]
+      @@config ||= opts[:config] || Maximus::Config.new(opts)
       @settings ||= @@config.settings
 
       @path = opts[:file_paths] || @settings[:file_paths]
@@ -43,9 +42,13 @@ module Maximus
     protected
 
     # Organize stat output on the @output variable
+    #   Adds @output[:statistics][:filepath] with all statistic data
+    #   Ignores if is_dev or if stats_cli is blank
     #
-    # Adds @output[:statistics][:filepath] with all statistic data
-    def refine_stats(stats_cli, file_path)
+    # @param stats_cli [String] JSON data from a lint result
+    # @param file_path [String] key value to organize stats output
+    # @return [Hash] organized stats data
+    def refine(stats_cli, file_path)
 
       # Stop right there unless you mean business
       return puts stats_cli if @@config.is_dev?

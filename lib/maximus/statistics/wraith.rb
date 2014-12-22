@@ -17,21 +17,22 @@ module Maximus
 
       # Run history or latest depending on the existence of a history directory as defined
       #   in each wraith config file.
+      #
       # @todo this doesn't work very well. It puts the new shots in the history folder,
       #   even with absolute paths. Could be a bug in wraith
       #
       # @yieldparam browser [String] headless browser name
       # @yieldparam configpath [String] path to temp config file (see Config#wraith_setup)
       @settings[:wraith].each do |browser, configpath|
-        @wraith_yaml = YAML.load_file(configpath)
-        if File.directory?("#{@settings[:root_dir]}/#{@wraith_yaml['history_dir']}")
+        wraith_yaml = YAML.load_file(configpath)
+        if File.directory?("#{@settings[:root_dir]}/#{wraith_yaml['history_dir']}")
           puts `wraith latest #{configpath}`
         else
           puts `wraith history #{configpath}`
         end
-
-        @config.destroy_temp(browser)
-        wraith_parse(browser, configpath)
+        File.write('said.yml', wraith_yaml.to_yaml)
+        File.delete(configpath)
+        wraith_parse browser
       end
 
     end
@@ -41,9 +42,10 @@ module Maximus
 
     # Get a diff percentage of all changes by label and screensize
     #
-    # Example {:statistics=>{:/=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
+    # @example {:statistics=>{:/=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
+    # @param browser [String] headless browser used to generate the gallery
     # @return [Hash] { path: { percent_changed: [{ size: percent_diff }] } }
-    def wraith_parse(browser, wraith_filename)
+    def wraith_parse(browser)
       Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.txt").select { |f| File.file? f }.each do |file|
         file_object = File.open(file, 'rb')
         orig_label = File.dirname(file).split('/').last
