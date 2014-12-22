@@ -125,7 +125,7 @@ When adding new lints, the JSON output should obey the following format:
 
 ## Changelog
 
-### 0.1.3
+### 0.1.3 (December 22, 2014)
 
 Features:
 
