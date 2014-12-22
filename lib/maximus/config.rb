@@ -70,7 +70,11 @@ module Maximus
       @yaml['paths'] ||= @settings[:paths]
       @yaml['port'] ||= @settings[:port]
       set_families('lints', ['jshint', 'scsslint', 'rubocop', 'brakeman', 'railsbp'])
+      set_families('frontend', ['jshint', 'scsslint', 'phantomas', 'stylestats', 'wraith'])
+      set_families('backend', ['rubocop', 'brakeman', 'railsbp'])
+      set_families('ruby', ['rubocop', 'brakeman', 'railsbp'])
       set_families('statistics', ['phantomas', 'stylestats', 'wraith'])
+      set_families('all', ['lints', 'statistics'])
 
       # Override options with any defined in a discovered config file
       evaluate_yaml
@@ -223,6 +227,7 @@ module Maximus
     #   @yaml['statistics'] = false
     #   set_families('statistics', ['phantomas', 'stylestats', 'wraith'])
     #
+    # Sets as Boolean based on whether or not the queried label is `true`
     # @param head_of_house [String] @yaml key and group label
     # @param family [Array] group of other @yaml keys to be disabled
     # @return [void] modified @yaml

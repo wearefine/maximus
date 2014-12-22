@@ -14,6 +14,53 @@ Plays nice with Middleman and Rails.
 
 Maximus has several node dependencies that can be installed with a `npm install -g jshint phantomas stylestats` or a `maximus install` once the gem is successfully installed.
 
+## Config
+
+Lints and statistics can be configured turned on or off with a  `maximus.yml` file in the root directory maximus is being called in. `config/maximus.yml` will be checked if a config file isn't found in the root, and if there's still no luck, [the default config](lib/maximus/config/maximus.yml) will be loaded.
+
+Parent options are identical to the [command line flags](#command-line-flags) with the exception of `include` and `exclude`.
+
+```yaml
+domain: 'http://localhost'
+port: 3000
+paths:
+  home: '/'
+```
+
+Configs for each lint or statistic are identical to their own syntax.
+
+```yaml
+scsslint:
+  linters:
+    Compass::*:
+      enabled: true
+```
+
+For systems that are JavaScript based, like JSHint, the YAML is converted to JSON.
+
+```yaml
+jshint:
+  browser: true
+  unused: true
+  jquery: true
+```
+
+Some configs can be massive and it's more readable to break these into their own files. They can be loaded by setting the value to the path of the desired config.
+
+```yaml
+rubocop: 'config/rubocop.yml'
+```
+
+Systems and groups of systems can be disabled with booleans. Groups of systems override individual preferences.
+
+```yaml
+brakeman: false
+statistics: false # no statistics will run
+lints: true # all lints including brakeman will run
+```
+
+### [Sample Config](lib/maximus/config/maximus-example.yml)
+
 ## Command Line Flags
 
 Flag                | Accepts                          | Description

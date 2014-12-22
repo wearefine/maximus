@@ -1,9 +1,14 @@
 # Config for all
-domain: 'http://localhost:3000'
+domain: 'http://localhost'
+port: 3000
+
 paths:
   home: '/'
 
 # Lints
+
+# lints: true # enable all lints
+
 scsslint:
   scss_files: 'app/assets/stylesheets/'
 
