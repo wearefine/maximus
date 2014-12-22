@@ -315,6 +315,7 @@ module Maximus
       value['screen_widths'] ||= [767, 1024, 1280]
 
       value['paths'] = @yaml['paths']
+      value['threshold'] ||= 0
 
       # Wraith requires config files have .yaml extensions
       # https://github.com/BBC-News/wraith/blob/2aff771eba01b76e61600cccb2113869bfe16479/lib/wraith/wraith.rb
