@@ -27,18 +27,19 @@ module Maximus
 
     # 30,000 foot view of a commit
     #
-    # @param commitsha [String] the sha of the commit
+    # @param commit_sha [String] the sha of the commit
     # @return [Hash] commit data
-    def commit_export(commitsha = sha)
-      ce_commit = vccommit(commitsha)
+    def commit_export(commit_sha = sha)
+      ce_commit = vccommit(commit_sha)
       ce_diff = diff(ce_commit, @g.object('HEAD^'))
       {
-        commitsha: commitsha,
+        commit_sha: commit_sha,
         branch: branch,
         message: ce_commit.message,
         remote_repo: remote,
         git_author: ce_commit.author.name,
         git_author_email: ce_commit.author.email,
+        commit_date: ce_commit.author.date,
         diff: ce_diff
       }
     end
@@ -201,98 +202,98 @@ module Maximus
 
     protected
 
-    # Get list of file paths
-    #
-    # @param files [Hash] hash of files denoted by key 'filename'
-    # @param ext [String] file extension - different extensions are joined different ways
-    # @return [String] file paths delimited by comma or space
-    def lint_file_paths(files, ext)
-      file_list = files.map { |f| f[:filename] }.compact
-      # Lints accept files differently
-      ext == :ruby ? file_list.join(' ') : file_list.join(',')
-    end
-
-    # Determine which lines were added (where and how many) in a commit
-    #
-    # @example output from method
-    #   {
-    #     'filename': [
-    #       '0..10',
-    #       '11..14'
-    #     ]
-    #   }
-    #
-    # @param git_sha [String] sha of the commit
-    # @return [Hash] ranges by lines added in a commit by file name
-    def lines_added(git_sha)
-      new_lines = {}
-      lines_added = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n")
-      lines_added.each do |filename|
-        fsplit = filename.split(':')
-        # if file isn't already part of the array
-        new_lines[fsplit[0]] ||= []
-        new_lines[fsplit[0]] << fsplit[1] unless fsplit[1].nil?
-        # no repeats
-        new_lines[fsplit[0]].uniq!
+      # Get list of file paths
+      #
+      # @param files [Hash] hash of files denoted by key 'filename'
+      # @param ext [String] file extension - different extensions are joined different ways
+      # @return [String] file paths delimited by comma or space
+      def lint_file_paths(files, ext)
+        file_list = files.map { |f| f[:filename] }.compact
+        # Lints accept files differently
+        ext == :ruby ? file_list.join(' ') : file_list.join(',')
       end
-      new_lines.delete("/dev/null")
-      new_lines
-    end
 
-    # Get last commit on current branch
-    #
-    # @return [String] sha
-    def sha
-      @g.object('HEAD').sha
-    end
+      # Determine which lines were added (where and how many) in a commit
+      #
+      # @example output from method
+      #   {
+      #     'filename': [
+      #       '0..10',
+      #       '11..14'
+      #     ]
+      #   }
+      #
+      # @param git_sha [String] sha of the commit
+      # @return [Hash] ranges by lines added in a commit by file name
+      def lines_added(git_sha)
+        new_lines = {}
+        lines_added = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n")
+        lines_added.each do |filename|
+          fsplit = filename.split(':')
+          # if file isn't already part of the array
+          new_lines[fsplit[0]] ||= []
+          new_lines[fsplit[0]] << fsplit[1] unless fsplit[1].nil?
+          # no repeats
+          new_lines[fsplit[0]].uniq!
+        end
+        new_lines.delete("/dev/null")
+        new_lines
+      end
 
-    # Get current branch name
-    #
-    # @return [String]
-    def branch
-      `env -i git rev-parse --abbrev-ref HEAD`.strip!
-    end
+      # Get last commit on current branch
+      #
+      # @return [String] sha
+      def sha
+        @g.object('HEAD').sha
+      end
 
-    # Get last commit on the master branch
-    #
-    # @return [Git::Object]
-    def master_commit
-      @g.branches[:master].gcommit
-    end
+      # Get current branch name
+      #
+      # @return [String]
+      def branch
+        `env -i git rev-parse --abbrev-ref HEAD`.strip!
+      end
 
-    # Store last commit as Ruby Git::Object
-    #
-    # @param commitsha [String]
-    # @return [Git::Object]
-    def vccommit(commitsha = sha)
-      @g.gcommit(commitsha)
-    end
+      # Get last commit on the master branch
+      #
+      # @return [Git::Object]
+      def master_commit
+        @g.branches[:master].gcommit
+      end
 
-    # Get general stats of commit on HEAD versus last commit on master branch
-    #
-    # @return [Git::Diff]
-    def diff(new_commit = vccommit, old_commit = master_commit)
-      @g.diff(new_commit, old_commit).stats
-    end
+      # Store last commit as Ruby Git::Object
+      #
+      # @param commit_sha [String]
+      # @return [Git::Object]
+      def vccommit(commit_sha = sha)
+        @g.gcommit(commit_sha)
+      end
 
-    # Get remote URL
-    #
-    # @return [String, nil] nil returns if remotes is blank
-    def remote
-      @g.remotes.first.url unless @g.remotes.blank?
-    end
+      # Get general stats of commit on HEAD versus last commit on master branch
+      #
+      # @return [Git::Diff]
+      def diff(new_commit = vccommit, old_commit = master_commit)
+        @g.diff(new_commit, old_commit).stats
+      end
 
-    # Define associations to linters based on file extension
-    #
-    # @return [Hash] linters and extension arrays
-    def associations
-      {
-        scss:   ['scss', 'sass'],
-        js:     ['js'],
-        ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc'],
-        rails:  ['slim', 'haml']
-      }
-    end
+      # Get remote URL
+      #
+      # @return [String, nil] nil returns if remotes is blank
+      def remote
+        @g.remotes.first.url unless @g.remotes.blank?
+      end
+
+      # Define associations to linters based on file extension
+      #
+      # @return [Hash] linters and extension arrays
+      def associations
+        {
+          scss:   ['scss', 'sass'],
+          js:     ['js'],
+          ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc'],
+          rails:  ['slim', 'haml']
+        }
+      end
 
   end
 end

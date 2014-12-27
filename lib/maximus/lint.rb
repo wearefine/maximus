@@ -24,9 +24,9 @@ module Maximus
     # @see Config#initialize
     #
     # @param opts [Hash] ({}) options passed directly to the lint
-    # @option git_files [Hash] filename: file location
+    # @option opts [Hash] :git_files filename: file location
     #   @see GitControl#lints_and_stats
-    # @option file_paths [Array, String] lint only specific files or directories
+    # @option opts [Array, String] :file_paths lint only specific files or directories
     #   Accepts globs too
     #   which is used to define paths from the URL
     # @option opts [Config object] :config custom Maximus::Config object
@@ -106,135 +106,133 @@ module Maximus
 
     protected
 
-    # List all files inspected
-    #
-    # @param ext [String] extension to search for
-    # @param delimiter [String] comma or space separated
-    # @param remove [String] remove from all file names
-    # @return all_files [Array<string>] list of file names
-    def files_inspected(ext, delimiter = ',', remove = @settings[:root_dir])
-      @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, remove)
-    end
-
-    # Compare lint output with lines changed in commit
-    #
-    # @param lint [Hash] output lint data
-    # @param files [Hash<String: String>] filename: filepath
-    # @return [Array] lints that match the lines in commit
-    def relevant_lints(lint, files)
-      all_files = {}
-      files.each do |file|
-
-        # sometimes data will be blank but this is good - it means no errors raised in the lint
-        unless lint.blank?
-          lint_file = lint[file[:filename].to_s]
-
-          expanded = lines_added_to_range(file)
-          revert_name = file[:filename].gsub("#{@settings[:root_dir]}/", '')
-          unless lint_file.blank?
-            all_files[revert_name] = []
-
-            # @todo originally I tried .map and delete_if, but this works,
-            #   and the other method didn't cover all bases.
-            #   Gotta be a better way to write this though
-            lint_file.each do |l|
-              if expanded.include?(l['line'].to_i)
-                all_files[revert_name] << l
-              end
-            end
-            # If there's nothing there, then it definitely isn't a relevant lint
-            all_files.delete(revert_name) if all_files[revert_name].blank?
-          end
-        else
-          # Optionally store the filename with a blank array
-          #   @example all_files[file[:filename].to_s.gsub("#{@settings[:root_dir]}/", '')] = []
-        end
+      # List all files inspected
+      #
+      # @param ext [String] extension to search for
+      # @param delimiter [String] comma or space separated
+      # @param remove [String] remove from all file names
+      # @return all_files [Array<string>] list of file names
+      def files_inspected(ext, delimiter = ',', remove = @settings[:root_dir])
+        @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, remove)
       end
-      @output[:files_linted] = all_files.keys
-      all_files
-    end
 
-    # Look for a config defined from Config#initialize
-    #
-    # @since 0.1.2
-    # @param search_for [String]
-    # @return [String, Boolean] path to temp file
-    def temp_config(search_for)
-      return false if @settings.nil?
-      @settings[search_for.to_sym].blank? ? false : @settings[search_for.to_sym]
-    end
+      # Compare lint output with lines changed in commit
+      #
+      # @param lint [Hash] output lint data
+      # @param files [Hash<String: String>] filename: filepath
+      # @return [Array] lints that match the lines in commit
+      def relevant_lints(lint, files)
+        all_files = {}
+        files.each do |file|
+
+          # sometimes data will be blank but this is good - it means no errors raised in the lint
+          unless lint.blank?
+            lint_file = lint[file[:filename].to_s]
+
+            expanded = lines_added_to_range(file)
+            revert_name = file[:filename].gsub("#{@settings[:root_dir]}/", '')
+            unless lint_file.blank?
+              all_files[revert_name] = []
+
+              # @todo originally I tried .map and delete_if, but this works,
+              #   and the other method didn't cover all bases.
+              #   Gotta be a better way to write this though
+              lint_file.each do |l|
+                if expanded.include?(l['line'].to_i)
+                  all_files[revert_name] << l
+                end
+              end
+              # If there's nothing there, then it definitely isn't a relevant lint
+              all_files.delete(revert_name) if all_files[revert_name].blank?
+            end
+          else
+            # Optionally store the filename with a blank array
+            #   @example all_files[file[:filename].to_s.gsub("#{@settings[:root_dir]}/", '')] = []
+          end
+        end
+        @output[:files_linted] = all_files.keys
+        all_files
+      end
+
+      # Look for a config defined from Config#initialize
+      #
+      # @since 0.1.2
+      # @param search_for [String]
+      # @return [String, Boolean] path to temp file
+      def temp_config(search_for)
+        return false if @settings.nil?
+        @settings[search_for.to_sym].blank? ? false : @settings[search_for.to_sym]
+      end
 
 
     private
 
-    # Send abbreviated results to console or to the log
-    #
-    # @return [String] console message to display
-    def lint_summarize
-      puts "\n" if @@config.is_dev?
+      # Send abbreviated results to console or to the log
+      #
+      # @return [String] console message to display
+      def lint_summarize
+        puts "\n" if @@config.is_dev?
 
-      puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length > 0
+        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length > 0
 
-      success = @task.to_s.color(:green)
-      success += ": "
-      success += "[#{@output[:lint_warnings].length}]".color(:yellow)
-      success += " " + "[#{@output[:lint_errors].length}]".color(:red)
-      if @task == 'rubocop'
-        success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan)
-        success += " " + "[#{@output[:lint_refactors].length}]".color(:white)
+        success = @task.to_s.color(:green)
+        success += ": "
+        success += "[#{@output[:lint_warnings].length}]".color(:yellow)
+        success += " " + "[#{@output[:lint_errors].length}]".color(:red)
+        if @task == 'rubocop'
+          success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan)
+          success += " " + "[#{@output[:lint_refactors].length}]".color(:white)
+        end
+
+        success
       end
 
-      success
-    end
+      # If there's just too much to handle, through a warning.
+      #
+      # @param lint_length [Integer] count of how many lints
+      # @return [String] console message to display
+      def lint_ceiling(lint_length)
+        if lint_length > 100
+          lint_dev_format
+          failed_task = "#{@task}".color(:green)
+          errors = Rainbow("#{lint_length} failures.").red
+          errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
+          errormsg += "\n\n"
 
-    # If there's just too much to handle, through a warning.
-    # MySQL may not store all the data and throw an abortive error if the blob is too large
-    # If prompt returns truthy, execution continues
-    #
-    # @param lint_length [Integer] count of how many lints
-    # @return [String] console message to display
-    def lint_ceiling(lint_length)
-      if lint_length > 100
-        lint_dev_format
-        failed_task = "#{@task}".color(:green)
-        errors = Rainbow("#{lint_length} failures.").red
-        errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
-        errormsg += "\n\n"
-
-        go_on = prompt "\n#{errors} Continue? (y/n) "
-        abort errormsg unless truthy(go_on)
-      end
-    end
-
-    # Dev display, executed only when called from command line
-    #
-    # @param errors [Hash] data from lint
-    # @return [String] console message to display
-    def lint_dev_format(errors = @output[:raw_data])
-      return if errors.blank?
-      pretty_output = ''
-      errors.each do |filename, error_list|
-        pretty_output += "\n"
-        filename = filename.gsub("#{@settings[:root_dir]}/", '')
-        pretty_output += filename.color(:cyan).underline
-        pretty_output += "\n"
-        error_list.each do |message|
-          pretty_output += case message['severity']
-            when 'warning' then 'W'.color(:yellow)
-            when 'error' then 'E'.color(:red)
-            when 'convention' then 'C'.color(:cyan)
-            when 'refactor' then 'R'.color(:white)
-            else '?'.color(:blue)
-          end
-          pretty_output += ' '
-          pretty_output += message['line'].to_s.color(:blue)
-          pretty_output += " #{message['linter'].color(:green)}: "
-          pretty_output += message['reason']
-          pretty_output += "\n"
+          go_on = prompt "\n#{errors} Continue? (y/n) "
+          abort errormsg unless truthy(go_on)
         end
       end
-      pretty_output
-    end
+
+      # Dev display, executed only when called from command line
+      #
+      # @param errors [Hash] data from lint
+      # @return [String] console message to display
+      def lint_dev_format(errors = @output[:raw_data])
+        return if errors.blank?
+        pretty_output = ''
+        errors.each do |filename, error_list|
+          pretty_output += "\n"
+          filename = filename.gsub("#{@settings[:root_dir]}/", '')
+          pretty_output += filename.color(:cyan).underline
+          pretty_output += "\n"
+          error_list.each do |message|
+            pretty_output += case message['severity']
+              when 'warning' then 'W'.color(:yellow)
+              when 'error' then 'E'.color(:red)
+              when 'convention' then 'C'.color(:cyan)
+              when 'refactor' then 'R'.color(:white)
+              else '?'.color(:blue)
+            end
+            pretty_output += ' '
+            pretty_output += message['line'].to_s.color(:blue)
+            pretty_output += " #{message['linter'].color(:green)}: "
+            pretty_output += message['reason']
+            pretty_output += "\n"
+          end
+        end
+        pretty_output
+      end
 
   end
 end

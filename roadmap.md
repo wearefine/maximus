@@ -3,7 +3,7 @@
 * Check for custom lint or stat hooks in a lib/maximus folder
 * Add custom lint path and script execution support to maximus.yml config file
 * Use PhantomJS 2.0 with webfont support
-* Resolve/review TODOs
+* Resolve/review @todos
 * Tests and specs
 * Convert ruby-git to rugged (MAYBE - rugged requires libgit2)
 * Add SCSS specificity graph
