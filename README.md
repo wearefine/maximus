@@ -103,21 +103,21 @@ Command               | Description
 
 ### Git Examples
 
-Default. Lints based on your working directory
-
 `maximus -g working` 
 
-Lints based on the previous commit by `HEAD^`
+Default. Lints based on your working directory
 
 `maximus -g last` 
 
-Lints based on the commit on the master branch
+Lints based on the previous commit by `HEAD^`
 
 `maximus -g master`
 
-Lints based on commit d96a8e23
+Lints based on the commit on the master branch
 
 `maximus -g d96a8e23`
+
+Lints based on commit d96a8e23
 
 ## Lint syntax
 
