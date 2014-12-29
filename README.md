@@ -1,6 +1,6 @@
 # Maximus
 
-[![Gem Version](https://badge.fury.io/rb/maximus.svg)](http://badge.fury.io/rb/maximus) [![Code Climate](https://codeclimate.com/github/wearefine/maximus/badges/gpa.svg)](https://codeclimate.com/github/wearefine/maximus)
+[![Gem Version](https://badge.fury.io/rb/maximus.svg)](http://badge.fury.io/rb/maximus) [![Code Climate](https://codeclimate.com/github/wearefine/maximus/badges/gpa.svg)](https://codeclimate.com/github/wearefine/maximus) [![Build Status](https://travis-ci.org/wearefine/maximus.svg)](https://travis-ci.org/wearefine/maximus)
 
 The all-in-one linting solution.
 
