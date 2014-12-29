@@ -28,7 +28,7 @@ $ maximus install
 
 Lints and statistics can be configured turned on or off with a  `maximus.yml` file in the root directory maximus is being called in. `config/maximus.yml` will be checked if a config file isn't found in the root, and if there's still no luck, [the default config](lib/maximus/config/maximus.yml) will be loaded.
 
-Parent options are identical to the [command line flags](#command-line-flags) with the exception of `include` and `exclude`.
+Parent options are identical to the [command line flags](#flags) with the exception of `include` and `exclude`.
 
 ```yaml
 domain: 'http://localhost'
