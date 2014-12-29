@@ -71,7 +71,9 @@ lints: true # all lints including brakeman will run
 
 ### [Sample Config](lib/maximus/config/maximus-example.yml)
 
-## Command Line Flags
+## Command Line
+
+### Flags
 
 Flag                | Accepts                          | Description
 --------------------|----------------------------------|--------------------
@@ -92,7 +94,7 @@ Flag                | Accepts                          | Description
 * Lint tasks can accept glob notation, i.e. `**/*.scss`
 * Arrays are space-separated, i.e. `--urls=/ /about`
 
-## Command Line Commands
+### Commands
 
 Command               | Description
 ----------------------|---------------------------
@@ -103,19 +105,19 @@ Command               | Description
 
 ### Git Examples
 
-`maximus -g working` 
+`$ maximus -g working` 
 
 Default. Lints based on your working directory
 
-`maximus -g last` 
+`$ maximus -g last` 
 
 Lints based on the previous commit by `HEAD^`
 
-`maximus -g master`
+`$ maximus -g master`
 
 Lints based on the commit on the master branch
 
-`maximus -g d96a8e23`
+`$ maximus -g d96a8e23`
 
 Lints based on commit d96a8e23
 
