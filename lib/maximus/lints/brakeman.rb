@@ -54,20 +54,20 @@ module Maximus
 
     private
 
-    # Convert to {file:README.md Maximus format}
-    #
-    # @param error [Hash] lint error
-    # @return [Hash]
-    def hash_for_brakeman(error, type)
-      {
-        linter: error['warning_type'],
-        severity: type.chomp('s'),
-        reason: error['message'],
-        column: 0,
-        line: error['line'].to_i,
-        confidence: error['confidence']
-      }
-    end
+      # Convert to {file:README.md Maximus format}
+      #
+      # @param error [Hash] lint error
+      # @return [Hash]
+      def hash_for_brakeman(error, type)
+        {
+          linter: error['warning_type'],
+          severity: type.chomp('s'),
+          reason: error['message'],
+          column: 0,
+          line: error['line'].to_i,
+          confidence: error['confidence']
+        }
+      end
 
   end
 end

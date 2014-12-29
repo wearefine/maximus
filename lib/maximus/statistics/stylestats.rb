@@ -50,67 +50,67 @@ module Maximus
 
     private
 
-    # Find all CSS files or compile.
-    #
-    # Uses sprockets if Rails; Sass engine otherwise.
-    # Compass is supported
-    # @return [Array] CSS files
-    def find_css_files
-      searched_files = []
+      # Find all CSS files or compile.
+      #
+      # Uses sprockets if Rails; Sass engine otherwise.
+      # Compass is supported
+      # @return [Array] CSS files
+      def find_css_files
+        searched_files = []
 
-      if is_rails?
-        # Only load tasks if we're not running a rake task
-        Rails.application.load_tasks unless @@config.is_dev?
+        if is_rails?
+          # Only load tasks if we're not running a rake task
+          Rails.application.load_tasks unless @@config.is_dev?
 
-        puts "\n"
-        puts 'Compiling assets for stylestats...'.color(:blue)
+          puts "\n"
+          puts 'Compiling assets for stylestats...'.color(:blue)
 
-        # @todo I'd rather Rake::Task but it's not working in different directories
-        Dir.chdir(@settings[:root_dir]) do
-          if @@config.is_dev?
-             # @todo review that this may not be best practice, but it's really noisy in the console
-            quietly { `rake assets:precompile` }
-          else
-            `rake assets:precompile`
+          # @todo I'd rather Rake::Task but it's not working in different directories
+          Dir.chdir(@settings[:root_dir]) do
+            if @@config.is_dev?
+               # @todo review that this may not be best practice, but it's really noisy in the console
+              quietly { `rake assets:precompile` }
+            else
+              `rake assets:precompile`
+            end
+          end
+
+          Dir.glob(@path).select { |f| File.file? f }.each do |file|
+            searched_files << file
+          end
+
+        else
+
+          # Load Compass paths if the gem exists
+          if Gem::Specification::find_all_by_name('compass').any?
+            require 'compass'
+            Compass.sass_engine_options[:load_paths].each do |path|
+              Sass.load_paths << path
+            end
+          end
+
+          # Shouldn't need to load paths anymore, but in case this doesn't work
+          #   as it should, try the func below
+          # Dir.glob(@path).select { |d| File.directory? d}.each do |directory|
+          #   Sass.load_paths << directory
+          # end
+
+          @path += ".scss"
+
+          Dir[@path].select { |f| File.file? f }.each do |file|
+            # @todo don't compile file if it starts with an underscore
+            scss_file = File.open(file, 'rb') { |f| f.read }
+
+            output_file = File.open( file.split('.').reverse.drop(1).reverse.join('.'), "w" )
+            output_file << Sass::Engine.new(scss_file, { syntax: :scss, quiet: true, style: :compressed }).render
+            output_file.close
+
+            searched_files << output_file.path
+
           end
         end
-
-        Dir.glob(@path).select { |f| File.file? f }.each do |file|
-          searched_files << file
-        end
-
-      else
-
-        # Load Compass paths if the gem exists
-        if Gem::Specification::find_all_by_name('compass').any?
-          require 'compass'
-          Compass.sass_engine_options[:load_paths].each do |path|
-            Sass.load_paths << path
-          end
-        end
-
-        # Shouldn't need to load paths anymore, but in case this doesn't work
-        #   as it should, try the func below
-        # Dir.glob(@path).select { |d| File.directory? d}.each do |directory|
-        #   Sass.load_paths << directory
-        # end
-
-        @path += ".scss"
-
-        Dir[@path].select { |f| File.file? f }.each do |file|
-          # @todo don't compile file if it starts with an underscore
-          scss_file = File.open(file, 'rb') { |f| f.read }
-
-          output_file = File.open( file.split('.').reverse.drop(1).reverse.join('.'), "w" )
-          output_file << Sass::Engine.new(scss_file, { syntax: :scss, quiet: true, style: :compressed }).render
-          output_file.close
-
-          searched_files << output_file.path
-
-        end
+        searched_files
       end
-      searched_files
-    end
 
   end
 end

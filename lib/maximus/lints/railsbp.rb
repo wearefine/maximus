@@ -45,19 +45,19 @@ module Maximus
 
     private
 
-    # Convert to {file:README.md Maximus format}
-    #
-    # @param error [Hash] lint error
-    # @return [Hash]
-    def hash_for_railsbp(error)
-      {
-        linter: error['message'].gsub(/\((.*)\)/, '').strip.parameterize('_').camelize,
-        severity: 'warning',
-        reason: error['message'],
-        column: 0,
-        line: error['line_number'].to_i
-      }
-    end
+      # Convert to {file:README.md Maximus format}
+      #
+      # @param error [Hash] lint error
+      # @return [Hash]
+      def hash_for_railsbp(error)
+        {
+          linter: error['message'].gsub(/\((.*)\)/, '').strip.parameterize('_').camelize,
+          severity: 'warning',
+          reason: error['message'],
+          column: 0,
+          line: error['line_number'].to_i
+        }
+      end
 
   end
 end

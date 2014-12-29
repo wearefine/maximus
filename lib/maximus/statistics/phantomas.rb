@@ -27,14 +27,14 @@ module Maximus
 
     private
 
-    # Organize stat output on the @output variable
-    # Adds @output[:statistics][:filepath] with all statistic data
-    # @return [void] goes to refine statistics
-    def phantomas_by_url(url, phantomas_cli)
-      puts "Phantomas on #{@domain + url}".color(:green)
-      phantomas = `#{phantomas_cli} #{@domain + url}`
-      refine(phantomas, url)
-    end
+      # Organize stat output on the @output variable
+      # Adds @output[:statistics][:filepath] with all statistic data
+      # @return [void] goes to refine statistics
+      def phantomas_by_url(url, phantomas_cli)
+        puts "Phantomas on #{@domain + url}".color(:green)
+        phantomas = `#{phantomas_cli} #{@domain + url}`
+        refine(phantomas, url)
+      end
 
   end
 end

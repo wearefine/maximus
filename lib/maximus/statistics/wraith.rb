@@ -40,27 +40,27 @@ module Maximus
 
     private
 
-    # Get a diff percentage of all changes by label and screensize
-    #
-    # @example {:statistics=>{:/=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
-    # @param browser [String] headless browser used to generate the gallery
-    # @return [Hash] { path: { percent_changed: [{ size: percent_diff }] } }
-    def wraith_parse(browser)
-      Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.txt").select { |f| File.file? f }.each do |file|
-        file_object = File.open(file, 'rb')
-        orig_label = File.dirname(file).split('/').last
-        label = @settings[:paths][orig_label]
-        @output[:statistics][browser.to_sym] ||= {}
-        @output[:statistics][browser.to_sym][label.to_sym] ||= {}
-        browser_output = @output[:statistics][browser.to_sym][label.to_sym]
-        browser_output ||= {}
-        browser_output[:name] = orig_label
-        browser_output[:percent_changed] ||= []
-        browser_output[:percent_changed] << { File.basename(file).split('_')[0].to_i => file_object.read.to_f }
-        file_object.close
+      # Get a diff percentage of all changes by label and screensize
+      #
+      # @example {:statistics=>{:/=>{:percent_changed=>[{1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}, {1024=>0.0}, {767=>0.0}] } }}
+      # @param browser [String] headless browser used to generate the gallery
+      # @return [Hash] { path: { percent_changed: [{ size: percent_diff }] } }
+      def wraith_parse(browser)
+        Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.txt").select { |f| File.file? f }.each do |file|
+          file_object = File.open(file, 'rb')
+          orig_label = File.dirname(file).split('/').last
+          label = @settings[:paths][orig_label]
+          @output[:statistics][browser.to_sym] ||= {}
+          @output[:statistics][browser.to_sym][label.to_sym] ||= {}
+          browser_output = @output[:statistics][browser.to_sym][label.to_sym]
+          browser_output ||= {}
+          browser_output[:name] = orig_label
+          browser_output[:percent_changed] ||= []
+          browser_output[:percent_changed] << { File.basename(file).split('_')[0].to_i => file_object.read.to_f }
+          file_object.close
+        end
+        @output
       end
-      @output
-    end
 
   end
 end
