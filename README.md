@@ -75,18 +75,18 @@ lints: true # all lints including brakeman will run
 
 Flag                | Accepts                          | Description
 --------------------|----------------------------------|--------------------
-`-fp`/`--filepaths` | String/Array                     | Space-separated path(s) to files
-`-u`/`--urls`       | String/Array                     | Statistics only - Space-separated path(s) to relative URL paths
-`-d`/`--domain`     | String                           | Statistics only - Web address (prepended to paths)
-`-po`/`--port`      | String/Numeric                   | Statistics only - Port to use if required (appended to domain)
-`-f`/`--frontend`   | Boolean/Blank                    | Run all front-end lints
-`-b`/`--backend`    | Boolean/Blank                    | Run all back-end lints
-`-s`/`--statistics` | Boolean/Blank                    | Run all statistics
-`-a`/`--all`        | Boolean/Blank                    | Run everything
-`-i`/`--include`    | String/Array                     | Include specific lints or statistics
-`-i`/`--exclude`    | String/Array                     | Exclude specific lints or statistics
-`-git`/`--sha`      | String                           | Run maximus based on a git commit, working copy (`working`, default), the last commit (`last` or `HEAD^`), or the master branch (`master`)
-`-c`/`--config`     | String                           | Path to config file
+`-fp` `--filepaths` | String/Array                     | Space-separated path(s) to files
+`-u` `--urls`       | String/Array                     | Statistics only - Space-separated path(s) to relative URL paths
+`-d` `--domain`     | String                           | Statistics only - Web address (prepended to paths)
+`-po` `--port`      | String/Numeric                   | Statistics only - Port to use if required (appended to domain)
+`-f` `--frontend`   | Boolean/Blank                    | Run all front-end lints
+`-b` `--backend`    | Boolean/Blank                    | Run all back-end lints
+`-s` `--statistics` | Boolean/Blank                    | Run all statistics
+`-a` `--all`        | Boolean/Blank                    | Run everything
+`-i` `--include`    | String/Array                     | Include specific lints or statistics
+`-i` `--exclude`    | String/Array                     | Exclude specific lints or statistics
+`-git` `--sha`      | String                           | Run maximus based on a git commit, working copy (`working`, default), the last commit (`last` or `HEAD^`), or the master branch (`master`)
+`-c` `--config`     | String                           | Path to config file
 
 
 * Lint tasks can accept glob notation, i.e. `**/*.scss`
@@ -134,6 +134,12 @@ When adding new lints, the JSON output should obey the following format:
 ```
 
 ## Changelog
+
+### 0.1.4
+
+Bugfixes:
+
+* Added basic tests
 
 ### 0.1.3 (December 22, 2014)
 
