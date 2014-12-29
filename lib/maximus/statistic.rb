@@ -1,6 +1,8 @@
 module Maximus
+
+  # Parent class for all statistics (inherited by children)
   # @since 0.1.0
-  # @attr_accessor output [Hash] result of a lint parsed by Lint#refine
+  # @attr_accessor output [Hash] result of a statistic parsed by Statistic#refine
   class Statistic
     attr_accessor :output
 

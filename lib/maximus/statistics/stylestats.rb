@@ -2,9 +2,7 @@ module Maximus
   # @since 0.1.0
   class Stylestats < Maximus::Statistic
 
-    # @path array preferrably absolute paths, but relative should work
-    #   If stylestatting one file, pass that as an array
-    #
+    # Produces CSS statistics
     # @see Statistic#initialize
     def result
 

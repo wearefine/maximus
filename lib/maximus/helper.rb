@@ -6,6 +6,7 @@ require 'yaml'
 require 'tempfile'
 
 module Maximus
+  # Methods used in more than one place
   # @since 0.1.0
   module Helper
 

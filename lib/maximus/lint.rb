@@ -1,6 +1,8 @@
 require 'json'
 
 module Maximus
+
+  # Parent class for all lints (inherited by children)
   # @since 0.1.0
   # @attr_accessor output [Hash] result of a lint parsed by Lint#refine
   class Lint

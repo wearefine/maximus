@@ -1,5 +1,6 @@
 require 'thor'
 
+# Command line abilities
 # @since 0.1.0
 class Maximus::CLI < Thor
 

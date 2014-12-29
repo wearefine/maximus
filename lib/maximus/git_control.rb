@@ -271,7 +271,9 @@ module Maximus
 
       # Get general stats of commit on HEAD versus last commit on master branch
       #
-      # @return [Git::Diff]
+      # @param new_commit [Git::Object]
+      # @param old_commit [Git::Object]
+      # @return [Git::Diff] hash of abbreviated, useful stats
       def diff(new_commit = vccommit, old_commit = master_commit)
         @g.diff(new_commit, old_commit).stats
       end

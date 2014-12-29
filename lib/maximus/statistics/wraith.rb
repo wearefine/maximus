@@ -2,10 +2,7 @@ module Maximus
   # @since 0.1.0
   class Wraith < Maximus::Statistic
 
-    # By default checks homepage
-    # Requires config to be in config/wraith/history.yaml
-    # Adds a new config/wraith/history.yaml if not present
-    # Path should be an Array defined as [{ label: url }]
+    # Generates screenshots for visual regression testing
     # @see Statistic#initialize
     def result
 
