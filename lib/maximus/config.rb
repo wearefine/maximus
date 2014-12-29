@@ -42,18 +42,7 @@ module Maximus
       opts[:port] ||= is_rails? ? 3000 : ''
       opts[:paths] ||= { 'home' => '/' }
 
-      # Accounting for space-separated command line arrays
-      if opts[:paths].is_a?(Array)
-        new_paths = {}
-        opts[:paths].each do |p|
-          if p.split('/').length > 1
-            new_paths[p.split('/').last.to_s] = p
-          else
-            new_paths['home'] = '/'
-          end
-        end
-        opts[:paths] = new_paths
-      end
+      opts[:paths] = parse_cli_config(opts[:paths]) if opts[:paths].is_a?(Array)
 
       # What we're really interested in
       @settings = opts
@@ -61,22 +50,9 @@ module Maximus
       # Instance variables for Config class only
       @temp_files = {}
 
-      conf_location = (opts[:config_file] && File.exist?(opts[:config_file])) ? opts[:config] : find_config
+      load_config_file(opts[:config_file])
 
-      @yaml = YAML.load_file(conf_location)
-
-      # Match defaults
-      @yaml['domain'] ||= @settings[:domain]
-      @yaml['paths'] ||= @settings[:paths]
-      @yaml['port'] ||= @settings[:port]
-
-      # @todo the command line options are overriden here and it should be the other way around
-      set_families('lints', ['jshint', 'scsslint', 'rubocop', 'brakeman', 'railsbp'])
-      set_families('frontend', ['jshint', 'scsslint', 'phantomas', 'stylestats', 'wraith'])
-      set_families('backend', ['rubocop', 'brakeman', 'railsbp'])
-      set_families('ruby', ['rubocop', 'brakeman', 'railsbp'])
-      set_families('statistics', ['phantomas', 'stylestats', 'wraith'])
-      set_families('all', ['lints', 'statistics'])
+      group_families
 
       # Override options with any defined in a discovered config file
       evaluate_yaml
@@ -179,7 +155,6 @@ module Maximus
 
     # If output should be returned to console
     #   in a pretty display
-    #
     # @return [Boolean]
     def is_dev?
       @settings[:is_dev]
@@ -200,10 +175,8 @@ module Maximus
     # Remove all or one created temporary config file
     #
     # @see temp_it
-    #
     # @param filename [String] (nil) file to destroy
     #   If nil, destroy all temp files
-    # @return [void]
     def destroy_temp(filename = nil)
       return if @temp_files[filename.to_sym].blank?
       if filename.nil?
@@ -216,7 +189,6 @@ module Maximus
     end
 
     # Combine domain with port if necessary
-    #
     # @return [String] complete domain/host address
     def domain
       (!@settings[:port].blank? || @settings[:domain].include?(':')) ? "#{@settings[:domain]}:#{@settings[:port]}" : @settings[:domain]
@@ -224,6 +196,33 @@ module Maximus
 
 
     private
+
+      # Look for a maximus config file
+      #
+      # Checks ./maximus.yml, ./maximus.yaml, ./config/maximus.yaml in order.
+      #   If there hasn't been a file discovered yet, checks ./config/maximus.yml
+      #   and if there still isn't a file, load the default one included with the
+      #   maximus gem.
+      #
+      # @since 0.1.4
+      # @param file_path [String]
+      # @return @yaml [Hash]
+      def load_config_file(file_path)
+
+        conf_location = if !file_path.nil? && File.exist?(file_path)
+          file_path
+        else
+          config_exists('maximus.yml') || config_exists('maximus.yaml') || config_exists('config/maximus.yaml') || check_default_config_path('maximus.yml')
+        end
+
+        @yaml = YAML.load_file(conf_location)
+
+        # Match defaults
+        @yaml['domain'] ||= @settings[:domain]
+        @yaml['paths'] ||= @settings[:paths]
+        @yaml['port'] ||= @settings[:port]
+
+      end
 
       # Allow shorthand to be declared for groups Maximus executions
       #
@@ -273,28 +272,44 @@ module Maximus
         file.path
       end
 
-      # Look for a maximus config file
-      #
-      # Checks ./maximus.yml, ./maximus.yaml, ./config/maximus.yaml in order.
-      #   If there hasn't been a file discovered yet, checks ./config/maximus.yml
-      #   and if there still isn't a file, load the default one included with the
-      #   maximus gem.
-      #
-      # @return [String] absolute path to config file
-      def find_config
-        config_exists('maximus.yml') || config_exists('maximus.yaml') || config_exists('config/maximus.yaml') || check_default_config_path('maximus.yml')
-      end
-
       # See if a config file exists
       #
-      # @see find_config
+      # @see load_config_file
       #
-      # This is used exclusively for the find_config method
+      # This is used exclusively for the load_config_file method
       # @param file [String] file name
       # @return [String, FalseClass] if file is found return the absolute path
       #   otherwise return false so we can keep checking
       def config_exists(file)
         File.exist?(File.join(File.dirname(__FILE__), file)) ? File.join(File.dirname(__FILE__), file) : false
+      end
+
+      # Accounting for space-separated command line arrays
+      # @since 0.1.4
+      # @param paths [Array]
+      # @return [Hash]
+      def parse_cli_config(paths)
+        new_paths = {}
+        paths.each do |p|
+          if p.split('/').length > 1
+            new_paths[p.split('/').last.to_s] = p
+          else
+            new_paths['home'] = '/'
+          end
+        end
+        new_paths
+      end
+
+      # Group families of extensions
+      # @since 0.1.4
+      # @todo the command line options are overriden here and it should be the other way around
+      def group_families
+        set_families('lints', ['jshint', 'scsslint', 'rubocop', 'brakeman', 'railsbp'])
+        set_families('frontend', ['jshint', 'scsslint', 'phantomas', 'stylestats', 'wraith'])
+        set_families('backend', ['rubocop', 'brakeman', 'railsbp'])
+        set_families('ruby', ['rubocop', 'brakeman', 'railsbp'])
+        set_families('statistics', ['phantomas', 'stylestats', 'wraith'])
+        set_families('all', ['lints', 'statistics'])
       end
 
       # Wraith is a complicated gem with significant configuration

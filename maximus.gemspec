@@ -27,5 +27,9 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "wraith", "~> 2.1.0"
   spec.add_runtime_dependency "activesupport"
   spec.add_runtime_dependency "thor"
+
   spec.add_development_dependency "bundler", "~> 1.6"
+  spec.add_development_dependency "nokogiri", "~> 1.6.0"
+  spec.add_development_dependency "yard", "~> 0.8"
+  spec.add_development_dependency "rspec", "~> 3.0"
 end
