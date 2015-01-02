@@ -27,7 +27,6 @@ module Maximus
         else
           puts `wraith history #{configpath}`
         end
-        File.write('said.yml', wraith_yaml.to_yaml)
         File.delete(configpath)
         wraith_parse browser
       end
