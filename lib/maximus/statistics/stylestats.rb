@@ -23,7 +23,6 @@ module Maximus
 
         # include JSON formatter unless we're in dev
         stylestats = `stylestats #{file} --config=#{@settings[:stylestats]} #{'--type=json' unless @@config.is_dev?}`
-        puts stylestats
         refine(stylestats, pretty_name)
 
         File.delete(file)
