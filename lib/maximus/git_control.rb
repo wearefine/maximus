@@ -72,7 +72,7 @@ module Maximus
       #   The space here is important because git-lines checks for a second arg,
       #   and if one is present, it runs git diff without a commit
       #   or a comparison to a commit.
-      git_diff = @psuedo_commit ? ['working directory'] : `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
+      git_diff = @psuedo_commit ? ["git #{sha1}"] : `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
 
       # Include the first sha because rev-list is doing a traversal
       # So sha1 is never included
