@@ -10,15 +10,11 @@ module Maximus
     #
     # Inherits settings from {Config#initialize}
     # @param opts [Hash] options passed directly to config
-    # @option opts [Boolean] :is_dev (false) whether or not the class was initialized from the command line
-    #   This is set here again in case only GitControl needs to be directly called (outside of command line)
     # @option opts [Config object] :config custom Maximus::Config object
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
-      opts[:is_dev] ||= false
-
-      opts[:config] ||= Maximus::Config.new({commit: opts[:commit], is_dev: opts[:is_dev] })
+      opts[:config] ||= Maximus::Config.new({ commit: opts[:commit] })
       @config ||= opts[:config]
       @settings ||= @config.settings
       @psuedo_commit = (!@settings[:commit].blank? && (@settings[:commit] == 'working' || @settings[:commit] == 'last' || @settings[:commit] == 'master') )
@@ -39,7 +35,7 @@ module Maximus
         remote_repo: remote,
         git_author: ce_commit.author.name,
         git_author_email: ce_commit.author.email,
-        commit_date: ce_commit.author.date,
+        commit_date: ce_commit.author.date.to_s,
         diff: ce_diff
       }
     end
