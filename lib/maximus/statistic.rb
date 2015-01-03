@@ -30,8 +30,8 @@ module Maximus
     # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
 
-      @@config ||= opts[:config] || Maximus::Config.new(opts)
-      @settings ||= @@config.settings
+      @config = opts[:config] || Maximus::Config.new(opts)
+      @settings = @config.settings
 
       @path = opts[:file_paths] || @settings[:file_paths]
 
@@ -56,7 +56,7 @@ module Maximus
       def refine(stats_cli, file_path)
 
         # Stop right there unless you mean business
-        return puts stats_cli if @@config.is_dev?
+        return puts stats_cli if @config.is_dev?
 
         # JSON.parse will throw an abortive error if it's given an empty string
         return false if stats_cli.blank?

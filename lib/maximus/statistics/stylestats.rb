@@ -22,7 +22,7 @@ module Maximus
         puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
 
         # include JSON formatter unless we're in dev
-        stylestats = `stylestats #{file} --config=#{@settings[:stylestats]} #{'--type=json' unless @@config.is_dev?}`
+        stylestats = `stylestats #{file} --config=#{@settings[:stylestats]} #{'--type=json' unless @config.is_dev?}`
         refine(stylestats, pretty_name)
 
         File.delete(file)
@@ -31,7 +31,7 @@ module Maximus
       if is_rails?
         # @todo I'd rather Rake::Task but it's not working in different directories
         Dir.chdir(@settings[:root_dir]) do
-          if @@config.is_dev?
+          if @config.is_dev?
             # @todo review that this may not be best practice, but it's really noisy in the console
             quietly { `rake assets:clobber` }
           else
@@ -39,7 +39,7 @@ module Maximus
           end
         end
       end
-      @@config.destroy_temp('stylestats')
+      @config.destroy_temp('stylestats')
       @output
 
     end
@@ -57,14 +57,14 @@ module Maximus
 
         if is_rails?
           # Only load tasks if we're not running a rake task
-          Rails.application.load_tasks unless @@config.is_dev?
+          Rails.application.load_tasks unless @config.is_dev?
 
           puts "\n"
           puts 'Compiling assets for stylestats...'.color(:blue)
 
           # @todo I'd rather Rake::Task but it's not working in different directories
           Dir.chdir(@settings[:root_dir]) do
-            if @@config.is_dev?
+            if @config.is_dev?
                # @todo review that this may not be best practice, but it's really noisy in the console
               quietly { `rake assets:precompile` }
             else

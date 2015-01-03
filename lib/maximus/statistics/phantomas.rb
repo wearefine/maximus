@@ -13,14 +13,14 @@ module Maximus
       node_module_exists('phantomas')
 
       @path = @settings[:paths] if @path.blank?
-      @domain = @@config.domain
+      @domain = @config.domain
 
       # Phantomas doesn't actually skip the skip-modules defined in the config BUT here's to hoping for future support
       phantomas_cli = "phantomas --config=#{@settings[:phantomas]} "
-      phantomas_cli += @@config.is_dev? ? '--colors' : '--reporter=json:no-skip'
+      phantomas_cli += @config.is_dev? ? '--colors' : '--reporter=json:no-skip'
       phantomas_cli += " --proxy=#{@domain}"
       @path.is_a?(Hash) ? @path.each { |label, url| phantomas_by_url(url, phantomas_cli) } : phantomas_by_url(@path, phantomas_cli)
-      @@config.destroy_temp('phantomas')
+      @config.destroy_temp('phantomas')
       @output
     end
 

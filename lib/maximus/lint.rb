@@ -36,8 +36,8 @@ module Maximus
     def initialize(opts = {})
 
       # Only run the config once
-      @@config ||= opts[:config] || Maximus::Config.new(opts)
-      @settings ||= @@config.settings
+      @config = opts[:config] || Maximus::Config.new(opts)
+      @settings = @config.settings
 
       @git_files = opts[:git_files]
       @path = opts[:file_paths] || @settings[:file_paths]
@@ -92,16 +92,16 @@ module Maximus
       @output[:lint_conventions] = lint_conventions
       @output[:lint_refactors] = lint_refactors
       lint_count = (lint_errors.length + lint_warnings.length + lint_conventions.length + lint_refactors.length)
-      if @@config.is_dev?
+      if @config.is_dev?
         puts lint_dev_format(data) unless data.blank?
         puts lint_summarize
         lint_ceiling lint_count
       else
-        @@config.log.info lint_summarize
+        @config.log.info lint_summarize
         # Because this should be returned in the format it was received
         @output[:raw_data] = data.to_json
       end
-      @@config.destroy_temp(@task)
+      @config.destroy_temp(@task)
       @output
     end
 
@@ -173,7 +173,7 @@ module Maximus
       #
       # @return [String] console message to display
       def lint_summarize
-        puts "\n" if @@config.is_dev?
+        puts "\n" if @config.is_dev?
 
         puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length > 0
 
