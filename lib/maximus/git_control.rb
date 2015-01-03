@@ -187,6 +187,7 @@ module Maximus
           end
         end
         # @todo better way to silence git, in case there's a real error?
+        @g.branch('master').checkout if base_branch == "maximus_#{sha}"
         quietly {
           @g.branch(base_branch).checkout
           @g.branch("maximus_#{sha}").delete
@@ -237,28 +238,24 @@ module Maximus
       end
 
       # Get last commit on current branch
-      #
       # @return [String] sha
       def sha
         @g.object('HEAD').sha
       end
 
       # Get current branch name
-      #
       # @return [String]
       def branch
         `env -i git rev-parse --abbrev-ref HEAD`.strip!
       end
 
       # Get last commit on the master branch
-      #
       # @return [Git::Object]
       def master_commit
         @g.branches[:master].gcommit
       end
 
       # Store last commit as Ruby Git::Object
-      #
       # @param commit_sha [String]
       # @return [Git::Object]
       def vccommit(commit_sha = sha)
@@ -266,7 +263,6 @@ module Maximus
       end
 
       # Get general stats of commit on HEAD versus last commit on master branch
-      #
       # @param new_commit [Git::Object]
       # @param old_commit [Git::Object]
       # @return [Git::Diff] hash of abbreviated, useful stats
@@ -275,14 +271,12 @@ module Maximus
       end
 
       # Get remote URL
-      #
       # @return [String, nil] nil returns if remotes is blank
       def remote
         @g.remotes.first.url unless @g.remotes.blank?
       end
 
       # Define associations to linters based on file extension
-      #
       # @return [Hash] linters and extension arrays
       def associations
         {
