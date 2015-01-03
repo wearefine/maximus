@@ -27,7 +27,7 @@ module Maximus
     # @option opts [Hash] :paths ({home: '/'}) labeled relative path to URLs. Statistics only
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
     # @option opts [String] :config_file ('maximus.yml') path to config file
-    # @return [void] this method is used to set up instance variables
+    # @return [#load_config_file #group_families #evaluate_yaml] this method is used to set up instance variables
     def initialize(opts = {})
       opts[:is_dev] ||= false
 
@@ -163,7 +163,6 @@ module Maximus
     end
 
     # Defines base logger
-    #
     # @param out [String, STDOUT] location for logging
     #   Accepts file path
     # @return [Logger] self.log
@@ -175,19 +174,12 @@ module Maximus
     end
 
     # Remove all or one created temporary config file
-    #
     # @see temp_it
-    # @param filename [String] (nil) file to destroy
-    #   If nil, destroy all temp files
-    def destroy_temp(filename = nil)
+    # @param filename [String] file to destroy
+    def destroy_temp(filename)
       return if @temp_files[filename.to_sym].blank?
-      if filename.nil?
-        @temp_files.each { |filename, file| file.unlink }
-        @temp_files = {}
-      else
-        @temp_files[filename.to_sym].unlink
-        @temp_files.delete(filename.to_sym)
-      end
+      @temp_files[filename.to_sym].unlink
+      @temp_files.delete(filename.to_sym)
     end
 
     # Combine domain with port if necessary
