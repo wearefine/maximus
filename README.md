@@ -137,11 +137,14 @@ When adding new lints, the JSON output should obey the following format:
 
 ## Changelog
 
-### 0.1.4
+### 0.1.4 (January 3, 2015)
 
 Bugfixes:
 
 * Added basic tests
+* Modified git-lines to show unified=1 instead of unified=0
+* Remove tmp files error
+* Better documentation to README
 
 ### 0.1.3 (December 22, 2014)
 
