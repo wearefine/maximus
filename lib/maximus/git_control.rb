@@ -12,7 +12,6 @@ module Maximus
     # @param opts [Hash] options passed directly to config
     # @option opts [Config object] :config custom Maximus::Config object
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
-    # @return [void] this method is used to set up instance variables
     def initialize(opts = {})
       opts[:config] ||= Maximus::Config.new({ commit: opts[:commit] })
       @config ||= opts[:config]
@@ -22,7 +21,6 @@ module Maximus
     end
 
     # 30,000 foot view of a commit
-    #
     # @param commit_sha [String] the sha of the commit
     # @return [Hash] commit data
     def commit_export(commit_sha = sha)
@@ -266,11 +264,17 @@ module Maximus
       end
 
       # Get general stats of commit on HEAD versus last commit on master branch
+      # @modified 0.1.4
       # @param new_commit [Git::Object]
       # @param old_commit [Git::Object]
-      # @return [Git::Diff] hash of abbreviated, useful stats
+      # @return [Git::Diff] hash of abbreviated, useful stats with added lines
       def diff(new_commit = vccommit, old_commit = master_commit)
-        @g.diff(new_commit, old_commit).stats
+        stats = @g.diff(new_commit, old_commit).stats
+        return if lines.blank? || diff.blank?
+        lines.each do |filename, filelines|
+          stats[:files][filename][:lines_added] = filelines if stats[:files].has_key?(filename)
+        end
+        stats
       end
 
       # Get remote URL
