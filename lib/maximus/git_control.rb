@@ -187,9 +187,12 @@ module Maximus
           end
         end
         # @todo better way to silence git, in case there's a real error?
-        @g.branch('master').checkout if base_branch == "maximus_#{sha}"
         quietly {
-          @g.branch(base_branch).checkout
+          if base_branch == "maximus_#{sha}"
+            @g.branch('master').checkout
+          else
+            @g.branch(base_branch).checkout
+          end
           @g.branch("maximus_#{sha}").delete
         } unless @psuedo_commit
       end
