@@ -325,7 +325,7 @@ module Maximus
         end
 
         # Wraith requires this screen_width config to be present
-        value['screen_widths'] ||= [767, 1024, 1280]
+        value['screen_widths'] ||= [1280, 1024, 767]
 
         value['paths'] = @yaml['paths']
         value['threshold'] ||= 0
