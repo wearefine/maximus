@@ -10,7 +10,6 @@ function lines-added(){
   local unified=1
   while read; do
     esc=$'\033'
-    echo $REPLY
     if [[ $REPLY =~ ---\ (a/)?.* ]]; then
       continue
     elif [[ $REPLY =~ \+\+\+\ (b/)?([^[:blank:]$esc]+).* ]]; then
