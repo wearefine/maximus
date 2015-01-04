@@ -3,16 +3,12 @@ module Maximus
   class Rubocop < Maximus::Lint
 
     # RuboCop
-    #
     # @see Lint#initialize
     def result
       @task = 'rubocop'
-
-      return unless temp_config(@task)
-
       @path = is_rails? ? "#{@settings[:root_dir]}/app" : "#{@settings[:root_dir]}/*.rb" if @path.blank?
 
-      return unless path_exists(@path)
+      return unless temp_config(@task) && path_exists(@path)
 
       rubo = `rubocop #{@path} --require #{reporter_path('rubocop')} --config #{temp_config(@task)} --format RuboCop::Formatter::MaximusRuboFormatter #{'-R' if is_rails?}`
 

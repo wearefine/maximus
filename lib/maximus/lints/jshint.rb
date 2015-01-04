@@ -3,16 +3,12 @@ module Maximus
   class Jshint < Maximus::Lint
 
     # JSHint (requires node module)
-    #
     # @see Lint#initialize
     def result
       @task = 'jshint'
-
-      return unless temp_config(@task)
-
       @path = is_rails? ? "#{@settings[:root_dir]}/app/assets" : "#{@settings[:root_dir]}source/assets" if @path.blank?
 
-      return unless path_exists(@path)
+      return unless temp_config(@task) && path_exists(@path)
 
       node_module_exists(@task)
 
