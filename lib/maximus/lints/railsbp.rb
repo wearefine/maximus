@@ -3,19 +3,13 @@ module Maximus
   class Railsbp < Maximus::Lint
 
     # rails_best_practice (requires Rails)
-    #
     # @see Lint#initialize
     def result
 
-      return unless is_rails?
-
       @task = 'railsbp'
-
-      return unless temp_config(@task)
-
       @path = @settings[:root_dir] if @path.blank?
 
-      return unless path_exists(@path)
+      return unless is_rails? && temp_config(@task) && path_exists(@path)
 
       tmp = Tempfile.new('railsbp')
       `rails_best_practices #{@path} -f json --output-file #{tmp.path}`
@@ -46,7 +40,6 @@ module Maximus
     private
 
       # Convert to {file:README.md Maximus format}
-      #
       # @param error [Hash] lint error
       # @return [Hash]
       def hash_for_railsbp(error)

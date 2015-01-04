@@ -74,7 +74,7 @@ module Maximus
 
             when 'jshint', 'JSHint', 'JShint'
 
-              # @todo DRY this up, but can't call it at the start because of the
+              # @todo DRY this load_config up, but can't call it at the start because of the
               #   global config variables (last when statement in this switch)
               value = load_config(value)
 
@@ -111,38 +111,7 @@ module Maximus
 
             when 'wraith', 'Wraith'
               value = load_config(value)
-
-              @settings[:wraith] = {}
-              if value.include?('browser')
-                value['browser'].each do |browser, browser_value|
-                  unless browser_value.is_a?(FalseClass)
-                    new_data = {}
-                    new_data['browser'] = []
-                    new_data['browser'] << { browser.to_s => browser.to_s }
-
-                    # Regardless of what's in the config, override with maximus,
-                    #   predictable namespacing
-                    new_data['directory'] = "maximus_wraith_#{browser}"
-                    new_data['history_dir'] = "maximus_wraith_history_#{browser}"
-
-                    # @todo a snap file cannot be set in the config
-                    snap_file = case browser
-                      when 'casperjs' then 'casper'
-                      when 'nojs' then 'nojs'
-                      else 'snap'
-                    end
-                    new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
-
-                    @settings[:wraith][browser.to_sym] = wraith_setup(new_data, "wraith_#{browser}")
-                  end
-                end
-              else
-                value['browser'] = { 'phantomjs' => 'phantomjs' }
-                value['directory'] = 'maximus_wraith_phantomjs'
-                value['history_dir'] = 'maximus_wraith_history_phantomjs'
-                value['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/snap.js")
-                @settings[:wraith][:phantomjs] = wraith_setup(value)
-              end
+              evaluate_for_wraith(value)
 
             # Configuration important to all of maximus
             when 'is_dev', 'log', 'root_dir', 'domain', 'port', 'paths', 'commit'
@@ -308,8 +277,7 @@ module Maximus
 
       # Wraith is a complicated gem with significant configuration
       #
-      # @see yaml_evaluate
-      # @see temp_it
+      # @see yaml_evaluate, temp_it
       #
       # @param value [Hash] modified data from a wraith config or injected data
       # @param name [String] ('wraith') config file name to write and eventually load
@@ -336,6 +304,46 @@ module Maximus
         file.write(value.to_yaml)
         file.close
         file.path
+      end
+
+      # Apply wraith defaults/merge existing config
+      # @since 0.1.5
+      # @see yaml_evaluate
+      # @param value [Hash]
+      def evaluate_for_wraith(value)
+        @settings[:wraith] = {}
+
+        if value.include?('browser')
+          value['browser'].each do |browser, browser_value|
+            unless browser_value.is_a?(FalseClass)
+              new_data = {}
+              new_data['browser'] = []
+              new_data['browser'] << { browser.to_s => browser.to_s }
+
+              # Regardless of what's in the config, override with maximus,
+              #   predictable namespacing
+              new_data['directory'] = "maximus_wraith_#{browser}"
+              new_data['history_dir'] = "maximus_wraith_history_#{browser}"
+
+              # @todo a snap file cannot be set in the config
+              snap_file = case browser
+                when 'casperjs' then 'casper'
+                when 'nojs' then 'nojs'
+                else 'snap'
+              end
+              new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
+
+              @settings[:wraith][browser.to_sym] = wraith_setup(new_data, "wraith_#{browser}")
+            end
+          end
+        else
+          value['browser'] = { 'phantomjs' => 'phantomjs' }
+          value['directory'] = 'maximus_wraith_phantomjs'
+          value['history_dir'] = 'maximus_wraith_history_phantomjs'
+          value['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/snap.js")
+          @settings[:wraith][:phantomjs] = wraith_setup(value)
+        end
+
       end
 
   end

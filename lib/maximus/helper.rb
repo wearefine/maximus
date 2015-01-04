@@ -11,7 +11,6 @@ module Maximus
   module Helper
 
     # See if project linted is a Rails app
-    #
     # This will usually be stored as a class variable in the inherited class
     # @return [Boolean]
     def is_rails?
@@ -19,7 +18,6 @@ module Maximus
     end
 
     # Get root directory of file being called
-    #
     # @return [String] absolute path to root directory
     def root_dir
       is_rails? ? Rails.root.to_s : Dir.pwd.to_s
@@ -53,7 +51,6 @@ module Maximus
     end
 
     # Grab the absolute path of the reporter file
-    #
     # @param filename [String]
     # @return [String] absolute path to the reporter file
     def reporter_path(filename)
@@ -82,7 +79,6 @@ module Maximus
     end
 
     # Convert string to boolean
-    #
     # @param str [String] the string to evaluate
     # @return [Boolean] whether or not the string is true
     def truthy(str)
@@ -91,7 +87,6 @@ module Maximus
     end
 
     # Edit and save a YAML file
-    #
     # @param yaml_location [String] YAML absolute file path
     # @return [void]
     def edit_yaml(yaml_location, &block)
@@ -101,7 +96,6 @@ module Maximus
     end
 
     # Request user input
-    #
     # @param args [Array<String>] prompts to request
     # @return [String] user input to use elsewhere
     def prompt(*args)
@@ -136,7 +130,6 @@ module Maximus
     end
 
     # Ensure path exists
-    #
     # @param path [String, Array] path to files can be directory or glob
     # @return [Boolean]
     def path_exists(path = @path)

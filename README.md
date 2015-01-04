@@ -77,18 +77,18 @@ lints: true # all lints including brakeman will run
 
 Flag                | Accepts                          | Description
 --------------------|----------------------------------|--------------------
-`-fp`/`--filepaths` | String/Array                     | Space-separated path(s) to files
-`-u`/`--urls`       | String/Array                     | Statistics only - Space-separated path(s) to relative URLs
-`-d`/`--domain`     | String                           | Statistics only - Web address (prepended to paths)
-`-po`/`--port`      | String/Numeric                   | Statistics only - Port to use if required (appended to domain)
+`-git`/`--sha`      | String                           | Run maximus based on a git commit. See [below](#git-examples)
 `-f`/`--frontend`   | Boolean/Blank                    | Run all front-end lints
 `-b`/`--backend`    | Boolean/Blank                    | Run all back-end lints
 `-s`/`--statistics` | Boolean/Blank                    | Run all statistics
 `-a`/`--all`        | Boolean/Blank                    | Run everything
 `-i`/`--include`    | String/Array                     | Include specific lints or statistics
 `-i`/`--exclude`    | String/Array                     | Exclude specific lints or statistics
-`-git`/`--sha`      | String                           | Run maximus based on a git commit. See [below](#git-examples)
 `-c`/`--config`     | String                           | Path to config file
+`-fp`/`--filepaths` | String/Array                     | Space-separated path(s) to files
+`-u`/`--urls`       | String/Array                     | Statistics only - Space-separated path(s) to relative URLs
+`-d`/`--domain`     | String                           | Statistics only - Web address (prepended to paths)
+`-po`/`--port`      | String/Numeric                   | Statistics only - Port to use if required (appended to domain)
 
 
 * Lint tasks can accept glob notation, i.e. `**/*.scss`

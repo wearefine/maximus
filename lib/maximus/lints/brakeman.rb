@@ -3,19 +3,13 @@ module Maximus
   class Brakeman < Maximus::Lint
 
     # Brakeman (requires Rails)
-    #
     # @see Lint#initialize
     def result
 
-      return unless is_rails?
-
       @task = 'brakeman'
-
-      return unless temp_config(@task)
-
       @path = @settings[:root_dir] if @path.blank?
 
-      return unless path_exists(@path)
+      return unless is_rails? && temp_config(@task) && path_exists(@path)
 
       tmp = Tempfile.new('brakeman')
       quietly { `brakeman #{@path} -f json -o #{tmp.path} -q` }
@@ -55,7 +49,6 @@ module Maximus
     private
 
       # Convert to {file:README.md Maximus format}
-      #
       # @param error [Hash] lint error
       # @return [Hash]
       def hash_for_brakeman(error, type)

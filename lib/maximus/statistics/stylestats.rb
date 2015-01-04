@@ -9,7 +9,10 @@ module Maximus
       return if @settings[:stylestats].blank?
 
       node_module_exists('stylestats')
-      @path = is_rails? ? "#{@settings[:root_dir]}/public/assets/**/*.css" : "#{@settings[:root_dir]}/**/*.css" if @path.blank?
+
+      if @path.blank?
+        @path = is_rails? ? "#{@settings[:root_dir]}/public/assets/**/*.css" : "#{@settings[:root_dir]}/**/*.css"
+      end
 
       css_files = @path.is_a?(Array) ? @path : find_css_files
 
@@ -28,18 +31,7 @@ module Maximus
         File.delete(file)
       end
 
-      if is_rails?
-        # @todo I'd rather Rake::Task but it's not working in different directories
-        Dir.chdir(@settings[:root_dir]) do
-          if @config.is_dev?
-            # @todo review that this may not be best practice, but it's really noisy in the console
-            quietly { `rake assets:clobber` }
-          else
-            `rake assets:clobber`
-          end
-        end
-      end
-      @config.destroy_temp('stylestats')
+      destroy_assets
       @output
 
     end
@@ -88,6 +80,7 @@ module Maximus
 
           # Shouldn't need to load paths anymore, but in case this doesn't work
           #   as it should, try the func below
+          #
           # Dir.glob(@path).select { |d| File.directory? d}.each do |directory|
           #   Sass.load_paths << directory
           # end
@@ -107,6 +100,25 @@ module Maximus
           end
         end
         searched_files
+      end
+
+      # Remove all assets created
+      # @since 0.1.5
+      def destroy_assets
+
+        if is_rails?
+          # @todo I'd rather Rake::Task but it's not working in different directories
+          Dir.chdir(@settings[:root_dir]) do
+            if @config.is_dev?
+              # @todo review that this may not be best practice, but it's really noisy in the console
+              quietly { `rake assets:clobber` }
+            else
+              `rake assets:clobber`
+            end
+          end
+        end
+        @config.destroy_temp('stylestats')
+
       end
 
   end
