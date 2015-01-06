@@ -117,7 +117,6 @@ module Maximus
             end
           end
         end
-        @config.destroy_temp('stylestats')
 
       end
 

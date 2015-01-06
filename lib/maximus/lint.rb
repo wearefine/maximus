@@ -101,7 +101,6 @@ module Maximus
         # Because this should be returned in the format it was received
         @output[:raw_data] = data.to_json
       end
-      @config.destroy_temp(@task)
       @output
     end
 

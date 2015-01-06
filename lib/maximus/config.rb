@@ -144,11 +144,17 @@ module Maximus
 
     # Remove all or one created temporary config file
     # @see temp_it
-    # @param filename [String] file to destroy
-    def destroy_temp(filename)
-      return if @temp_files[filename.to_sym].blank?
-      @temp_files[filename.to_sym].unlink
-      @temp_files.delete(filename.to_sym)
+    # @param filename [String] (nil) file to destroy
+    #   If nil, destroy all temp files
+    def destroy_temp(filename = nil)
+      if filename.nil?
+        @temp_files.each { |filename, file| file.unlink }
+        @temp_files = {}
+      else
+        return if @temp_files[filename.to_sym].blank?
+        @temp_files[filename.to_sym].unlink
+        @temp_files.delete(filename.to_sym)
+      end
     end
 
     # Combine domain with port if necessary
@@ -228,9 +234,11 @@ module Maximus
       # @return [String] absolute path to new config file
       def temp_it(filename, data)
         ext = filename.split('.')
-        file = Tempfile.new([filename, ".#{ext[1]}"])
-        file.write(data)
-        file.close
+        file = Tempfile.new([filename, ".#{ext[1]}"]).tap do |f|
+          f.rewind
+          f.write(data)
+          f.close
+        end
         @temp_files[ext[0].to_sym] = file
         file.path
       end
@@ -297,13 +305,7 @@ module Maximus
 
         value['paths'] = @yaml['paths']
         value['threshold'] ||= 0
-
-        # Wraith requires config files have .yaml extensions
-        # https://github.com/BBC-News/wraith/blob/2aff771eba01b76e61600cccb2113869bfe16479/lib/wraith/wraith.rb
-        file = Tempfile.new([name, '.yaml'])
-        file.write(value.to_yaml)
-        file.close
-        file.path
+        temp_it("#{name}.yaml", value.to_yaml)
       end
 
       # Apply wraith defaults/merge existing config

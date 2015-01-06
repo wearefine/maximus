@@ -270,7 +270,8 @@ module Maximus
       # @return [Git::Diff] hash of abbreviated, useful stats with added lines
       def diff(new_commit = vccommit, old_commit = master_commit)
         stats = @g.diff(new_commit, old_commit).stats
-        return if lines.blank? || diff.blank?
+        lines = lines_added(new_commit.sha)
+        return if lines.blank? || stats.blank?
         lines.each do |filename, filelines|
           stats[:files][filename][:lines_added] = filelines if stats[:files].has_key?(filename)
         end

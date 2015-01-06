@@ -21,13 +21,13 @@ module Maximus
       # @yieldparam browser [String] headless browser name
       # @yieldparam configpath [String] path to temp config file (see Config#wraith_setup)
       @settings[:wraith].each do |browser, configpath|
+        return unless File.file?(configpath) # prevents abortive YAML error if it can't find the file
         wraith_yaml = YAML.load_file(configpath)
         if File.directory?("#{@settings[:root_dir]}/#{wraith_yaml['history_dir']}")
           puts `wraith latest #{configpath}`
         else
           puts `wraith history #{configpath}`
         end
-        File.delete(configpath)
         wraith_parse browser
       end
 

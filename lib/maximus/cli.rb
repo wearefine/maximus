@@ -61,7 +61,8 @@ class Maximus::CLI < Thor
     return options[:include].each { |i| send(i) } unless options[:include].blank?
     # If all flag is not enabled, lint working copy as it's supposed to be
     @config.settings[:commit] = options[:git]
-    return Maximus::GitControl.new({config: @config}).lints_and_stats(true)
+    Maximus::GitControl.new({config: @config}).lints_and_stats(true)
+    @config.destroy_temp
   end
 
   # @todo something better than just installing in the global npm file

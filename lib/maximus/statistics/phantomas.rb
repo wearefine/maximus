@@ -20,7 +20,6 @@ module Maximus
       phantomas_cli += @config.is_dev? ? '--colors' : '--reporter=json:no-skip'
       phantomas_cli += " --proxy=#{@domain}"
       @path.is_a?(Hash) ? @path.each { |label, url| phantomas_by_url(url, phantomas_cli) } : phantomas_by_url(@path, phantomas_cli)
-      @config.destroy_temp('phantomas')
       @output
     end
 
