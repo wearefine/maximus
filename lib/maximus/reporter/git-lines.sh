@@ -80,7 +80,12 @@ function diff-lines(){
 }
 
 if [ -z "$2" ]; then
-  git diff $1^ $1 --unified=1 | lines-added
+  first_commit=$(git rev-list --max-parents=0 HEAD)
+  if [[ "$1" == "$first_commit" ]]; then
+    git diff --unified=1 | lines-added
+  else
+    git diff $1^ $1 --unified=1 | lines-added
+  fi
 else
   git diff --unified=1 | lines-added
 fi

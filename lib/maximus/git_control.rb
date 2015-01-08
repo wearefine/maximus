@@ -25,7 +25,20 @@ module Maximus
     # @return [Hash] commit data
     def commit_export(commit_sha = sha)
       ce_commit = vccommit(commit_sha)
-      ce_diff = diff(ce_commit, @g.object('HEAD^'))
+
+      # This may come in as a symbol string (:"whatever") so convert it
+      # For the git call, there's a trailing new line ("\n") that must be removed for
+      #   the if statement to function properly
+      first_commit = `git -C #{@settings[:root_dir]} rev-list --max-parents=0 HEAD`.strip!
+
+      if first_commit == commit_sha.to_s
+        last_commit = @g.gcommit(first_commit)
+      else
+        last_commit = @g.gcommit(`git -C #{@settings[:root_dir]} rev-parse #{commit_sha.to_s}^`.strip!)
+      end
+
+      ce_diff = diff(ce_commit, last_commit)
+
       {
         commit_sha: commit_sha,
         branch: branch,
@@ -271,7 +284,7 @@ module Maximus
       def diff(new_commit = vccommit, old_commit = master_commit)
         stats = @g.diff(new_commit, old_commit).stats
         lines = lines_added(new_commit.sha)
-        return if lines.blank? || stats.blank?
+        return if !lines.is_a?(Hash) || stats.blank?
         lines.each do |filename, filelines|
           stats[:files][filename][:lines_added] = filelines if stats[:files].has_key?(filename)
         end
