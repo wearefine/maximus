@@ -30,7 +30,6 @@ module Maximus
         end
         wraith_parse browser
       end
-
       @output
 
     end
@@ -48,11 +47,10 @@ module Maximus
           file_object = File.open(file, 'rb')
           orig_label = File.dirname(file).split('/').last
           label = @settings[:paths][orig_label]
-          @output[:statistics][browser.to_sym] ||= {}
-          @output[:statistics][browser.to_sym][label.to_sym] ||= {}
-          browser_output = @output[:statistics][browser.to_sym][label.to_sym]
+          @output[:statistics][label.to_s] ||= {}
+          browser_output = @output[:statistics][label.to_s]
           browser_output ||= {}
-          browser_output[:browser] = browser
+          browser_output[:browser] = browser.to_s
           browser_output[:name] = orig_label
           browser_output[:percent_changed] ||= {}
           browser_output[:percent_changed][File.basename(file).split('_')[0].to_i] = file_object.read.to_f
