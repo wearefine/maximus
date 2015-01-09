@@ -31,6 +31,8 @@ module Maximus
         wraith_parse browser
       end
 
+      @output
+
     end
 
 
