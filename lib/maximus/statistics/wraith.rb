@@ -39,9 +39,9 @@ module Maximus
 
       # Get a diff percentage of all changes by label and screensize
       #
-      # @example {:statistics=>{:/=>{:percent_changed=>{1024=>0.0, 767=>0.0} }}
+      # @example { :statistics => { "/" => { :browser=>"phantomjs", :name=>"home", :percent_changed=>{ 1024=>2.1, 1280=>1.8, 767=>3.4 } } } }
       # @param browser [String] headless browser used to generate the gallery
-      # @return [Hash] { path: { percent_changed: { size: percent_diff ] } }
+      # @return [Hash] { path: { browser, path_label, percent_changed: { size: percent_diff ] } }
       def wraith_parse(browser)
         Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.txt").select { |f| File.file? f }.each do |file|
           file_object = File.open(file, 'rb')
