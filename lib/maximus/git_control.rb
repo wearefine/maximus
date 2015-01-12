@@ -145,7 +145,7 @@ module Maximus
       git_shas.each do |sha, exts|
         # @todo better way to silence git, in case there's a real error?
         quietly { `git checkout #{sha} -b maximus_#{sha}` } unless @psuedo_commit
-        puts sha.to_s.color(:blue) if @config.is_dev?
+        puts sha.to_s.color(:blue)
         git_output[sha.to_sym] = {
           lints: {},
           statistics: {}
