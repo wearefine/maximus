@@ -168,7 +168,7 @@ module Maximus
 
       # Look for a maximus config file
       #
-      # Checks ./maximus.yml, ./maximus.yaml, ./config/maximus.yaml in order.
+      # Checks ./maximus.yml, ./.maximus.yml, ./config/maximus.yml in order.
       #   If there hasn't been a file discovered yet, checks ./config/maximus.yml
       #   and if there still isn't a file, load the default one included with the
       #   maximus gem.
@@ -181,7 +181,7 @@ module Maximus
         conf_location = if !file_path.nil? && File.exist?(file_path)
           file_path
         else
-          config_exists('maximus.yml') || config_exists('maximus.yaml') || config_exists('config/maximus.yaml') || check_default_config_path('maximus.yml')
+          config_exists('maximus.yml') || config_exists('.maximus.yml') || check_default_config_path('config/maximus.yml')
         end
 
         @yaml = YAML.load_file(conf_location)

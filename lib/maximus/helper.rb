@@ -47,7 +47,7 @@ module Maximus
     # @param file [String] filename with extension to search for
     # @return [String] path to default config file or file in user's directory
     def check_default_config_path(file)
-      File.exist?(file) ? file : File.join(File.dirname(__FILE__), "config/#{file}")
+      File.exist?(file) ? file : File.join(File.dirname(__FILE__), file)
     end
 
     # Grab the absolute path of the reporter file
