@@ -293,18 +293,20 @@ module Maximus
       def wraith_setup(value, name = 'phantomjs')
 
         if @yaml.include?('urls')
-          value['domains'] = yaml_data['urls']
+          value['domains'] = @yaml['urls']
         else
           value['domains'] = {}
           # @see #domain
           value['domains']['main'] = domain
         end
 
+        # Set wraith defaults unless they're already defined
         # Wraith requires this screen_width config to be present
         value['screen_widths'] ||= [1280, 1024, 767]
+        value['fuzz'] ||= '20%'
+        value['threshold'] ||= 0
 
         value['paths'] = @yaml['paths']
-        value['threshold'] ||= 0
         temp_it("#{name}.yaml", value.to_yaml)
       end
 
@@ -322,8 +324,7 @@ module Maximus
               new_data['browser'] = []
               new_data['browser'] << { browser.to_s => browser.to_s }
 
-              # Regardless of what's in the config, override with maximus,
-              #   predictable namespacing
+              # Regardless of what's in the config, override with predictable namespacing
               new_data['directory'] = "maximus_wraith_#{browser}"
               new_data['history_dir'] = "maximus_wraith_history_#{browser}"
 
@@ -335,7 +336,7 @@ module Maximus
               end
               new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
 
-              @settings[:wraith][browser.to_sym] = wraith_setup(new_data, "wraith_#{browser}")
+              @settings[:wraith][browser.to_sym] = wraith_setup(new_data, "maximus_wraith_#{browser}")
             end
           end
         else
