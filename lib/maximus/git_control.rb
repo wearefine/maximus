@@ -21,16 +21,16 @@ module Maximus
     end
 
     # 30,000 foot view of a commit
-    # @param commit_sha [String] the sha of the commit
+    # @param commit_sha [String] (sha) the sha of the commit
     # @return [Hash] commit data
     def commit_export(commit_sha = sha)
       ce_commit = vccommit(commit_sha)
 
-      # This may come in as a symbol string (:"whatever") so convert it
       # For the git call, there's a trailing new line ("\n") that must be removed for
       #   the if statement to function properly
       first_commit = `git -C #{@settings[:root_dir]} rev-list --max-parents=0 HEAD`.strip!
 
+      # This may come in as a symbol string (:"whatever") so convert it
       if first_commit == commit_sha.to_s
         last_commit = @g.gcommit(first_commit)
       else
@@ -96,6 +96,7 @@ module Maximus
         # Grab all files in that commit and group them by extension
         # If working copy, just give the diff names of the files changed
         files = @psuedo_commit ? `git diff --name-only` : `git show --pretty="format:" --name-only #{git_sha}`
+        # File.extname is not used here in case dotfiles are encountered
         files = files.split("\n").group_by { |f| f.split('.').pop }
 
         # Don't worry about files that we don't have a lint or a statistic for
@@ -137,14 +138,19 @@ module Maximus
     #     'sha'...
     #   }
     #
+    # @see compare
+    # @param lint_by_path [Boolean] only lint by files in git commit and
+    #   not the commit as a whole
+    # @param git_shas [Hash] (#compare) a hash of gitcommit shas
+    #   and relevant file types in the commit
+    # @param nuclear [Boolean] do everything regardless of what's in the commit
     # @return [Hash] data all data grouped by task
-    def lints_and_stats(lint_by_path = false, git_shas = compare)
+    def lints_and_stats(lint_by_path = false, git_shas = compare, nuclear = false)
       return false if git_shas.blank?
       base_branch = branch
       git_output = {}
       git_shas.each do |sha, exts|
-        # @todo better way to silence git, in case there's a real error?
-        quietly { `git checkout #{sha} -b maximus_#{sha}` } unless @psuedo_commit
+        create_branch(sha) unless @psuedo_commit
         puts sha.to_s.color(:blue)
         git_output[sha.to_sym] = {
           lints: {},
@@ -162,50 +168,53 @@ module Maximus
             config: @config
           }
           lint_opts[:file_paths] = lint_file_paths(files, ext) if lint_by_path
-          case ext
-            when :scss
-              lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
+          if nuclear
+            lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
+            lints[:jshint] = Maximus::Jshint.new(lint_opts).result
+            lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
+            lints[:railsbp] = Maximus::Railsbp.new(lint_opts).result
+            lints[:brakeman] = Maximus::Brakeman.new(lint_opts).result
+            statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
+            statistics[:phantomas] = Maximus::Phantomas.new({config: @config}).result
+            statistics[:wraith] = Maximus::Wraith.new({config: @config}).result
+          else
+            case ext
+              when :scss
+                lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
 
-              # Do not run statistics if called from command line
-              if lint_opts[:commit].blank?
+                # Do not run statistics if called from command line
+                if @settings[:commit].blank?
 
-                # @todo stylestat is singular here because model name in Rails is singular.
-                #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
-                #   which breaks the model name.
-                statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
+                  # @todo stylestat is singular here because model name in Rails is singular.
+                  #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
+                  #   which breaks the model name.
+                  statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
 
-                # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
-                statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
-              end
-            when :js
-              lints[:jshint] = Maximus::Jshint.new(lint_opts).result
+                  # @todo double pipe here is best way to say, if it's already run, don't run again, right?
+                  statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
+                  statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
+                end
+              when :js
+                lints[:jshint] = Maximus::Jshint.new(lint_opts).result
 
-              # Do not run statistics if called from command line
-              if lint_opts[:commit].blank?
+                # Do not run statistics if called from command line
+                if @settings[:commit].blank?
 
-                statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
+                  statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
 
-                # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
-              end
-            when :ruby
-              lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
-              lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
-              lints[:brakeman] = Maximus::Brakeman.new(lint_opts).result
-            when :rails
-              lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
+                  # @todo double pipe here is best way to say, if it's already run, don't run again, right?
+                  statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
+                end
+              when :ruby
+                lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
+                lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
+                lints[:brakeman] = Maximus::Brakeman.new(lint_opts).result
+              when :rails
+                lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
+            end
           end
         end
-        # @todo better way to silence git, in case there's a real error?
-        quietly {
-          if base_branch == "maximus_#{sha}"
-            @g.branch('master').checkout
-          else
-            @g.branch(base_branch).checkout
-          end
-          @g.branch("maximus_#{sha}").delete
-        } unless @psuedo_commit
+        destroy_branch(base_branch, sha) unless @psuedo_commit
       end
       git_output
     end
@@ -213,8 +222,31 @@ module Maximus
 
     protected
 
+      # Create branch to run report on
+      # @todo better way to silence git, in case there's a real error?
+      # @since 0.1.5
+      # @param sha [String]
+      def create_branch(sha)
+        quietly { `git checkout #{sha} -b maximus_#{sha}` }
+      end
+
+      # Destroy created branch
+      # @todo better way to silence git, in case there's a real error?
+      # @since 0.1.5
+      # @param base_branch [String] branch we started on
+      # @param sha [String] used to check against created branch name
+      def destroy_branch(base_branch, sha)
+        quietly {
+          if base_branch == "maximus_#{sha}"
+            @g.branch('master').checkout
+          else
+            @g.branch(base_branch).checkout
+          end
+          @g.branch("maximus_#{sha}").delete
+        }
+      end
+
       # Get list of file paths
-      #
       # @param files [Hash] hash of files denoted by key 'filename'
       # @param ext [String] file extension - different extensions are joined different ways
       # @return [String] file paths delimited by comma or space
@@ -227,12 +259,10 @@ module Maximus
       # Determine which lines were added (where and how many) in a commit
       #
       # @example output from method
-      #   {
-      #     'filename': [
+      #   { 'filename': [
       #       '0..10',
       #       '11..14'
-      #     ]
-      #   }
+      #    ] }
       #
       # @param git_sha [String] sha of the commit
       # @return [Hash] ranges by lines added in a commit by file name
