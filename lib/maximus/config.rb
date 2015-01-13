@@ -150,11 +150,7 @@ module Maximus
     def destroy_temp(filename = nil)
       if filename.nil?
         @temp_files.each do |filename, file|
-          if file.is_a?(String)
-            file.unlink
-          else
-            file.each { |f| f.unlink }
-          end
+          file.unlink if file.is_a?(String)
         end
         @temp_files = {}
       else
