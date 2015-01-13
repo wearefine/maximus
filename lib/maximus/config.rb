@@ -3,12 +3,13 @@ module Maximus
   # Global options and configuration
   # @since 0.1.3
   # @attr_reader settings [Hash] all the options
-  # @attr_reader temp_files [Hash] Filename without extension => path to temp file
+  # @attr_accessor temp_files [Hash] Filename without extension => path to temp file
   class Config
 
     include Helper
 
-    attr_reader :settings, :temp_files
+    attr_reader :settings
+    attr_accessor :temp_files
 
     # Global options for all of maximus
     #
@@ -148,7 +149,13 @@ module Maximus
     #   If nil, destroy all temp files
     def destroy_temp(filename = nil)
       if filename.nil?
-        @temp_files.each { |filename, file| file.unlink }
+        @temp_files.each do |filename, file|
+          if file.is_a?(String)
+            file.unlink
+          else
+            file.each { |f| f.unlink }
+          end
+        end
         @temp_files = {}
       else
         return if @temp_files[filename.to_sym].blank?
