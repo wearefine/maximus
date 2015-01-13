@@ -135,7 +135,25 @@ When adding new lints, the JSON output should obey the following format:
 } ]
 ```
 
+## Notes
+
+If calling Maximus::Wraith from a script, please see the note in lib/statistics/wraith.rb#result
+
 ## Changelog
+
+### 0.1.5
+
+Bugfixes:
+
+* Wraith outputs percentages properly
+* Diff data for initial commits
+* More intuitive config path discovery
+* Flip GitControl#diff around for old to new comparison
+* More stability/defensive programming in Config, Wraith, and GitControl
+
+Features:
+
+* Wraith includes images in output
 
 ### 0.1.4 (January 3, 2015)
 

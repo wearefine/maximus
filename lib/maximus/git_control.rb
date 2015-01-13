@@ -32,15 +32,14 @@ module Maximus
 
       # This may come in as a symbol string (:"whatever") so convert it
       if first_commit == commit_sha.to_s
-        last_commit = @g.gcommit(first_commit)
+        ce_diff = diff_initial(first_commit)
       else
         last_commit = @g.gcommit(`git -C #{@settings[:root_dir]} rev-parse #{commit_sha.to_s}^`.strip!)
+        ce_diff = diff(last_commit, ce_commit)
       end
 
-      ce_diff = diff(last_commit, ce_commit)
-
       {
-        commit_sha: commit_sha,
+        commit_sha: commit_sha.to_s,
         branch: branch,
         message: ce_commit.message,
         remote_repo: remote,
@@ -319,6 +318,38 @@ module Maximus
           stats[:files][filename][:lines_added] = filelines if stats[:files].has_key?(filename)
         end
         stats
+      end
+
+      # Get diff stats on just the initial commit
+      # Ruby-git doesn't support this well
+      # @see diff
+      # @since 0.1.5
+      # @param commit_sha [String]
+      # @return [Hash] stat data similar to Ruby-git's Diff.stats return
+      def diff_initial(commit_sha)
+        # Start after the commit information
+        data = `git -C #{@settings[:root_dir]} log --numstat --oneline #{commit_sha}`.split("\n")[1..-1]
+        value = {
+          total: {
+            insertions: 0,
+            deletions: 0,
+            lines: 0,
+            files: data.length
+          },
+          files: {}
+        }
+        data.each do |d|
+          item = d.split("\t")
+          insertions = item[0].to_i
+          value[:total][:insertions] += insertions
+          value[:total][:lines] += insertions
+          value[:files][item[2]] = {
+            insertions: insertions,
+            deletions: 0,
+            lines_added: ["0..#{item[0]}"]
+          }
+        end
+        value
       end
 
       # Get remote URL
