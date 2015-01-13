@@ -70,7 +70,7 @@ module Maximus
             # so that :raw_data remains unaffected
             message = message.clone
             message.delete('length')
-            message['filename'] = filename
+            message['filename'] = filename.nil? ? '' : filename.gsub("#{@settings[:root_dir]}/", '')
             if message['severity'] == 'warning'
               message.delete('severity')
               lint_warnings << message
