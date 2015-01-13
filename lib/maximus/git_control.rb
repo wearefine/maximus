@@ -37,7 +37,7 @@ module Maximus
         last_commit = @g.gcommit(`git -C #{@settings[:root_dir]} rev-parse #{commit_sha.to_s}^`.strip!)
       end
 
-      ce_diff = diff(ce_commit, last_commit)
+      ce_diff = diff(last_commit, ce_commit)
 
       {
         commit_sha: commit_sha,
@@ -308,11 +308,11 @@ module Maximus
 
       # Get general stats of commit on HEAD versus last commit on master branch
       # @modified 0.1.4
-      # @param new_commit [Git::Object]
       # @param old_commit [Git::Object]
+      # @param new_commit [Git::Object]
       # @return [Git::Diff] hash of abbreviated, useful stats with added lines
-      def diff(new_commit = vccommit, old_commit = master_commit)
-        stats = @g.diff(new_commit, old_commit).stats
+      def diff(old_commit = master_commit, new_commit = vccommit)
+        stats = @g.diff(old_commit, new_commit).stats
         lines = lines_added(new_commit.sha)
         return if !lines.is_a?(Hash) || stats.blank?
         lines.each do |filename, filelines|
