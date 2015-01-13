@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "rubocop", "~> 0.23"
   spec.add_runtime_dependency "rails_best_practices", "~> 1.15"
   spec.add_runtime_dependency "brakeman", "~> 2.6"
-  spec.add_runtime_dependency "wraith", "~> 2.1.0"
+  spec.add_runtime_dependency "wraith", "~> 2.3.0"
   spec.add_runtime_dependency "activesupport"
   spec.add_runtime_dependency "thor"
 
