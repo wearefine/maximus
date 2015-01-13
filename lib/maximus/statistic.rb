@@ -62,10 +62,10 @@ module Maximus
         return false if stats_cli.blank?
 
         stats = JSON.parse(stats_cli)
-        @output[:statistics][file_path.to_sym] ||= {}
+        @output[:statistics][file_path.to_s] ||= {}
 
         # @todo is there a better way to do this?
-        fp = @output[:statistics][file_path.to_s.to_sym]
+        fp = @output[:statistics][file_path.to_s]
 
         # @todo Can I do like a self << thing here?
         stats.each do |stat, value|

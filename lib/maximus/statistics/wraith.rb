@@ -25,10 +25,11 @@ module Maximus
         wraith_yaml = YAML.load_file(configpath)
         if File.directory?("#{@settings[:root_dir]}/#{wraith_yaml['history_dir']}")
           puts `wraith latest #{configpath}`
-        else
-          puts `wraith history #{configpath}`
+          # Reset history dir
+          puts `rm -rf #{@settings[:root_dir]}/#{wraith_yaml['history_dir']}`
         end
         wraith_parse browser
+        puts `wraith history #{configpath}`
       end
       @output
 
