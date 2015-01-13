@@ -31,16 +31,19 @@ class Maximus::CLI < Thor
   desc "frontend", "Execute all front-end tasks"
   def frontend
     ['scsslint', 'jshint'].each { |e| check_exclude(e) }
+    @config.destroy_temp
   end
 
   desc "backend", "Lint with all backend lints"
   def backend
     ['rubocop', 'railsbp', 'brakeman'].each { |e| check_exclude(e) }
+    @config.destroy_temp
   end
 
   desc "statistics", "Run all statistics"
   def statistics
     ['stylestats', 'phantomas', 'wraith'].each { |e| check_exclude(e) }
+    @config.destroy_temp
   end
 
   # Alias ruby to backend
