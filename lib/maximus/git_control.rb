@@ -85,38 +85,17 @@ module Maximus
       git_diff = @psuedo_commit ? ["git #{sha1}"] : `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
 
       # Include the first sha because rev-list is doing a traversal
-      # So sha1 is never included
+      #   So sha1 is never included
       git_diff << sha1 unless @psuedo_commit
 
       # Reverse so that we go in chronological order
       git_diff.reverse.each do |git_sha|
-        new_lines = lines_added(git_sha)
 
         # Grab all files in that commit and group them by extension
-        # If working copy, just give the diff names of the files changed
+        #   If working copy, just give the diff names of the files changed
         files = @psuedo_commit ? `git diff --name-only` : `git show --pretty="format:" --name-only #{git_sha}`
-        # File.extname is not used here in case dotfiles are encountered
-        files = files.split("\n").group_by { |f| f.split('.').pop }
 
-        # Don't worry about files that we don't have a lint or a statistic for
-        flat_associations = associations.clone.flatten(2)
-        files.delete_if { |k,v| !flat_associations.include?(k) || k.nil? }
-
-        associations.each do |ext, related|
-          files[ext] ||= []
-          related.each do |child|
-            unless files[child].blank?
-              files[child].each do |c|
-                # hack to ignore deleted files
-                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@settings[:root_dir]}/#{c}", changes: new_lines[c] ]
-              end
-              files[ext].concat(files[child])
-              files.delete(child)
-            end
-          end
-        end
-        files.delete_if { |k,v| v.blank? }
-        diff_return[git_sha.to_sym] = files
+        diff_return[git_sha.to_sym] = match_associations(git_sha, files)
       end
       diff_return
     end
@@ -365,8 +344,41 @@ module Maximus
           scss:   ['scss', 'sass'],
           js:     ['js'],
           ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc'],
-          rails:  ['slim', 'haml']
+          rails:  ['slim', 'haml', 'jbuilder', 'erb']
         }
+      end
+
+      # Associate files by extension and match their changes
+      # @since 0.1.5
+      # @param git_sha [String]
+      # @param files [String] list of files from git return
+      # @return [Hash] files with matched extensions and changes
+      def match_associations(git_sha, files)
+        new_lines = lines_added(git_sha)
+
+        # File.extname is not used here in case dotfiles are encountered
+        files = files.split("\n").group_by { |f| f.split('.').pop }
+
+        # Don't worry about files that we don't have a lint or a statistic for
+        flat_associations = associations.clone.flatten(2)
+        files.delete_if { |k,v| !flat_associations.include?(k) || k.nil? }
+
+        associations.each do |ext, related|
+          files[ext] ||= []
+          related.each do |child|
+            unless files[child].blank?
+              files[child].each do |c|
+                # hack to ignore deleted files
+                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@settings[:root_dir]}/#{c}", changes: new_lines[c] ]
+              end
+              files[ext].concat(files[child])
+              files.delete(child)
+            end
+          end
+        end
+
+        files.delete_if { |k,v| v.blank? }
+        files
       end
 
   end
