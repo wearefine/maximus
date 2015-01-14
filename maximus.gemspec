@@ -18,8 +18,8 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "git", ">= 1.2.8"
-  spec.add_runtime_dependency "scss-lint", "~> 0.31.0"
+  spec.add_runtime_dependency "git", "~> 1.2.9"
+  spec.add_runtime_dependency "scss-lint", "~> 0.32.0"
   spec.add_runtime_dependency "rainbow", "2.0.0"
   spec.add_runtime_dependency "rubocop", "~> 0.23"
   spec.add_runtime_dependency "rails_best_practices", "~> 1.15"
