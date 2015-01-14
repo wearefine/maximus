@@ -9,5 +9,6 @@
 * Add CSS lint (maybe)
 * Add JSLint (maybe)
 * Add W3 validator (maybe)
+* Add Markdown lint (maybe)
 * Regex path names on phantomas and wraith to defend against injection and bad characters
 * Test for < ruby 2.0 or require 2.0 < in gemspec
