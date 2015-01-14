@@ -31,7 +31,7 @@ module Maximus
       # @yieldparam browser [String] headless browser name
       # @yieldparam configpath [String] path to temp config file (see Config#wraith_setup)
       @settings[:wraith].each do |browser, configpath|
-        return unless File.file?(configpath) # prevents abortive YAML error if it can't find the file
+        next unless File.file?(configpath) # prevents abortive YAML error if it can't find the file
         wraith_yaml = YAML.load_file(configpath)
         if File.directory?("#{@settings[:root_dir]}/#{wraith_yaml['history_dir']}")
           puts `wraith latest #{configpath}`
@@ -82,7 +82,6 @@ module Maximus
       # @param browser [String]
       def wraith_images(browser)
         Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.png").select { |f| File.file? f }.each do |file|
-          file_object = File.open(file, 'rb')
           orig_label = File.dirname(file).split('/').last
           # Get stored key value
           label = @settings[:paths][orig_label]
