@@ -1,2 +1,57 @@
+domain: 'http://localhost'
+port: 3000
+
+paths:
+  home: '/'
+
 lints: true
-statistics: true
+
+jshint:
+  browser: true
+  esnext: true
+  globals: {}
+  globalstrict: true
+  undef: true
+  unused: true
+  jquery: true
+
+phantomas:
+  block-domain: 'google-analytics.com'
+  skip-modules:
+    - 'Caching'
+    - 'localStorage'
+    - 'Cookies'
+    - 'assetsWithQueryString'
+    - 'nodesWithInlineCSS'
+
+stylestats:
+  published: false
+  paths: false
+  stylesheets: false
+  styleElements: true
+  size: true
+  dataUriSize: true
+  ratioOfDataUriSize: true
+  gzippedSize: false
+  simplicity: true
+  rules: true
+  selectors: true
+  mostIdentifier: true
+  mostIdentifierSelector: true
+  lowestCohesion: true
+  lowestCohesionSelector: true
+  totalUniqueFontSizes: true
+  uniqueFontSize: true
+  totalUniqueColors: true
+  uniqueColor: true
+  idSelectors: true
+  universalSelectors: true
+  unqualifiedAttributeSelectors: true
+  javascriptSpecificSelectors: "[#\\.]js\\-"
+  importantKeywords: true
+  floatProperties: true
+  mediaQueries: true
+  propertiesCount: 10
+  requestOptions: {}
+
+wraith: true
