@@ -95,7 +95,7 @@ module Maximus
         #   If working copy, just give the diff names of the files changed
         files = @psuedo_commit ? `git diff --name-only` : `git show --pretty="format:" --name-only #{git_sha}`
 
-        diff_return[git_sha.to_sym] = match_associations(git_sha, files)
+        diff_return[git_sha.to_s] = match_associations(git_sha, files)
       end
       diff_return
     end
@@ -129,13 +129,14 @@ module Maximus
       git_output = {}
       git_shas.each do |sha, exts|
         create_branch(sha) unless @psuedo_commit
-        puts sha.to_s.color(:blue)
-        git_output[sha.to_sym] = {
+        sha = sha.to_s
+        puts sha.color(:blue)
+        git_output[sha] = {
           lints: {},
           statistics: {}
         }
-        lints = git_output[sha.to_sym][:lints]
-        statistics = git_output[sha.to_sym][:statistics]
+        lints = git_output[sha][:lints]
+        statistics = git_output[sha][:statistics]
         lint_opts = {}
 
         # This is where everything goes down
