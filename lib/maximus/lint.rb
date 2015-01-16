@@ -45,7 +45,6 @@ module Maximus
     end
 
     # Convert raw data into warnings, errors, conventions or refactors. Use this wisely.
-    #
     # @param data [Hash] unfiltered lint data
     # @return [Hash] refined lint data and all the other bells and whistles
     def refine(data)
@@ -60,10 +59,10 @@ module Maximus
         data = @output[:relevant_lints]
       end
 
-      lint_warnings = []
-      lint_errors = []
-      lint_conventions = []
-      lint_refactors = []
+      @output[:lint_warnings] = []
+      @output[:lint_errors] = []
+      @output[:lint_conventions] = []
+      @output[:lint_refactors] = []
       unless data.blank?
         data.each do |filename, error_list|
           error_list.each do |message|
@@ -71,33 +70,20 @@ module Maximus
             message = message.clone
             message.delete('length')
             message['filename'] = filename.nil? ? '' : filename.gsub("#{@settings[:root_dir]}/", '')
-            if message['severity'] == 'warning'
-              message.delete('severity')
-              lint_warnings << message
-            elsif message['severity'] == 'error'
-              message.delete('severity')
-              lint_errors << message
-            elsif message['severity'] == 'convention'
-              message.delete('severity')
-              lint_conventions << message
-            elsif message['severity'] == 'refactor'
-              message.delete('severity')
-              lint_refactors << message
-            end
+            severity = message['severity']
+            message.delete('severity')
+            @output["lint_#{severity}s".to_sym] << message
           end
         end
       end
-      @output[:lint_errors] = lint_errors
-      @output[:lint_warnings] = lint_warnings
-      @output[:lint_conventions] = lint_conventions
-      @output[:lint_refactors] = lint_refactors
-      lint_count = (lint_errors.length + lint_warnings.length + lint_conventions.length + lint_refactors.length)
+      lint_count = (@output[:lint_errors].length + @output[:lint_warnings].length + @output[:lint_conventions].length + @output[:lint_refactors].length)
+
+      puts lint_summarize
+
       if @config.is_dev?
         puts lint_dev_format(data) unless data.blank?
-        puts lint_summarize
         lint_ceiling lint_count
       else
-        @config.log.info lint_summarize
         # Because this should be returned in the format it was received
         @output[:raw_data] = data.to_json
       end
@@ -118,7 +104,6 @@ module Maximus
       end
 
       # Compare lint output with lines changed in commit
-      #
       # @param lint [Hash] output lint data
       # @param files [Hash<String: String>] filename: filepath
       # @return [Array] lints that match the lines in commit
@@ -156,7 +141,6 @@ module Maximus
       end
 
       # Look for a config defined from Config#initialize
-      #
       # @since 0.1.2
       # @param search_for [String]
       # @return [String, Boolean] path to temp file
@@ -169,7 +153,6 @@ module Maximus
     private
 
       # Send abbreviated results to console or to the log
-      #
       # @return [String] console message to display
       def lint_summarize
         puts "\n" if @config.is_dev?
@@ -179,24 +162,23 @@ module Maximus
         success = @task.to_s.color(:green)
         success += ": "
         success += "[#{@output[:lint_warnings].length}]".color(:yellow)
-        success += " " + "[#{@output[:lint_errors].length}]".color(:red)
+        success += " [#{@output[:lint_errors].length}]".color(:red)
         if @task == 'rubocop'
-          success += " " + "[#{@output[:lint_conventions].length}]".color(:cyan)
-          success += " " + "[#{@output[:lint_refactors].length}]".color(:white)
+          success += " [#{@output[:lint_conventions].length}]".color(:cyan)
+          success += " [#{@output[:lint_refactors].length}]".color(:white)
         end
 
         success
       end
 
       # If there's just too much to handle, through a warning.
-      #
       # @param lint_length [Integer] count of how many lints
       # @return [String] console message to display
       def lint_ceiling(lint_length)
         if lint_length > 100
           lint_dev_format
-          failed_task = "#{@task}".color(:green)
-          errors = Rainbow("#{lint_length} failures.").red
+          failed_task = @task.color(:green)
+          errors = "#{lint_length} failures.".color(:red)
           errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
           errormsg += "\n\n"
 
@@ -206,17 +188,14 @@ module Maximus
       end
 
       # Dev display, executed only when called from command line
-      #
       # @param errors [Hash] data from lint
       # @return [String] console message to display
       def lint_dev_format(errors = @output[:raw_data])
         return if errors.blank?
         pretty_output = ''
         errors.each do |filename, error_list|
-          pretty_output += "\n"
           filename = filename.gsub("#{@settings[:root_dir]}/", '')
-          pretty_output += filename.color(:cyan).underline
-          pretty_output += "\n"
+          pretty_output += "\n#{filename.color(:cyan).underline} \n"
           error_list.each do |message|
             pretty_output += case message['severity']
               when 'warning' then 'W'.color(:yellow)
@@ -225,11 +204,7 @@ module Maximus
               when 'refactor' then 'R'.color(:white)
               else '?'.color(:blue)
             end
-            pretty_output += ' '
-            pretty_output += message['line'].to_s.color(:blue)
-            pretty_output += " #{message['linter'].color(:green)}: "
-            pretty_output += message['reason']
-            pretty_output += "\n"
+            pretty_output += " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
           end
         end
         pretty_output

@@ -37,10 +37,9 @@ module Maximus
           puts `wraith latest #{configpath}`
 
           # Reset history dir
-          # It puts the new shots in the history folder,
-          #   even with absolute paths in the config.
-          #   Could be a bug in wraith
-          puts `rm -rf #{@settings[:root_dir]}/#{wraith_yaml['history_dir']}`
+          # It puts the new shots in the history folder, even with absolute paths in the config.
+          #   Could be a bug in wraith.
+          `rm -rf #{@settings[:root_dir]}/#{wraith_yaml['history_dir']}`
         end
         wraith_parse browser
         wraith_images browser unless @config.is_dev?
