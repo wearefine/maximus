@@ -1,3 +1,6 @@
+require 'active_support'
+require 'active_support/core_ext/hash/keys'
+
 module Maximus
 
   # Global options and configuration
@@ -33,10 +36,11 @@ module Maximus
 
       # Only set log file if it's set to true.
       #   Otherwise, allow it to be nil or a path
-      opts[:log] = 'log/maximus.log' if opts[:log].is_a?(TrueClass)
+      opts[:log] = false if opts[:log].nil?
+      opts[:log] ||= 'log/maximus.log' if opts[:log].is_a?(TrueClass)
 
       opts[:git_log] = false if opts[:git_log].nil?
-      opts[:git_log] = 'log/maximus_git.log' if opts[:git_log].is_a?(TrueClass)
+      opts[:git_log] ||= 'log/maximus_git.log' if opts[:git_log].is_a?(TrueClass)
 
       # @see Helper#root_dir
       opts[:root_dir] ||= root_dir
@@ -62,59 +66,59 @@ module Maximus
 
     # Set global options or generate appropriate config files for lints or statistics
     #
-    # @param yaml_data [Hash] (@yaml) loaded data from the discovered maximus config file
+    # @param yaml_data [Hash] (@settings) loaded data from the discovered maximus config file
     # @return [Hash] paths to temp config files and static options
     #   These should be deleted with destroy_temp after read and loaded
-    def evaluate_yaml(yaml_data = @yaml)
+    def evaluate_yaml(yaml_data = @settings)
       yaml_data.each do |key, value|
         unless value.is_a?(FalseClass)
           value = {} if value.is_a?(TrueClass)
 
           case key
 
-            when 'jshint', 'JSHint', 'JShint'
+            when :jshint, :JSHint, :JShint
 
               # @todo DRY this load_config up, but can't call it at the start because of the
               #   global config variables (last when statement in this switch)
               value = load_config(value)
 
-              if yaml_data[key].is_a?(Hash) && yaml_data[key].has_key?['ignore']
+              if yaml_data[key].is_a?(Hash) && yaml_data[key].has_key?('jshintignore')
                 jshintignore_file = []
-                yaml_data[key]['ignore'].each { |i| jshintignore_file << "#{i}\n" }
+                yaml_data[key]['jshintignore'].each { |i| jshintignore_file << "#{i}\n" }
                 @settings[:jshintignore] = temp_it('jshintignore.json', jshintignore_file)
               end
               @settings[:jshint] = temp_it('jshint.json', value.to_json)
 
-            when 'scsslint', 'scss-lint', 'SCSSlint'
+            when :scsslint, :SCSSlint
               value = load_config(value)
 
               @settings[:scsslint] = temp_it('scsslint.yml', value.to_yaml)
 
-            when 'rubocop', 'Rubocop', 'RuboCop'
+            when :rubocop, :Rubocop, :RuboCop
               value = load_config(value)
 
               @settings[:rubocop] = temp_it('rubocop.yml', value.to_yaml)
 
-            when 'brakeman'
+            when :brakeman
               @settings[:brakeman] = yaml_data[key]
 
-            when 'rails_best_practice', 'railsbp'
+            when :rails_best_practice, :railsbp
               @settings[:railsbp] = yaml_data[key]
 
-            when 'stylestats', 'Stylestats'
+            when :stylestats, :Stylestats
               value = load_config(value)
               @settings[:stylestats] = temp_it('stylestats.json', value.to_json)
 
-            when 'phantomas', 'Phantomas'
+            when :phantomas, :Phantomas
               value = load_config(value)
               @settings[:phantomas] = temp_it('phantomas.json', value.to_json)
 
-            when 'wraith', 'Wraith'
+            when :wraith, :Wraith
               value = load_config(value)
               evaluate_for_wraith(value)
 
             # Configuration important to all of maximus
-            when 'is_dev', 'log', 'root_dir', 'domain', 'port', 'paths', 'commit'
+            when :is_dev, :log, :root_dir, :domain, :port, :paths, :commit
               @settings[key.to_sym] = yaml_data[key]
           end
         end
@@ -175,37 +179,34 @@ module Maximus
       #
       # @since 0.1.4
       # @param file_path [String]
-      # @return @yaml [Hash]
+      # @return @settings [Hash]
       def load_config_file(file_path)
 
         conf_location = if !file_path.nil? && File.exist?(file_path)
           file_path
         else
-          config_exists('maximus.yml') || config_exists('.maximus.yml') || check_default_config_path('config/maximus.yml')
+          config_exists('.maximus.yml') || config_exists('maximus.yml') || check_default_config_path('config/maximus.yml')
         end
 
-        @yaml = YAML.load_file(conf_location)
+        yaml = YAML.load_file(conf_location)
 
-        # Match defaults
-        @yaml['domain'] ||= @settings[:domain]
-        @yaml['paths'] ||= @settings[:paths]
-        @yaml['port'] ||= @settings[:port]
+        @settings = @settings.merge(yaml.symbolize_keys)
 
       end
 
       # Allow shorthand to be declared for groups Maximus executions
       #
       # @example disable statistics
-      #   @yaml['statistics'] = false
+      #   @settings[:statistics] = false
       #   set_families('statistics', ['phantomas', 'stylestats', 'wraith'])
       #
       # Sets as Boolean based on whether or not the queried label is `true`
-      # @param head_of_house [String] @yaml key and group label
-      # @param family [Array] group of other @yaml keys to be disabled
-      # @return [void] modified @yaml
+      # @param head_of_house [String] @settings key and group label
+      # @param family [Array] group of other @settings keys to be disabled
+      # @return [void] modified @settings
       def set_families(head_of_house, family)
-        if @yaml.has_key?(head_of_house)
-          family.each { |f| @yaml[f] = @yaml[head_of_house].is_a?(TrueClass) }
+        if @settings.has_key?(head_of_house)
+          family.each { |f| @settings[f] = @settings[head_of_house].is_a?(TrueClass) }
         end
       end
 
@@ -216,6 +217,7 @@ module Maximus
       #   the reset of the process doesn't break
       def load_config(value)
         return value unless value.is_a?(String)
+        puts value
         if File.exist?(value)
           return YAML.load_file(value)
         else
@@ -275,12 +277,12 @@ module Maximus
       # @since 0.1.4
       # @todo the command line options are overriden here and it should be the other way around
       def group_families
-        set_families('lints', ['jshint', 'scsslint', 'rubocop', 'brakeman', 'railsbp'])
-        set_families('frontend', ['jshint', 'scsslint', 'phantomas', 'stylestats', 'wraith'])
-        set_families('backend', ['rubocop', 'brakeman', 'railsbp'])
-        set_families('ruby', ['rubocop', 'brakeman', 'railsbp'])
-        set_families('statistics', ['phantomas', 'stylestats', 'wraith'])
-        set_families('all', ['lints', 'statistics'])
+        set_families(:lints, [:jshint, :scsslint, :rubocop, :brakeman, :railsbp])
+        set_families(:frontend, [:jshint, :scsslint, :phantomas, :stylestats, :wraith])
+        set_families(:backend, [:rubocop, :brakeman, :railsbp])
+        set_families(:ruby, [:rubocop, :brakeman, :railsbp])
+        set_families(:statistics, [:phantomas, :stylestats, :wraith])
+        set_families(:all, [:lints, :statistics])
       end
 
       # Wraith is a complicated gem with significant configuration
@@ -292,8 +294,8 @@ module Maximus
       # @return [String] temp file path
       def wraith_setup(value, name = 'phantomjs')
 
-        if @yaml.include?('urls')
-          value['domains'] = @yaml['urls']
+        if @settings.has_key?(:urls)
+          value['domains'] = @settings[:urls]
         else
           value['domains'] = {}
           # @see #domain
@@ -306,7 +308,7 @@ module Maximus
         value['fuzz'] ||= '20%'
         value['threshold'] ||= 0
 
-        value['paths'] = @yaml['paths']
+        value['paths'] = @settings[:paths]
         temp_it("#{name}.yaml", value.to_yaml)
       end
 

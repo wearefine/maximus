@@ -5,20 +5,21 @@ describe Maximus::Config do
 
   subject(:config) do
     File.write(config_path, config_body)
-    described_class.new(config_body.blank? ? {} : { config_file: config_path })
+    config_contents = config_body.blank? ? {} : { config_file: config_path }
+    described_class.new(config_contents)
   end
 
   describe '#is_dev?', :isolated_environment do
     context 'setting root value is_dev to true' do
       let(:config_body) { 'is_dev: true' }
-      it 'is_dev should be true' do
+      it 'should be true' do
         expect(config.is_dev?).to be true
       end
     end
 
-    context 'is_dev is blank/not supplied' do
+    context 'is blank/not supplied' do
       let(:config_body) { '' }
-      it 'is_dev should default to false' do
+      it 'should default to false' do
         expect(config.is_dev?).to be false
       end
     end
@@ -33,7 +34,7 @@ describe Maximus::Config do
       end
     end
 
-    context 'not supplying a linter but relying on the default include all' do
+    context 'not supplying a linter but relying on the default' do
       let(:config_body) { '' }
       it 'should include a linter' do
         expect(config.settings.has_key?(:scsslint)).to be true
