@@ -4,7 +4,13 @@ port: 3000
 paths:
   home: '/'
 
-lints: true
+scsslint: true
+
+rubocop: true
+
+railsbp: true
+
+brakeman: true
 
 jshint:
   browser: true
