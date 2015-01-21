@@ -21,7 +21,7 @@ class Maximus::CLI < Thor
 
   class_option :config, aliases: ['-c'], type: :string, default: nil, desc: 'Path to config file'
 
-  class_option :git, aliases: ['-g', '--sha'], type: :string, default: 'working', banner: "working, last, master, or sha", desc: "Lint by commit or working copy"
+  class_option :git, aliases: ['-g', '--git', '--sha'], type: :string, default: 'working', banner: "working, last, master, or sha", desc: "Lint by commit or working copy"
 
   def initialize(*args)
     super

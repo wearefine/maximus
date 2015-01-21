@@ -77,7 +77,7 @@ lints: true # all lints including brakeman will run
 
 Flag                | Accepts                          | Description
 --------------------|----------------------------------|--------------------
-`-git`/`--sha`      | String                           | Run maximus based on a git commit. See [below](#git-examples)
+`-g`/`--sha`      | String                           | Run maximus based on a git commit. See [below](#git-examples)
 `-f`/`--frontend`   | Boolean/Blank                    | Run all front-end lints
 `-b`/`--backend`    | Boolean/Blank                    | Run all back-end lints
 `-s`/`--statistics` | Boolean/Blank                    | Run all statistics
