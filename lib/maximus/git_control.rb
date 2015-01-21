@@ -13,11 +13,14 @@ module Maximus
     # @option opts [Config object] :config custom Maximus::Config object
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
     def initialize(opts = {})
+
       opts[:config] ||= Maximus::Config.new({ commit: opts[:commit] })
-      @config ||= opts[:config]
-      @settings ||= @config.settings
+      @config = opts[:config]
+
+      @settings = @config.settings
       @psuedo_commit = (!@settings[:commit].blank? && (@settings[:commit] == 'working' || @settings[:commit] == 'last' || @settings[:commit] == 'master') )
-      @g = Git.open(@settings[:root_dir], :log => @settings[:git_log])
+
+      @g = Git.open(@settings[:root_dir])
     end
 
     # 30,000 foot view of a commit
@@ -82,18 +85,18 @@ module Maximus
       #   The space here is important because git-lines checks for a second arg,
       #   and if one is present, it runs git diff without a commit
       #   or a comparison to a commit.
-      git_diff = @psuedo_commit ? ["git #{sha1}"] : `git rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
+      git_spread = @psuedo_commit ? ["git #{sha1}"] : `git -C #{@settings[:root_dir]} rev-list #{sha1}..#{sha2} --no-merges`.split("\n")
 
       # Include the first sha because rev-list is doing a traversal
       #   So sha1 is never included
-      git_diff << sha1 unless @psuedo_commit
+      git_spread << sha1 unless @psuedo_commit
 
       # Reverse so that we go in chronological order
-      git_diff.reverse.each do |git_sha|
+      git_spread.reverse.each do |git_sha|
 
         # Grab all files in that commit and group them by extension
         #   If working copy, just give the diff names of the files changed
-        files = @psuedo_commit ? `git diff --name-only` : `git show --pretty="format:" --name-only #{git_sha}`
+        files = @psuedo_commit ? `git -C #{@settings[:root_dir]} diff --name-only` : `git -C #{@settings[:root_dir]} show --pretty="format:" --name-only #{git_sha}`
 
         diff_return[git_sha.to_s] = match_associations(git_sha, files)
       end
@@ -206,7 +209,7 @@ module Maximus
       # @since 0.1.5
       # @param sha [String]
       def create_branch(sha)
-        quietly { `git checkout #{sha} -b maximus_#{sha}` }
+        quietly { `git -C #{@settings[:root_dir]} checkout #{sha} -b maximus_#{sha}` }
       end
 
       # Destroy created branch
@@ -247,8 +250,8 @@ module Maximus
       # @return [Hash] ranges by lines added in a commit by file name
       def lines_added(git_sha)
         new_lines = {}
-        lines_added = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n")
-        lines_added.each do |filename|
+        git_lines = Dir.chdir(@settings[:root_dir]) { `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n") }
+        git_lines.each do |filename|
           fsplit = filename.split(':')
           # if file isn't already part of the array
           new_lines[fsplit[0]] ||= []
