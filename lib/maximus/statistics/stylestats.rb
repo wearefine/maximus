@@ -14,7 +14,12 @@ module Maximus
         @path = is_rails? ? "#{@settings[:root_dir]}/public/assets/**/*.css" : "#{@settings[:root_dir]}/**/*.css"
       end
 
-      css_files = @path.is_a?(Array) ? @path : find_css_files
+      if @path.is_a?(Array)
+        css_files = @path
+      else
+        compile_scss if @settings[:compile_assets]
+        css_files = find_css
+      end
 
       css_files.each do |file|
 
@@ -31,7 +36,7 @@ module Maximus
         File.delete(file)
       end
 
-      destroy_assets
+      destroy_assets if @settings[:compile_assets]
       @output
 
     end
@@ -44,28 +49,74 @@ module Maximus
       # Uses sprockets if Rails; Sass engine otherwise.
       # Compass is supported
       # @return [#compile_scss_rails, #compile_scss, Array] CSS files
-      def find_css_files
+      def compile_scss
         puts "\nCompiling assets for stylestats...".color(:blue)
         if is_rails?
 
-          # Only load tasks if we're not running a rake task
+          # Get rake tasks
           Rails.application.load_tasks unless @config.is_dev?
-          searched_files = compile_scss_rails
-
+          compile_scss_rails
         else
 
           load_compass
 
-          # Shouldn't need to load paths anymore, but in case this doesn't work
-          #   as it should, try the func below
-          #
-          # Dir.glob(@path).select { |d| File.directory? d}.each do |directory|
-          #   Sass.load_paths << directory
-          # end
-
-          searched_files = compile_scss
+          compile_scss
         end
-        searched_files
+      end
+
+      # Load Compass paths if the gem exists
+      # @see find_css_files
+      # @since 0.1.5
+      def load_compass
+        if Gem::Specification::find_all_by_name('compass').any?
+          require 'compass'
+          Compass.sass_engine_options[:load_paths].each do |path|
+            Sass.load_paths << path
+          end
+        end
+      end
+
+      # Add directories to load paths
+      # @todo This function is here in case older versions of SCSS will need it
+      #   because there shouldn't be a need to load paths, but there might be a need
+      #   in older versions of SCSS, which should be tested (although the SCSSLint)
+      #   dependency may dictate our scss version
+      # @since 0.1.5
+      def load_scss_load_paths
+        Dir.glob(@path).select { |d| File.directory? d}.each do |directory|
+          Sass.load_paths << directory
+        end
+      end
+
+      # Turns scss files into css files with the asset pipeline
+      # @see find_css_files
+      # @since 0.1.5
+      # @return [Array] compiled css files
+      def compile_scss_rails
+        searched_files = []
+        # @todo I'd rather Rake::Task but it's not working in different directories
+        Dir.chdir(@settings[:root_dir]) do
+          if @config.is_dev?
+             # @todo review that this may not be best practice, but it's really noisy in the console
+            quietly { `rake assets:precompile` }
+          else
+            `rake assets:precompile`
+          end
+        end
+      end
+
+      # Turn scss files into css files
+      # @see find_css_files
+      # @since 0.1.5
+      def compile_scss_normal
+        Dir["#{@path}.scss"].select { |f| File.file? f }.each do |file|
+          # @todo don't compile file if it starts with an underscore
+          scss_file = File.open(file, 'rb') { |f| f.read }
+
+          output_file = File.open( file.split('.').reverse.drop(1).reverse.join('.'), "w" )
+          output_file << Sass::Engine.new(scss_file, { syntax: :scss, quiet: true, style: :compressed }).render
+          output_file.close
+        end
       end
 
       # Remove all assets created
@@ -86,58 +137,11 @@ module Maximus
 
       end
 
-      # Load Compass paths if the gem exists
-      # @see find_css_files
-      # @since 0.1.5
-      def load_compass
-        if Gem::Specification::find_all_by_name('compass').any?
-          require 'compass'
-          Compass.sass_engine_options[:load_paths].each do |path|
-            Sass.load_paths << path
-          end
-        end
-      end
-
-      # Turns scss files into css files with the asset pipeline
-      # @see find_css_files
-      # @since 0.1.5
-      # @return [Array] compiled css files
-      def compile_scss_rails
-        searched_files = []
-        # @todo I'd rather Rake::Task but it's not working in different directories
-        Dir.chdir(@settings[:root_dir]) do
-          if @config.is_dev?
-             # @todo review that this may not be best practice, but it's really noisy in the console
-            quietly { `rake assets:precompile` }
-          else
-            `rake assets:precompile`
-          end
-        end
-
-        Dir.glob(@path).select { |f| File.file? f }.each do |file|
-          searched_files << file
-        end
-      end
-
-      # Turns scss files into css files
-      # @see find_css_files
-      # @since 0.1.5
-      # @return [Array] compiled css files
-      def compile_scss
-        searched_files = []
-
-        @path += ".scss"
-        Dir[@path].select { |f| File.file? f }.each do |file|
-          # @todo don't compile file if it starts with an underscore
-          scss_file = File.open(file, 'rb') { |f| f.read }
-
-          output_file = File.open( file.split('.').reverse.drop(1).reverse.join('.'), "w" )
-          output_file << Sass::Engine.new(scss_file, { syntax: :scss, quiet: true, style: :compressed }).render
-          output_file.close
-
-          searched_files << output_file.path
-        end
-        searched_files
+      # Find all css files
+      # @param path [String] globbed file path
+      # @return [Array] paths to compiled CSS files
+      def find_css(path = @path)
+        Dir.glob(path).select { |f| File.file? f }.map { |file| file }
       end
 
   end

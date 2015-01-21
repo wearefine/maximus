@@ -30,10 +30,11 @@ module Maximus
     # @option opts [Hash] :paths ({home: '/'}) labeled relative path to URLs. Statistics only
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
     # @option opts [String] :config_file ('maximus.yml') path to config file
+    # @option opts [Boolean] :compile_assets (true) compile and destroy assets automagically
     # @return [#load_config_file #group_families #evaluate_yaml] this method is used to set up instance variables
     def initialize(opts = {})
-
-      @settings = opts
+      yaml = load_config_file(opts[:config_file])
+      @settings = yaml.merge(opts)
 
       @settings[:is_dev] ||= false
 
@@ -50,16 +51,12 @@ module Maximus
       @settings[:domain] ||= 'http://localhost'
       @settings[:port] ||= is_rails? ? 3000 : ''
       @settings[:paths] ||= { 'home' => '/' }
+      @settings[:compile_assets] = true if @settings[:compile_assets].nil?
 
       @settings[:paths] = parse_cli_config(@settings[:paths]) if @settings[:paths].is_a?(Array)
 
-      # What we're really interested in
-      @settings = opts
-
       # Instance variables for Config class only
       @temp_files = {}
-
-      load_config_file(@settings[:config_file])
 
       group_families
 
@@ -192,7 +189,7 @@ module Maximus
 
         yaml = YAML.load_file(conf_location)
 
-        @settings = @settings.merge(yaml.symbolize_keys)
+        yaml.symbolize_keys
 
       end
 
@@ -287,9 +284,7 @@ module Maximus
       end
 
       # Wraith is a complicated gem with significant configuration
-      #
       # @see yaml_evaluate, temp_it
-      #
       # @param value [Hash] modified data from a wraith config or injected data
       # @param name [String] ('wraith') config file name to write and eventually load
       # @return [String] temp file path

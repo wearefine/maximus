@@ -20,7 +20,7 @@ module Maximus
     #     lint_data = JSON.parse(`some-command-line-linter`)
     #     @output[:files_inspected] ||= files_inspected(extension, delimiter, base_path_replacement)
     #     refine data_from_output
-    #  end
+    #   end
     #
     # Inherits settings from {Config#initialize}
     # @see Config#initialize
@@ -155,8 +155,6 @@ module Maximus
       # Send abbreviated results to console or to the log
       # @return [String] console message to display
       def lint_summarize
-        puts "\n" if @config.is_dev?
-
         puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length > 0
 
         success = @task.to_s.color(:green)
