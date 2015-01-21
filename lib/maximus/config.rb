@@ -32,23 +32,26 @@ module Maximus
     # @option opts [String] :config_file ('maximus.yml') path to config file
     # @return [#load_config_file #group_families #evaluate_yaml] this method is used to set up instance variables
     def initialize(opts = {})
-      opts[:is_dev] ||= false
+
+      @settings = opts
+
+      @settings[:is_dev] ||= false
 
       # Only set log file if it's set to true.
       #   Otherwise, allow it to be nil or a path
-      opts[:log] = false if opts[:log].nil?
-      opts[:log] ||= 'log/maximus.log' if opts[:log].is_a?(TrueClass)
+      @settings[:log] = false if @settings[:log].nil?
+      @settings[:log] ||= 'log/maximus.log' if @settings[:log].is_a?(TrueClass)
 
-      opts[:git_log] = false if opts[:git_log].nil?
-      opts[:git_log] ||= 'log/maximus_git.log' if opts[:git_log].is_a?(TrueClass)
+      @settings[:git_log] = false if @settings[:git_log].nil?
+      @settings[:git_log] ||= 'log/maximus_git.log' if @settings[:git_log].is_a?(TrueClass)
 
       # @see Helper#root_dir
-      opts[:root_dir] ||= root_dir
-      opts[:domain] ||= 'http://localhost'
-      opts[:port] ||= is_rails? ? 3000 : ''
-      opts[:paths] ||= { 'home' => '/' }
+      @settings[:root_dir] ||= root_dir
+      @settings[:domain] ||= 'http://localhost'
+      @settings[:port] ||= is_rails? ? 3000 : ''
+      @settings[:paths] ||= { 'home' => '/' }
 
-      opts[:paths] = parse_cli_config(opts[:paths]) if opts[:paths].is_a?(Array)
+      @settings[:paths] = parse_cli_config(@settings[:paths]) if @settings[:paths].is_a?(Array)
 
       # What we're really interested in
       @settings = opts
@@ -56,7 +59,7 @@ module Maximus
       # Instance variables for Config class only
       @temp_files = {}
 
-      load_config_file(opts[:config_file])
+      load_config_file(@settings[:config_file])
 
       group_families
 
@@ -71,56 +74,55 @@ module Maximus
     #   These should be deleted with destroy_temp after read and loaded
     def evaluate_yaml(yaml_data = @settings)
       yaml_data.each do |key, value|
-        unless value.is_a?(FalseClass)
-          value = {} if value.is_a?(TrueClass)
+        next if value.is_a?(FalseClass)
+        value = {} if value.is_a?(TrueClass)
 
-          case key
+        case key
 
-            when :jshint, :JSHint, :JShint
+          when :jshint, :JSHint, :JShint
 
-              # @todo DRY this load_config up, but can't call it at the start because of the
-              #   global config variables (last when statement in this switch)
-              value = load_config(value)
+            # @todo DRY this load_config up, but can't call it at the start because of the
+            #   global config variables (last when statement in this switch)
+            value = load_config(value)
 
-              if yaml_data[key].is_a?(Hash) && yaml_data[key].has_key?('jshintignore')
-                jshintignore_file = []
-                yaml_data[key]['jshintignore'].each { |i| jshintignore_file << "#{i}\n" }
-                @settings[:jshintignore] = temp_it('jshintignore.json', jshintignore_file)
-              end
-              @settings[:jshint] = temp_it('jshint.json', value.to_json)
+            if yaml_data[key].is_a?(Hash) && yaml_data[key].has_key?('jshintignore')
+              jshintignore_file = []
+              yaml_data[key]['jshintignore'].each { |i| jshintignore_file << "#{i}\n" }
+              @settings[:jshintignore] = temp_it('jshintignore.json', jshintignore_file)
+            end
+            @settings[:jshint] = temp_it('jshint.json', value.to_json)
 
-            when :scsslint, :SCSSlint
-              value = load_config(value)
+          when :scsslint, :SCSSlint
+            value = load_config(value)
 
-              @settings[:scsslint] = temp_it('scsslint.yml', value.to_yaml)
+            @settings[:scsslint] = temp_it('scsslint.yml', value.to_yaml)
 
-            when :rubocop, :Rubocop, :RuboCop
-              value = load_config(value)
+          when :rubocop, :Rubocop, :RuboCop
+            value = load_config(value)
 
-              @settings[:rubocop] = temp_it('rubocop.yml', value.to_yaml)
+            @settings[:rubocop] = temp_it('rubocop.yml', value.to_yaml)
 
-            when :brakeman
-              @settings[:brakeman] = yaml_data[key]
+          when :brakeman
+            @settings[:brakeman] = yaml_data[key]
 
-            when :rails_best_practice, :railsbp
-              @settings[:railsbp] = yaml_data[key]
+          when :rails_best_practice, :railsbp
+            @settings[:railsbp] = yaml_data[key]
 
-            when :stylestats, :Stylestats
-              value = load_config(value)
-              @settings[:stylestats] = temp_it('stylestats.json', value.to_json)
+          when :stylestats, :Stylestats
+            value = load_config(value)
+            @settings[:stylestats] = temp_it('stylestats.json', value.to_json)
 
-            when :phantomas, :Phantomas
-              value = load_config(value)
-              @settings[:phantomas] = temp_it('phantomas.json', value.to_json)
+          when :phantomas, :Phantomas
+            value = load_config(value)
+            @settings[:phantomas] = temp_it('phantomas.json', value.to_json)
 
-            when :wraith, :Wraith
-              value = load_config(value)
-              evaluate_for_wraith(value)
+          when :wraith, :Wraith
+            value = load_config(value)
+            evaluate_for_wraith(value)
 
-            # Configuration important to all of maximus
-            when :is_dev, :log, :root_dir, :domain, :port, :paths, :commit
-              @settings[key.to_sym] = yaml_data[key]
-          end
+          # Configuration important to all of maximus
+          when :is_dev, :log, :root_dir, :domain, :port, :paths, :commit
+            @settings[key] = yaml_data[key]
         end
       end
 
@@ -217,7 +219,6 @@ module Maximus
       #   the reset of the process doesn't break
       def load_config(value)
         return value unless value.is_a?(String)
-        puts value
         if File.exist?(value)
           return YAML.load_file(value)
         else
