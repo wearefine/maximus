@@ -8,7 +8,7 @@ module Maximus
       @task = 'jshint'
       @path = is_rails? ? "#{@settings[:root_dir]}/app/assets" : "#{@settings[:root_dir]}source/assets" if @path.blank?
 
-      return unless temp_config(@task) && path_exists(@path)
+      return unless temp_config(@task) && path_exists?(@path)
 
       node_module_exists(@task)
 

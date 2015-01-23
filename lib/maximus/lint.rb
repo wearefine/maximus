@@ -181,7 +181,7 @@ module Maximus
           errormsg += "\n\n"
 
           go_on = prompt "\n#{errors} Continue? (y/n) "
-          abort errormsg unless truthy(go_on)
+          abort errormsg unless truthy?(go_on)
         end
       end
 

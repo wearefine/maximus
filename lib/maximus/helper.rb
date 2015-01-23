@@ -29,13 +29,9 @@ module Maximus
     # @param install_instructions [String] how to install the missing command
     # @return [void] aborts the action if command not found
     def node_module_exists(command, install_instructions = 'npm install -g')
-      cmd = `if hash #{command} 2>/dev/null; then
-        echo "true"
-      else
-        echo "false"
-      fi`
+      cmd = `if hash #{command} 2>/dev/null; then echo "true"; else echo "false"; fi`
       if cmd.include? "false"
-        command_msg = "Missing command #{command}".color(:red)
+        command_msg = "Missing command #{command}"
         abort "#{command_msg}: Please run `#{install_instructions} #{command}` And try again\n"
         exit 1
       end
@@ -81,7 +77,7 @@ module Maximus
     # Convert string to boolean
     # @param str [String] the string to evaluate
     # @return [Boolean] whether or not the string is true
-    def truthy(str)
+    def truthy?(str)
       return true if str == true || str =~ (/^(true|t|yes|y|1)$/i)
       return false if str == false || str.blank? || str =~ (/^(false|f|no|n|0)$/i)
     end
@@ -109,17 +105,10 @@ module Maximus
     # @see Lint#relevant_lint
     #
     # @example typical output
-    #   lines_added = {'filename' => ['0..10', '11..14']}
+    #   lines_added = {changes: ['0..10', '11..14']}
     #   lines_added_to_range(lines_added)
     #   # output
-    #   {
-    #     'filename': {
-    #       {
-    #         [0,1,2,3,4,5,6,7,8,9,10],
-    #         [11,12,13,14]
-    #       }
-    #     }
-    #   }
+    #   [0,1,2,3,4,5,6,7,8,9,10, 11,12,13,14]
     #
     # @todo I'm sure there's a better way of doing this
     # @todo figure out a better place to put this than in Helper
@@ -132,7 +121,7 @@ module Maximus
     # Ensure path exists
     # @param path [String, Array] path to files can be directory or glob
     # @return [Boolean]
-    def path_exists(path = @path)
+    def path_exists?(path = @path)
       path = path.split(' ') if path.is_a?(String) && path.include?(' ')
       if path.is_a?(Array)
         path.each do |p|

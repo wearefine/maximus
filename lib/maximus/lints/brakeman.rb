@@ -9,7 +9,7 @@ module Maximus
       @task = 'brakeman'
       @path = @settings[:root_dir] if @path.blank?
 
-      return unless is_rails? && temp_config(@task) && path_exists(@path)
+      return unless is_rails? && temp_config(@task) && path_exists?(@path)
 
       tmp = Tempfile.new('brakeman')
       quietly { `brakeman #{@path} -f json -o #{tmp.path} -q` }

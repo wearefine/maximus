@@ -9,7 +9,7 @@ module Maximus
       @task = 'railsbp'
       @path = @settings[:root_dir] if @path.blank?
 
-      return unless is_rails? && temp_config(@task) && path_exists(@path)
+      return unless is_rails? && temp_config(@task) && path_exists?(@path)
 
       tmp = Tempfile.new('railsbp')
       `rails_best_practices #{@path} -f json --output-file #{tmp.path}`
