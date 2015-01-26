@@ -53,7 +53,7 @@ module Maximus
       @settings[:paths] ||= { 'home' => '/' }
       @settings[:compile_assets] = true if @settings[:compile_assets].nil?
 
-      @settings[:paths] = parse_cli_config(@settings[:paths]) if @settings[:paths].is_a?(Array)
+      @settings[:paths] = split_paths(@settings[:paths]) if @settings[:paths].is_a?(Array)
 
       # Instance variables for Config class only
       @temp_files = {}
@@ -163,7 +163,7 @@ module Maximus
     # Combine domain with port if necessary
     # @return [String] complete domain/host address
     def domain
-      (!@settings[:port].blank? || @settings[:domain].include?(':')) ? "#{@settings[:domain]}:#{@settings[:port]}" : @settings[:domain]
+      (!@settings[:port].blank?) ? "#{@settings[:domain]}:#{@settings[:port]}" : @settings[:domain]
     end
 
 
@@ -259,7 +259,7 @@ module Maximus
       # @since 0.1.4
       # @param paths [Array]
       # @return [Hash]
-      def parse_cli_config(paths)
+      def split_paths(paths)
         new_paths = {}
         paths.each do |p|
           if p.split('/').length > 1
