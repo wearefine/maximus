@@ -13,7 +13,6 @@ module Maximus
     # @option opts [Config object] :config custom Maximus::Config object
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
     def initialize(opts = {})
-
       opts[:config] ||= Maximus::Config.new({ commit: opts[:commit] })
       @config = opts[:config]
 
@@ -29,15 +28,11 @@ module Maximus
     def commit_export(commit_sha = sha)
       ce_commit = vccommit(commit_sha)
 
-      # For the git call, there's a trailing new line ("\n") that must be removed for
-      #   the if statement to function properly
-      first_commit = `git -C #{@settings[:root_dir]} rev-list --max-parents=0 HEAD`.strip!
-
       # This may come in as a symbol string (:"whatever") so convert it
       if first_commit == commit_sha.to_s
         ce_diff = diff_initial(first_commit)
       else
-        last_commit = @g.gcommit(`git -C #{@settings[:root_dir]} rev-parse #{commit_sha.to_s}^`.strip!)
+        last_commit = @g.gcommit(previous_commit(commit_sha.to_s))
         ce_diff = diff(last_commit, ce_commit)
       end
 
@@ -200,6 +195,22 @@ module Maximus
         destroy_branch(base_branch, sha) unless @psuedo_commit
       end
       git_output
+    end
+
+    # Find first commit
+    # @since 0.1.5
+    # @return [String]
+    def first_commit
+      `git -C #{@settings[:root_dir]} rev-list --max-parents=0 HEAD`.strip!
+    end
+
+    # Get commit before current
+    # @since 0.1.5
+    # @param current_commit [String] (sha) commit to start at
+    # @param previous_by [Integer] (1) commit n commits ago
+    # @return [String]
+    def previous_commit(current_commit = sha, previous_by = 1)
+      `git -C #{@settings[:root_dir]} log -#{previous_by + 1} #{current_commit} --pretty=%H --reverse | head -n1`.strip!
     end
 
 
