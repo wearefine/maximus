@@ -47,7 +47,7 @@ describe Maximus::GitControl do
         expect( export[:message] ).to eq 'misc'
         expect( export[:git_author] ).to eq 'Tim Shedor'
         expect( export[:git_author_email] ).to eq 'tim@finedesigngroup.com'
-        expect( export[:commit_date] ).to eq '2014-11-11 00:19:25 -0800'
+        expect( Time.parse export[:commit_date] ).to eq Time.parse('2014-11-11 00:19:25 -0800')
         expect( export[:diff] ).to be_a(Hash)
         expect( export[:remote_repo] ).to be_a(String)
         expect( export[:branch] ).to be_a(String)
@@ -64,7 +64,7 @@ describe Maximus::GitControl do
         expect( export[:message] ).to eq 'initial'
         expect( export[:git_author] ).to eq 'Tim Shedor'
         expect( export[:git_author_email] ).to eq 'tim@finedesigngroup.com'
-        expect( export[:commit_date] ).to eq '2014-10-31 18:16:17 -0700'
+        expect( Time.parse export[:commit_date] ).to eq Time.parse('2014-10-31 18:16:17 -0700')
         expect( export[:diff] ).to be_a(Hash)
         expect( export[:remote_repo] ).to be_a(String)
         expect( export[:branch] ).to be_a(String)
