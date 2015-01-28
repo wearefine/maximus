@@ -68,7 +68,6 @@ describe Maximus::GitControl do
         expect( export[:diff] ).to be_a(Hash)
         expect( export[:remote_repo] ).to be_a(String)
         expect( export[:branch] ).to be_a(String)
-
       end
     end
 
