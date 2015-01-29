@@ -55,12 +55,14 @@ module Maximus
 
       @settings[:paths] = split_paths(@settings[:paths]) if @settings[:paths].is_a?(Array)
 
-      # Instance variables for Config class only
-      @temp_files = {}
+      @settings[:phantomas] ||= false
+      @settings[:stylestats] ||= false
+      @settings[:wraith] ||= false
 
       group_families
 
-      @settings[:statistics] ||= false
+      # Instance variables for Config class only
+      @temp_files = {}
 
       # Override options with any defined in a discovered config file
       evaluate_yaml
