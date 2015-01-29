@@ -160,29 +160,21 @@ module Maximus
               when :scss
                 lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
 
-                # Do not run statistics if called from command line
-                if @settings[:commit].blank?
+                # @todo stylestat is singular here because model name in Rails is singular.
+                #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
+                #   which breaks the model name.
+                statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
 
-                  # @todo stylestat is singular here because model name in Rails is singular.
-                  #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
-                  #   which breaks the model name.
-                  statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
-
-                  # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                  statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
-                  statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
-                end
+                # @todo double pipe here is best way to say, if it's already run, don't run again, right?
+                statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
+                statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
               when :js
                 lints[:jshint] = Maximus::Jshint.new(lint_opts).result
 
-                # Do not run statistics if called from command line
-                if @settings[:commit].blank?
+                statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
 
-                  statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
-
-                  # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                  statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
-                end
+                # @todo double pipe here is best way to say, if it's already run, don't run again, right?
+                statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
               when :ruby
                 lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
                 lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result

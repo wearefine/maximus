@@ -60,6 +60,8 @@ module Maximus
 
       group_families
 
+      @settings[:statistics] ||= false
+
       # Override options with any defined in a discovered config file
       evaluate_yaml
     end
@@ -205,7 +207,7 @@ module Maximus
       # @return [void] modified @settings
       def set_families(head_of_house, family)
         if @settings.has_key?(head_of_house)
-          family.each { |f| @settings[f] = @settings[head_of_house].is_a?(TrueClass) }
+          family.each { |f| @settings[f] ||= @settings[head_of_house].is_a?(TrueClass) }
         end
       end
 
