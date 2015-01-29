@@ -80,7 +80,7 @@ module Maximus
       #   The space here is important because git-lines checks for a second arg,
       #   and if one is present, it runs git diff without a commit
       #   or a comparison to a commit.
-      git_spread = @psuedo_commit ? ["git #{sha1}"] : `git -C #{@settings[:root_dir]} rev-list #{sha1}..#{sha2} --no-merges`
+      git_spread = @psuedo_commit ? "git #{sha1}" : `git -C #{@settings[:root_dir]} rev-list #{sha1}..#{sha2} --no-merges`
       git_spread = git_spread.nil? ? [] : git_spread.split("\n")
 
       # Include the first sha because rev-list is doing a traversal
