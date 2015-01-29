@@ -60,13 +60,13 @@ function lines-added(){
   done
 }
 
-if [ -z "$2" ]; then
+if [ -z "$3" ]; then
   first_commit=$(git rev-list --max-parents=0 HEAD)
-  if [[ "$1" == "$first_commit" ]]; then
-    git diff --unified=1 | lines-added
+  if [[ "$2" == "$first_commit" ]]; then
+    git -C $1 diff --unified=1 | lines-added
   else
-    git diff $1^ $1 --unified=1 | lines-added
+    git -C $1 diff $2^ $2 --unified=1 | lines-added
   fi
 else
-  git diff --unified=1 | lines-added
+  git -C $1 diff --unified=1 | lines-added
 fi

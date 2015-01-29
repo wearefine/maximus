@@ -262,7 +262,7 @@ module Maximus
       # @return [Hash] ranges by lines added in a commit by file name
       def lines_added(git_sha)
         new_lines = {}
-        git_lines = Dir.chdir(@settings[:root_dir]) { `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{git_sha}`.split("\n") }
+        git_lines = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{@settings[:root_dir]} #{git_sha}`.split("\n")
         git_lines.each do |filename|
           fsplit = filename.split(':')
           # if file isn't already part of the array
