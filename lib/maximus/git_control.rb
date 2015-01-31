@@ -23,12 +23,12 @@ module Maximus
     end
 
     # 30,000 foot view of a commit
-    # @param commit_sha [String] (sha) the sha of the commit
+    # @param commit_sha [String] (head_sha) the sha of the commit
     # @return [Hash] commit data
-    def commit_export(commit_sha = sha)
+    def commit_export(commit_sha = head_sha)
       commit_sha = commit_sha.to_s
 
-      ce_commit = vccommit(commit_sha)
+      ce_commit = @g.gcommit(commit_sha)
 
       if first_commit == commit_sha
         ce_diff = diff_initial(first_commit)
@@ -63,9 +63,10 @@ module Maximus
     #       }
     #     }
     #   }
-    #
+    # @param sha1 [String]
+    # @param sha2 [String]
     # @return [Hash] diff_return files changed grouped by file extension and line number
-    def compare(sha1 = master_commit.sha, sha2 = sha)
+    def compare(sha1 = master_commit.sha, sha2 = head_sha)
       diff_return = {}
 
       sha1 = set_psuedo_commit if @settings[:commit]
@@ -182,10 +183,10 @@ module Maximus
 
     # Get commit before current
     # @since 0.1.5
-    # @param current_commit [String] (sha) commit to start at
+    # @param current_commit [String] (head_sha) commit to start at
     # @param previous_by [Integer] (1) commit n commits ago
     # @return [String]
-    def previous_commit(current_commit = sha, previous_by = 1)
+    def previous_commit(current_commit = head_sha, previous_by = 1)
       `git -C #{@settings[:root_dir]} rev-list --max-count=#{previous_by + 1} #{current_commit} --reverse | head -n1`.strip!
     end
 
@@ -231,7 +232,7 @@ module Maximus
       def set_psuedo_commit
         case @settings[:commit]
           when 'master' then master_commit.sha
-          when 'last' then previous_commit(@g.object('HEAD').sha)
+          when 'last' then previous_commit(head_sha)
           when 'working' then 'working'
           else @settings[:commit]
         end
@@ -298,7 +299,7 @@ module Maximus
 
       # Get last commit on current branch
       # @return [String] sha
-      def sha
+      def head_sha
         @g.object('HEAD').sha
       end
 
@@ -314,19 +315,12 @@ module Maximus
         @g.branches[:master].gcommit
       end
 
-      # Store last commit as Ruby Git::Object
-      # @param commit_sha [String]
-      # @return [Git::Object]
-      def vccommit(commit_sha = sha)
-        @g.gcommit(commit_sha)
-      end
-
       # Get general stats of commit on HEAD versus last commit on master branch
       # @modified 0.1.4
       # @param old_commit [Git::Object]
       # @param new_commit [Git::Object]
       # @return [Git::Diff] hash of abbreviated, useful stats with added lines
-      def diff(old_commit = master_commit, new_commit = vccommit)
+      def diff(old_commit, new_commit)
         stats = @g.diff(old_commit, new_commit).stats
         lines = lines_added(new_commit.sha)
         return if !lines.is_a?(Hash) || stats.blank?
