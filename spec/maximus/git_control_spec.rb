@@ -161,8 +161,9 @@ describe Maximus::GitControl do
 
     context 'commit is not supplied in the config' do
       it 'should return a hash with commit shas, file associations, and changed line numbers' do
-        proper_return = {'db4aa677aa1cf8cf477d5e66df1ea875b4fa20b6' => {ruby: [{filename: '/Users/Tim/localserver/maximus/.travis.yml', changes: ['4..5']}]}, 'e20fe614d323782e5cab4215942e4f22ddb98464'=>{ruby: [{filename: '/Users/Tim/localserver/maximus/spec/maximus/git_control_spec.rb', changes: ['50..49', '67..66']}]}, 'a2be59852c715382575b884e63c3e9bdee80e2db'=>{ruby: [{filename: '/Users/Tim/localserver/maximus/spec/maximus/git_control_spec.rb', changes: ['0..0']}]}}
-        expect( git.compare(sha1, sha2) ).to eq proper_return
+        result = git.compare(sha1, sha2)
+        expect( result ).to be_a(Hash)
+        expect( result.keys ).to eq ["db4aa677aa1cf8cf477d5e66df1ea875b4fa20b6", "e20fe614d323782e5cab4215942e4f22ddb98464", "a2be59852c715382575b884e63c3e9bdee80e2db"]
       end
     end
 
