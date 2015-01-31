@@ -17,7 +17,7 @@ module Maximus
       @config = opts[:config]
 
       @settings = @config.settings
-      @psuedo_commit = (!@settings[:commit].blank? && (@settings[:commit] == 'working' || @settings[:commit] == 'last' || @settings[:commit] == 'master') )
+      @psuedo_commit = ( !@settings[:commit].blank? && %w(working last master).include?(@settings[:commit]) )
 
       @g = Git.open(@settings[:root_dir])
     end
@@ -26,18 +26,19 @@ module Maximus
     # @param commit_sha [String] (sha) the sha of the commit
     # @return [Hash] commit data
     def commit_export(commit_sha = sha)
+      commit_sha = commit_sha.to_s
+
       ce_commit = vccommit(commit_sha)
 
-      # This may come in as a symbol string (:"whatever") so convert it
-      if first_commit == commit_sha.to_s
+      if first_commit == commit_sha
         ce_diff = diff_initial(first_commit)
       else
-        last_commit = @g.gcommit(previous_commit(commit_sha.to_s))
+        last_commit = @g.gcommit(previous_commit(commit_sha))
         ce_diff = diff(last_commit, ce_commit)
       end
 
       {
-        commit_sha: commit_sha.to_s,
+        commit_sha: commit_sha,
         branch: branch,
         message: ce_commit.message,
         remote_repo: remote,
@@ -67,28 +68,11 @@ module Maximus
     def compare(sha1 = master_commit.sha, sha2 = sha)
       diff_return = {}
 
-      if @settings[:commit]
-        sha1 = case @settings[:commit]
-          when 'master' then master_commit.sha
-          when 'last' then @g.object('HEAD^').sha
-          when 'working' then 'working'
-          else @settings[:commit]
-        end
-      end
-
-      # If working directory, just have a single item array.
-      #   The space here is important because git-lines checks for a second arg,
-      #   and if one is present, it runs git diff without a commit
-      #   or a comparison to a commit.
-      git_spread = @psuedo_commit ? "git #{sha1}" : `git -C #{@settings[:root_dir]} rev-list #{sha1}..#{sha2} --no-merges`
-      git_spread = git_spread.nil? ? [] : git_spread.split("\n")
-
-      # Include the first sha because rev-list is doing a traversal
-      #   So sha1 is never included
-      git_spread << sha1 unless @psuedo_commit
-
+      sha1 = set_psuedo_commit if @settings[:commit]
       # Reverse so that we go in chronological order
-      git_spread.reverse.each do |git_sha|
+      git_spread = commit_range(sha1, sha2).reverse
+
+      git_spread.each do |git_sha|
 
         # Grab all files in that commit and group them by extension
         #   If working copy, just give the diff names of the files changed
@@ -202,11 +186,56 @@ module Maximus
     # @param previous_by [Integer] (1) commit n commits ago
     # @return [String]
     def previous_commit(current_commit = sha, previous_by = 1)
-      `git -C #{@settings[:root_dir]} log -#{previous_by + 1} #{current_commit} --pretty=%H --reverse | head -n1`.strip!
+      `git -C #{@settings[:root_dir]} rev-list --max-count=#{previous_by + 1} #{current_commit} --reverse | head -n1`.strip!
+    end
+
+    # Define associations to linters based on file extension
+    # @return [Hash] linters and extension arrays
+    def associations
+      {
+        scss:   ['scss', 'sass'],
+        js:     ['js'],
+        ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc', 'rake', 'Capfile'],
+        rails:  ['slim', 'haml', 'jbuilder', 'erb']
+      }
     end
 
 
     protected
+
+      # Retrieve shas of all commits to be evaluated
+      # @since 0.1.5
+      #
+      # If working directory, just have a single item array.
+      #   The space here is important because git-lines checks for a second arg,
+      #   and if one is present, it runs git diff without a commit
+      #   or a comparison to a commit.
+      #
+      # Include the first sha because rev-list is doing a traversal
+      #   So sha1 is never included
+      #
+      # @param sha1 [String]
+      # @param sha2 [String]
+      # @return [Array] shas
+      def commit_range(sha1, sha2)
+        git_spread = @psuedo_commit ? "git #{sha1}" : `git -C #{@settings[:root_dir]} rev-list #{sha1}..#{sha2} --no-merges`
+        git_spread = git_spread.nil? ? [] : git_spread.split("\n")
+
+        git_spread << sha1 unless @psuedo_commit
+        git_spread
+      end
+
+      # Get sha if words passed for :commit config option
+      # @since 0.1.5
+      # @return [String] commit sha
+      def set_psuedo_commit
+        case @settings[:commit]
+          when 'master' then master_commit.sha
+          when 'last' then previous_commit(@g.object('HEAD').sha)
+          when 'working' then 'working'
+          else @settings[:commit]
+        end
+      end
 
       # Create branch to run report on
       # @todo better way to silence git, in case there's a real error?
@@ -343,17 +372,6 @@ module Maximus
       # @return [String, nil] nil returns if remotes is blank
       def remote
         @g.remotes.first.url unless @g.remotes.blank?
-      end
-
-      # Define associations to linters based on file extension
-      # @return [Hash] linters and extension arrays
-      def associations
-        {
-          scss:   ['scss', 'sass'],
-          js:     ['js'],
-          ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc', 'rake', 'Capfile'],
-          rails:  ['slim', 'haml', 'jbuilder', 'erb']
-        }
       end
 
       # Associate files by extension and match their changes

@@ -1,9 +1,13 @@
 require 'spec_helper'
 
 describe Maximus::GitControl do
+  let(:config) { {} }
+  let(:sha1) { 'db4aa677aa1cf8cf477d5e66df1ea875b4fa20b6' }
+  let(:sha2) { 'a2be59852c715382575b884e63c3e9bdee80e2db' }
 
   subject(:git) do
-    conf = Maximus::Config.new({ root_dir: Dir.pwd })
+    conf_settings = config.merge({ root_dir: Dir.pwd })
+    conf = Maximus::Config.new(conf_settings)
     described_class.new({ config: conf })
   end
 
@@ -68,6 +72,97 @@ describe Maximus::GitControl do
         expect( export[:diff] ).to be_a(Hash)
         expect( export[:remote_repo] ).to be_a(String)
         expect( export[:branch] ).to be_a(String)
+      end
+    end
+
+  end
+
+  describe '#associations' do
+
+    it 'should be a hash' do
+      expect( git.associations ).to be_a(Hash)
+    end
+
+  end
+
+  describe '#set_psuedo_commit' do
+
+    context 'words are provided' do
+
+      context 'master is supplied' do
+        let(:config) { { commit: 'master' } }
+        it 'should return the master sha' do
+          expect( git.send(:set_psuedo_commit) ).to eq `git -C #{Dir.pwd} rev-parse --branches=master HEAD`.strip!
+        end
+      end
+
+      context 'last is supplied' do
+        let(:config) { { commit: 'last' } }
+        it 'should return the previous_commit sha' do
+          expect( git.send(:set_psuedo_commit) ).to eq `git -C #{Dir.pwd} rev-parse HEAD^`.strip!
+        end
+      end
+
+      context 'working is supplied' do
+        let(:config) { { commit: 'working' } }
+        it 'should return the word "working"' do
+          expect( git.send(:set_psuedo_commit) ).to eq 'working'
+        end
+      end
+
+    end
+
+    context 'a commit hash is provided' do
+      let(:config) { { commit: '22126a6ba227d81f770d13c302e6225f7463f7be' } }
+      it 'should return the provided hash' do
+        expect( git.send(:set_psuedo_commit) ).to eq '22126a6ba227d81f770d13c302e6225f7463f7be'
+      end
+    end
+
+  end
+
+  describe '#associations' do
+
+    it 'should be a hash' do
+      expect( git.associations ).to be_a(Hash)
+    end
+
+  end
+
+  describe '#commit_range' do
+
+    context 'shas are provided' do
+
+      it 'should return an array of shas in between' do
+        shas = ['a2be59852c715382575b884e63c3e9bdee80e2db', 'e20fe614d323782e5cab4215942e4f22ddb98464', 'db4aa677aa1cf8cf477d5e66df1ea875b4fa20b6']
+        expect( git.send(:commit_range, sha1, sha2) ).to eq shas
+      end
+
+      context 'duplicate shas are provided' do
+        let(:sha1) { 'a2be59852c715382575b884e63c3e9bdee80e2db' }
+
+        it 'should only return that commit' do
+          expect( git.send(:commit_range, sha1, sha2) ).to eq [sha1]
+        end
+      end
+
+      context 'a psuedo_commit is passed in the config' do
+        let(:config) { { commit: 'master' } }
+        it 'should not return a sha' do
+          expect( git.send(:commit_range, sha1, sha2) ).to eq ["git #{sha1}"]
+        end
+      end
+
+    end
+
+  end
+
+  describe '#compare' do
+
+    context 'commit is not supplied in the config' do
+      it 'should return a hash with commit shas, file associations, and changed line numbers' do
+        proper_return = {'db4aa677aa1cf8cf477d5e66df1ea875b4fa20b6' => {ruby: [{filename: '/Users/Tim/localserver/maximus/.travis.yml', changes: ['4..5']}]}, 'e20fe614d323782e5cab4215942e4f22ddb98464'=>{ruby: [{filename: '/Users/Tim/localserver/maximus/spec/maximus/git_control_spec.rb', changes: ['50..49', '67..66']}]}, 'a2be59852c715382575b884e63c3e9bdee80e2db'=>{ruby: [{filename: '/Users/Tim/localserver/maximus/spec/maximus/git_control_spec.rb', changes: ['0..0']}]}}
+        expect( git.compare(sha1, sha2) ).to eq proper_return
       end
     end
 
