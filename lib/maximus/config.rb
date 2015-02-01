@@ -33,10 +33,20 @@ module Maximus
     # @option opts [Boolean] :compile_assets (true) compile and destroy assets automagically
     # @return [#load_config_file #group_families #evaluate_yaml] this method is used to set up instance variables
     def initialize(opts = {})
-      yaml = load_config_file(opts[:config_file])
-      @settings = yaml.merge(opts)
 
-      @settings[:is_dev] ||= false
+      default_options = {
+        root_dir: root_dir,
+        domain: 'http://localhost',
+        port: is_rails? ? 3000 : '',
+        paths: { 'home' => '/' },
+        is_dev: false,
+        phantomas: false,
+        stylestats: false,
+        wraith: false
+      }
+
+      yaml = default_options.merge load_config_file(opts[:config_file])
+      @settings = yaml.merge opts
 
       # Only set log file if it's set to true.
       #   Otherwise, allow it to be nil or a path
@@ -46,18 +56,9 @@ module Maximus
       @settings[:git_log] = false if @settings[:git_log].nil?
       @settings[:git_log] ||= 'log/maximus_git.log' if @settings[:git_log].is_a?(TrueClass)
 
-      # @see Helper#root_dir
-      @settings[:root_dir] ||= root_dir
-      @settings[:domain] ||= 'http://localhost'
-      @settings[:port] ||= is_rails? ? 3000 : ''
-      @settings[:paths] ||= { 'home' => '/' }
       @settings[:compile_assets] = true if @settings[:compile_assets].nil?
 
       @settings[:paths] = split_paths(@settings[:paths]) if @settings[:paths].is_a?(Array)
-
-      @settings[:phantomas] ||= false
-      @settings[:stylestats] ||= false
-      @settings[:wraith] ||= false
 
       group_families
 
@@ -321,32 +322,32 @@ module Maximus
 
         if value.include?('browser')
           value['browser'].each do |browser, browser_value|
-            unless browser_value.is_a?(FalseClass)
-              new_data = {}
-              new_data['browser'] = []
-              new_data['browser'] << { browser.to_s => browser.to_s }
+            next if browser_value.is_a?(FalseClass)
 
-              # Regardless of what's in the config, override with predictable namespacing
-              new_data['directory'] = "maximus_wraith_#{browser}"
-              new_data['history_dir'] = "maximus_wraith_history_#{browser}"
-
-              # @todo a snap file cannot be set in the config
-              snap_file = case browser
-                when 'casperjs' then 'casper'
-                when 'nojs' then 'nojs'
-                else 'snap'
-              end
-              new_data['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
-
-              @settings[:wraith][browser.to_sym] = wraith_setup(new_data, "maximus_wraith_#{browser}")
+            # @todo a snap file cannot be set in the config
+            snap_file = case browser
+              when 'casperjs' then 'casper'
+              when 'nojs' then 'nojs'
+              else 'snap'
             end
+
+            new_data = {
+              browser: [{ browser.to_s => browser.to_s }],
+              directory: "maximus_wraith_#{browser}",
+              history_dir: "maximus_wraith_history_#{browser}",
+              snap_file: File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
+            }
+
+            @settings[:wraith][browser.to_sym] = wraith_setup(new_data, "maximus_wraith_#{browser}")
           end
         else
-          value['browser'] = { 'phantomjs' => 'phantomjs' }
-          value['directory'] = 'maximus_wraith_phantomjs'
-          value['history_dir'] = 'maximus_wraith_history_phantomjs'
-          value['snap_file'] = File.join(File.dirname(__FILE__), "config/wraith/snap.js")
-          @settings[:wraith][:phantomjs] = wraith_setup(value)
+          append_value = {
+            browser: { 'phantomjs' => 'phantomjs' },
+            directory: 'maximus_wraith_phantomjs',
+            history_dir: 'maximus_wraith_history_phantomjs',
+            snap_file: File.join(File.dirname(__FILE__), "config/wraith/snap.js")
+          }
+          @settings[:wraith][:phantomjs] = wraith_setup value.merge(append_value)
         end
 
       end

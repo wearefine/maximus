@@ -72,7 +72,13 @@ module Maximus
             message['filename'] = filename.nil? ? '' : filename.gsub("#{@settings[:root_dir]}/", '')
             severity = message['severity']
             message.delete('severity')
-            @output["lint_#{severity}s".to_sym] << message
+            begin
+              @output["lint_#{severity}s".to_sym] << message
+            rescue => e
+              puts message[:severity]
+              puts e.inspect
+              puts e.backtrace.inspect
+            end
           end
         end
       end
@@ -111,29 +117,25 @@ module Maximus
         all_files = {}
         files.each do |file|
 
-          # sometimes data will be blank but this is good - it means no errors raised in the lint
-          unless lint.blank?
-            lint_file = lint[file[:filename].to_s]
+          # sometimes data will be blank but this is good - it means no errors were raised in the lint
+          next if lint.blank?
+          lint_file = lint[file[:filename].to_s]
 
-            expanded = lines_added_to_range(file)
-            revert_name = file[:filename].gsub("#{@settings[:root_dir]}/", '')
-            unless lint_file.blank?
-              all_files[revert_name] = []
+          expanded = lines_added_to_range(file)
+          revert_name = file[:filename].gsub("#{@settings[:root_dir]}/", '')
+          unless lint_file.blank?
+            all_files[revert_name] = []
 
-              # @todo originally I tried .map and delete_if, but this works,
-              #   and the other method didn't cover all bases.
-              #   Gotta be a better way to write this though
-              lint_file.each do |l|
-                if expanded.include?(l['line'].to_i)
-                  all_files[revert_name] << l
-                end
+            # @todo originally I tried .map and delete_if, but this works,
+            #   and the other method didn't cover all bases.
+            #   Gotta be a better way to write this though
+            lint_file.each do |l|
+              if expanded.include?(l['line'].to_i)
+                all_files[revert_name] << l
               end
-              # If there's nothing there, then it definitely isn't a relevant lint
-              all_files.delete(revert_name) if all_files[revert_name].blank?
             end
-          else
-            # Optionally store the filename with a blank array
-            #   @example all_files[file[:filename].to_s.gsub("#{@settings[:root_dir]}/", '')] = []
+            # If there's nothing there, then it definitely isn't a relevant lint
+            all_files.delete(revert_name) if all_files[revert_name].blank?
           end
         end
         @output[:files_linted] = all_files.keys
@@ -155,7 +157,7 @@ module Maximus
       # Send abbreviated results to console or to the log
       # @return [String] console message to display
       def lint_summarize
-        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length > 0
+        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length
 
         success = @task.to_s.color(:green)
         success += ": "
@@ -173,16 +175,14 @@ module Maximus
       # @param lint_length [Integer] count of how many lints
       # @return [String] console message to display
       def lint_ceiling(lint_length)
-        if lint_length > 100
-          lint_dev_format
-          failed_task = @task.color(:green)
-          errors = "#{lint_length} failures.".color(:red)
-          errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
-          errormsg += "\n\n"
+        return unless lint_length > 100
+        failed_task = @task.color(:green)
+        errors = "#{lint_length} failures.".color(:red)
+        errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
+        errormsg += "\n\n"
 
-          go_on = prompt "\n#{errors} Continue? (y/n) "
-          abort errormsg unless truthy?(go_on)
-        end
+        go_on = prompt "\n#{errors} Continue? (y/n) "
+        abort errormsg unless truthy?(go_on)
       end
 
       # Dev display, executed only when called from command line

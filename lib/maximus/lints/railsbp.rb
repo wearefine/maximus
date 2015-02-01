@@ -21,15 +21,13 @@ module Maximus
         rbj = JSON.parse(railsbp).group_by { |s| s['filename'] }
         railsbp = {}
         rbj.each do |file, errors|
-          if file
-            # This crazy gsub grapbs scrubs the absolute path from the filename
-            railsbp[file.gsub(Rails.root.to_s, '')[1..-1].to_sym] = errors.map { |o| hash_for_railsbp(o) }
-          end
+          next unless file
+
+          # This crazy gsub scrubs the absolute path from the filename
+          filename = file.gsub(Rails.root.to_s, '')[1..-1]
+          railsbp[filename] = errors.map { |o| hash_for_railsbp(o) }
+
         end
-        # The output of railsbp is a mix of strings and symbols
-        #   but resetting the JSON like this standardizes everything.
-        # @todo Better way to get around this?
-        railsbp = JSON.parse(railsbp.to_json)
       end
 
       @output[:files_inspected] ||= files_inspected('rb', ' ')
@@ -44,11 +42,11 @@ module Maximus
       # @return [Hash]
       def hash_for_railsbp(error)
         {
-          linter: error['message'].gsub(/\((.*)\)/, '').strip.parameterize('_').camelize,
-          severity: 'warning',
-          reason: error['message'],
-          column: 0,
-          line: error['line_number'].to_i
+          'linter' => error['message'].gsub(/\((.*)\)/, '').strip.parameterize('_').camelize,
+          'severity' => 'warning',
+          'reason' => error['message'],
+          'column' => 0,
+          'line' => error['line_number'].to_i
         }
       end
 

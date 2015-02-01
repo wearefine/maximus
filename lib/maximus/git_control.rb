@@ -115,10 +115,7 @@ module Maximus
         create_branch(sha) unless @psuedo_commit
         sha = sha.to_s
         puts sha.color(:blue)
-        git_output[sha] = {
-          lints: {},
-          statistics: {}
-        }
+        git_output[sha] = {lints: {}, statistics: {}}
         lints = git_output[sha][:lints]
         statistics = git_output[sha][:statistics]
         lint_opts = {}
@@ -126,10 +123,7 @@ module Maximus
         # This is where everything goes down
         exts.each do |ext, files|
           # For relevant_lines data
-          lint_opts = {
-            git_files: files,
-            config: @config
-          }
+          lint_opts = { git_files: files, config: @config }
           lint_opts[:file_paths] = lint_file_paths(files, ext) if lint_by_path
           if nuclear
             lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
