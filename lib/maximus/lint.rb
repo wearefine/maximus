@@ -186,6 +186,7 @@ module Maximus
         return if errors.blank?
         pretty_output = ''
         errors.each do |filename, error_list|
+          filename = filename.gsub("#{@settings[:root_dir]}/", '')
           pretty_output += "\n#{filename.color(:cyan).underline} \n"
           error_list.each do |message|
             pretty_output += case message['severity']
@@ -195,12 +196,7 @@ module Maximus
               when 'refactor' then 'R'.color(:white)
               else '?'.color(:blue)
             end
-            pretty_output += " "
-            pretty_output += message['line'].to_s.color(:blue)
-            pretty_output += message['linter'].color(:green)
-            pretty_output += ": "
-            pretty_output += message['reason']
-            pretty_output += " \n"
+            pretty_output += " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
           end
         end
         pretty_output

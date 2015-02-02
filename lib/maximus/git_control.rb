@@ -126,7 +126,7 @@ module Maximus
           lint_opts = {
             git_files: files,
             config: @config,
-            file_paths: lint_file_paths(files, ext) if lint_by_path
+            file_paths: (lint_file_paths(files, ext) if lint_by_path)
           }
 
           if nuclear
