@@ -48,6 +48,7 @@ module Maximus
     # @param data [Hash] unfiltered lint data
     # @return [Hash] refined lint data and all the other bells and whistles
     def refine(data)
+
       # Prevent abortive empty JSON.parse error
       data = '{}' if data.blank?
       return puts "Error from #{@task}: #{data}" if data.is_a?(String) && data.include?('No such')
@@ -79,7 +80,6 @@ module Maximus
     protected
 
       # List all files inspected
-      #
       # @param ext [String] extension to search for
       # @param delimiter [String] comma or space separated
       # @param remove [String] remove from all file names
@@ -150,6 +150,7 @@ module Maximus
             @output["lint_#{severity}s".to_sym] << message
           end
         end
+        return @output
       end
 
 

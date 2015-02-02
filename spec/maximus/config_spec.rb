@@ -83,7 +83,7 @@ describe Maximus::Config do
 
   end
 
-  describe '#split_paths' do
+  describe '#split_paths', :isolated_environment do
 
     context 'an array is provided' do
       let(:config_body) { "paths: \n  - '/'\n  - '/about'"}
@@ -108,7 +108,7 @@ describe Maximus::Config do
 
   end
 
-  describe '#load_config' do
+  describe '#load_config', :isolated_environment do
 
     context 'a file path is provided' do
       let(:config_body) { 'rubocop: spec/support/rubocop.yml' }

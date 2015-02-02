@@ -129,7 +129,7 @@ describe Maximus::GitControl do
 
   end
 
-  describe '#commit_range' do
+  describe '#commit_range', :isolated_environment do
 
     context 'shas are provided' do
 
@@ -157,7 +157,7 @@ describe Maximus::GitControl do
 
   end
 
-  describe '#compare' do
+  describe '#compare', :isolated_environment do
 
     context 'commit is not supplied in the config' do
       it 'should return a hash with commit shas, file associations, and changed line numbers' do
