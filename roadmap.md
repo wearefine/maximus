@@ -10,6 +10,8 @@
 * Add JSLint (maybe)
 * Add W3 validator (maybe)
 * Add Markdown lint (maybe)
+* Add Flog support (maybe)
+* Add Flay support (maybe)
 * Regex path names on phantomas and wraith to defend against injection and bad characters
 * Test for < ruby 2.0 or require 2.0 < in gemspec
 * If no files to inspect in working, say so
