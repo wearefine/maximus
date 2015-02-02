@@ -332,20 +332,20 @@ module Maximus
             end
 
             new_data = {
-              browser: [{ browser.to_s => browser.to_s }],
-              directory: "maximus_wraith_#{browser}",
-              history_dir: "maximus_wraith_history_#{browser}",
-              snap_file: File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
+              'browser' => [{ browser.to_s => browser.to_s }],
+              'directory' => "maximus_wraith_#{browser}",
+              'history_dir' => "maximus_wraith_history_#{browser}",
+              'snap_file' => File.join(File.dirname(__FILE__), "config/wraith/#{snap_file}.js")
             }
 
             @settings[:wraith][browser.to_sym] = wraith_setup(new_data, "maximus_wraith_#{browser}")
           end
         else
           append_value = {
-            browser: { 'phantomjs' => 'phantomjs' },
-            directory: 'maximus_wraith_phantomjs',
-            history_dir: 'maximus_wraith_history_phantomjs',
-            snap_file: File.join(File.dirname(__FILE__), "config/wraith/snap.js")
+            'browser' => { 'phantomjs' => 'phantomjs' },
+            'directory' => 'maximus_wraith_phantomjs',
+            'history_dir' => 'maximus_wraith_history_phantomjs',
+            'snap_file' => File.join(File.dirname(__FILE__), "config/wraith/snap.js")
           }
           @settings[:wraith][:phantomjs] = wraith_setup value.merge(append_value)
         end
