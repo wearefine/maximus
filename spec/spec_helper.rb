@@ -1,5 +1,9 @@
 require 'maximus'
+require 'coveralls'
+Coveralls.wear!
 
-RSpec.configure do |c|
-  c.treat_symbols_as_metadata_keys_with_true_values = true
+RSpec.configure do |config|
+  config.mock_with :rspec do |c|
+    c.syntax = [:should, :expect]
+  end
 end
