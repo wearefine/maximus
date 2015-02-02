@@ -19,17 +19,17 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency "git", "~> 1.2.9"
-  spec.add_runtime_dependency "scss-lint", "~> 0.32.0"
+  spec.add_runtime_dependency "scss-lint", "~> 0.33.0"
   spec.add_runtime_dependency "rainbow", "2.0.0"
-  spec.add_runtime_dependency "rubocop", "~> 0.23"
-  spec.add_runtime_dependency "rails_best_practices", "~> 1.15"
+  spec.add_runtime_dependency "rubocop", "~> 0.28"
+  spec.add_runtime_dependency "rails_best_practices", "~> 1.15.4"
   spec.add_runtime_dependency "brakeman", "~> 3.0.1"
-  spec.add_runtime_dependency "wraith", "~> 2.3.0"
-  spec.add_runtime_dependency "activesupport"
-  spec.add_runtime_dependency "thor"
+  spec.add_runtime_dependency "wraith", "~> 2.3.1"
+  spec.add_runtime_dependency "activesupport", "~> 4.2.0"
+  spec.add_runtime_dependency "thor", "~> 0.19.1"
 
   spec.add_development_dependency "bundler", "~> 1.6"
-  spec.add_development_dependency "nokogiri", "~> 1.6.0"
   spec.add_development_dependency "yard", "~> 0.8"
   spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "coveralls", "~> 0.7.8"
 end
