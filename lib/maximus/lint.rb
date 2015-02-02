@@ -59,23 +59,8 @@ module Maximus
         data = @output[:relevant_lints]
       end
 
-      @output[:lint_warnings] = []
-      @output[:lint_errors] = []
-      @output[:lint_conventions] = []
-      @output[:lint_refactors] = []
-      unless data.blank?
-        data.each do |filename, error_list|
-          error_list.each do |message|
-            # so that :raw_data remains unaffected
-            message = message.clone
-            message.delete('length')
-            message['filename'] = filename.nil? ? '' : filename.gsub("#{@settings[:root_dir]}/", '')
-            severity = message['severity']
-            message.delete('severity')
-            @output["lint_#{severity}s".to_sym] << message
-          end
-        end
-      end
+      evaluate_severities(data)
+
       lint_count = (@output[:lint_errors].length + @output[:lint_warnings].length + @output[:lint_conventions].length + @output[:lint_refactors].length)
 
       puts lint_summarize
@@ -148,6 +133,28 @@ module Maximus
 
     private
 
+      # Add severities to @output
+      # @since 0.1.5
+      # @param data [Hash]
+      def evaluate_severities(data)
+        @output[:lint_warnings] = []
+        @output[:lint_errors] = []
+        @output[:lint_conventions] = []
+        @output[:lint_refactors] = []
+        return if data.blank?
+        data.each do |filename, error_list|
+          error_list.each do |message|
+            # so that :raw_data remains unaffected
+            message = message.clone
+            message.delete('length')
+            message['filename'] = filename.nil? ? '' : filename.gsub("#{@settings[:root_dir]}/", '')
+            severity = message['severity']
+            message.delete('severity')
+            @output["lint_#{severity}s".to_sym] << message
+          end
+        end
+      end
+
       # Send abbreviated results to console or to the log
       # @return [String] console message to display
       def lint_summarize
@@ -201,6 +208,8 @@ module Maximus
         end
         pretty_output
       end
+
+
 
   end
 end
