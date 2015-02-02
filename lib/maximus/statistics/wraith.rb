@@ -39,10 +39,9 @@ module Maximus
           # Reset history dir
           # It puts the new shots in the history folder, even with absolute paths in the config.
           #   Could be a bug in wraith.
-          `rm -rf #{@settings[:root_dir]}/#{wraith_yaml['history_dir']}`
+          FileUtils.remove_dir("#{@settings[:root_dir]}/#{wraith_yaml['history_dir']}")
         end
-        wraith_parse browser
-        wraith_images browser unless @config.is_dev?
+        wraith_parse browser unless @config.is_dev?
         puts `wraith history #{configpath}`
       end
       @output
@@ -58,49 +57,63 @@ module Maximus
       # @param browser [String] headless browser used to generate the gallery
       # @return [Hash] { path: { browser, path_label, percent_changed: { size: percent_diff ] } }
       def wraith_parse(browser)
-        Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.txt").select { |f| File.file? f }.each do |file|
-          file_object = File.open(file, 'rb')
+        Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*").select { |f| File.file? f }.each do |file|
+          extension = File.extname(file)
+          next unless extension == '.png' || extension == '.txt'
+
           orig_label = File.dirname(file).split('/').last
-          # Get stored key value
-          label = @settings[:paths][orig_label]
-          @output[:statistics][label.to_s] ||= {}
-          browser_output = @output[:statistics][label.to_s]
-          browser_output ||= {}
-          browser_output[:browser] = browser.to_s
-          browser_output[:name] = orig_label
-          browser_output[:percent_changed] ||= {}
-          browser_output[:percent_changed][File.basename(file).split('_')[0].to_i] = file_object.read.to_f
-          file_object.close
+
+          path = @settings[:paths][orig_label].to_s
+
+          @output[:statistics][path] = {
+            browser: browser.to_s,
+            name: orig_label
+          } if @output[:statistics][path].blank?
+
+          browser_output = @output[:statistics][path]
+
+          if extension == '.txt'
+            browser_output = wraith_percentage(file, browser_output)
+          else
+            browser_output[:images] ||= []
+            browser_output[:images] << wraith_image(file)
+          end
+
         end
         @output
       end
 
-      # Make images temp files to save for later
-      # @todo DRY this up from wraith_parse
+      # Grab the percentage change from previous snapshots
       # @since 0.1.5
-      # @param browser [String]
-      def wraith_images(browser)
-        Dir.glob("#{@settings[:root_dir]}/maximus_wraith_#{browser}/**/*.png").select { |f| File.file? f }.each do |file|
-          orig_label = File.dirname(file).split('/').last
-          # Get stored key value
-          label = @settings[:paths][orig_label]
-          @output[:statistics][label.to_s] ||= {}
-          browser_output = @output[:statistics][label.to_s]
-          browser_output ||= {}
-          browser_output[:images] ||= []
-          data = File.read(file)
-          image = Tempfile.new([File.basename(file), '.png']).tap do |f|
-            f.rewind
-            f.write(data)
-            # Once this script exits, the images will delete themselves
-            # We need those images, so undefine that last call
-            # http://stackoverflow.com/a/21286718
-            ObjectSpace.undefine_finalizer(f)
-            f.close
-          end
-          browser_output[:images] << image.path
+      # @param file [String]
+      # @param browser_output [Hash]
+      # @return [Hash]
+      def wraith_percentage(file, browser_output)
+        file_object = File.open(file, 'rb')
+        browser_output[:percent_changed] ||= {}
+        browser_output[:percent_changed][File.basename(file).split('_')[0].to_i] = file_object.read.to_f
+
+        file_object.close
+
+        browser_output
+      end
+
+      # Make images temp files to save for later
+      # Once this script exits, the images will delete themselves.
+      #   We need those images, so the finalizer is left undefined.
+      #   http://stackoverflow.com/a/21286718
+      # @since 0.1.5
+      # @param file [String]
+      # @return [String] path to image
+      def wraith_image(file)
+        data = File.read(file)
+        image = Tempfile.new([File.basename(file), '.png']).tap do |f|
+          f.rewind
+          f.write(data)
+          ObjectSpace.undefine_finalizer(f)
+          f.close
         end
-        @output
+        image.path
       end
 
   end
