@@ -31,7 +31,7 @@ module Maximus
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
     # @option opts [String] :config_file ('maximus.yml') path to config file
     # @option opts [Boolean] :compile_assets (true) compile and destroy assets automagically
-    # @return [#load_config_file #group_families #evaluate_yaml] this method is used to set up instance variables
+    # @return [#load_config_file #group_families #evaluate_settings] this method is used to set up instance variables
     def initialize(opts = {})
 
       default_options = {
@@ -64,18 +64,16 @@ module Maximus
 
       # Instance variables for Config class only
       @temp_files = {}
-
       # Override options with any defined in a discovered config file
-      evaluate_yaml
+      evaluate_settings
     end
 
     # Set global options or generate appropriate config files for lints or statistics
-    #
-    # @param yaml_data [Hash] (@settings) loaded data from the discovered maximus config file
+    # @param settings_data [Hash] (@settings) loaded data from the discovered maximus config file
     # @return [Hash] paths to temp config files and static options
     #   These should be deleted with destroy_temp after read and loaded
-    def evaluate_yaml(yaml_data = @settings)
-      yaml_data.each do |key, value|
+    def evaluate_settings(settings_data = @settings)
+      settings_data.each do |key, value|
         next if value.is_a?(FalseClass)
         value = {} if value.is_a?(TrueClass)
 
@@ -87,9 +85,9 @@ module Maximus
             #   global config variables (last when statement in this switch)
             value = load_config(value)
 
-            if yaml_data[key].is_a?(Hash) && yaml_data[key].has_key?('jshintignore')
+            if settings_data[key].is_a?(Hash) && settings_data[key].has_key?('jshintignore')
               jshintignore_file = []
-              yaml_data[key]['jshintignore'].each { |i| jshintignore_file << "#{i}\n" }
+              settings_data[key]['jshintignore'].each { |i| jshintignore_file << "#{i}\n" }
               @settings[:jshintignore] = temp_it('jshintignore.json', jshintignore_file)
             end
             @settings[:jshint] = temp_it('jshint.json', value.to_json)
@@ -105,10 +103,10 @@ module Maximus
             @settings[:rubocop] = temp_it('rubocop.yml', value.to_yaml)
 
           when :brakeman
-            @settings[:brakeman] = yaml_data[key]
+            @settings[:brakeman] = settings_data[key]
 
           when :rails_best_practice, :railsbp
-            @settings[:railsbp] = yaml_data[key]
+            @settings[:railsbp] = settings_data[key]
 
           when :stylestats, :Stylestats
             value = load_config(value)
@@ -124,7 +122,7 @@ module Maximus
 
           # Configuration important to all of maximus
           when :is_dev, :log, :root_dir, :domain, :port, :paths, :commit
-            @settings[key] = yaml_data[key]
+            @settings[key] = settings_data[key]
         end
       end
 
