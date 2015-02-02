@@ -22,9 +22,9 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "scss-lint", "~> 0.33.0"
   spec.add_runtime_dependency "rainbow", "2.0.0"
   spec.add_runtime_dependency "rubocop", "~> 0.28"
-  spec.add_runtime_dependency "rails_best_practices", "~> 1.15.4"
+  spec.add_runtime_dependency "rails_best_practices", "~> 1.15"
   spec.add_runtime_dependency "brakeman", "~> 3.0.1"
-  spec.add_runtime_dependency "wraith", "~> 2.3.1"
+  spec.add_runtime_dependency "wraith", "~> 2.3"
   spec.add_runtime_dependency "activesupport", "~> 4.2.0"
   spec.add_runtime_dependency "thor", "~> 0.19.1"
 
