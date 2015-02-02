@@ -141,7 +141,7 @@ If calling Maximus::Wraith from a script, please see the note in lib/statistics/
 
 ## Changelog
 
-### 0.1.5
+### 0.1.5 (February 1, 2015)
 
 Bugfixes:
 
