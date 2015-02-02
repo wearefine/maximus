@@ -66,7 +66,7 @@ module Maximus
     # @param sha1 [String]
     # @param sha2 [String]
     # @return [Hash] diff_return files changed grouped by file extension and line number
-    def compare(sha1 = master_commit.sha, sha2 = head_sha)
+    def compare(sha1 = master_commit_sha, sha2 = head_sha)
       diff_return = {}
 
       sha1 = set_psuedo_commit if @settings[:commit]
@@ -229,7 +229,7 @@ module Maximus
       # @return [String] commit sha
       def set_psuedo_commit
         case @settings[:commit]
-          when 'master' then master_commit.sha
+          when 'master' then master_commit_sha
           when 'last' then previous_commit(head_sha)
           when 'working' then 'working'
           else @settings[:commit]
@@ -307,10 +307,10 @@ module Maximus
         `env -i git rev-parse --abbrev-ref HEAD`.strip!
       end
 
-      # Get last commit on the master branch
-      # @return [Git::Object]
-      def master_commit
-        @g.branches[:master].gcommit
+      # Get last commit sha on the master branch
+      # @return [String]
+      def master_commit_sha
+        @g.branches[:master].gcommit.sha
       end
 
       # Get general stats of commit on HEAD versus last commit on master branch
