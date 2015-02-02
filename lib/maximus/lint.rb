@@ -158,7 +158,7 @@ module Maximus
       # Send abbreviated results to console or to the log
       # @return [String] console message to display
       def lint_summarize
-        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task.to_s}" if @output[:lint_errors].length
+        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task}" if @output[:lint_errors].length
 
         success = @task.to_s.color(:green)
         success += ": "
