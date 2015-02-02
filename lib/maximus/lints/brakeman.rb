@@ -53,7 +53,7 @@ module Maximus
       # @return [Hash]
       def hash_for_brakeman(error, type)
         {
-          linter: error['warning_type'],
+          linter: error['warning_type'].delete(' '),
           severity: type.chomp('s'),
           reason: error['message'],
           column: 0,
