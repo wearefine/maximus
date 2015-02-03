@@ -30,15 +30,10 @@ module Maximus
         ['warnings', 'errors'].each do |type|
           new_brakeman = bjson[type].group_by { |s| s['file'] }
           new_brakeman.each do |file, errors|
-            if file
-              brakeman[file.to_sym] = errors.map { |e| hash_for_brakeman(e, type) }
-            end
+            next unless file
+            brakeman[file] = errors.map { |e| hash_for_brakeman(e, type) }
           end
         end
-        # The output of brakeman is a mix of strings and symbols
-        #   but resetting the JSON like this standardizes everything.
-        # @todo Better way to get around this?
-        brakeman = JSON.parse(brakeman.to_json)
       end
 
       @output[:files_inspected] ||= files_inspected('rb', ' ')
@@ -53,12 +48,12 @@ module Maximus
       # @return [Hash]
       def hash_for_brakeman(error, type)
         {
-          linter: error['warning_type'].delete(' '),
-          severity: type.chomp('s'),
-          reason: error['message'],
-          column: 0,
-          line: error['line'].to_i,
-          confidence: error['confidence']
+          'linter' => error['warning_type'].delete(' '),
+          'severity' => type.chomp('s'),
+          'reason' => error['message'],
+          'column' => 0,
+          'line' => error['line'].to_i,
+          'confidence' => error['confidence']
         }
       end
 
