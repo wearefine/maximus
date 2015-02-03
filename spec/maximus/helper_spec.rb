@@ -82,16 +82,4 @@ describe Maximus::Helper do
 
   end
 
-  describe '#lines_added_to_range', :isolated_environment do
-
-    context 'when a functional hash is provided' do
-      let(:lines_added) { { changes: ['0..5', '11..14'] } }
-
-      it 'should return an array of numbers' do
-        expect( dummy_class.lines_added_to_range lines_added ).to eq( [ 0,1,2,3,4,5, 11,12,13,14] )
-      end
-    end
-  end
-
-
 end

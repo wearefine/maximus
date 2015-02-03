@@ -64,10 +64,8 @@ module Maximus
         stats = JSON.parse(stats_cli)
         @output[:statistics][file_path.to_s] ||= {}
 
-        # @todo is there a better way to do this?
         fp = @output[:statistics][file_path.to_s]
 
-        # @todo Can I do like a self << thing here?
         stats.each do |stat, value|
           fp[stat.to_sym] = value
         end

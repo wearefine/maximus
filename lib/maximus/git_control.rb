@@ -69,7 +69,7 @@ module Maximus
     def compare(sha1 = master_commit_sha, sha2 = head_sha)
       diff_return = {}
 
-      sha1 = set_psuedo_commit if @settings[:commit]
+      sha1 = define_psuedo_commit if @settings[:commit]
       # Reverse so that we go in chronological order
       git_spread = commit_range(sha1, sha2).reverse
 
@@ -227,7 +227,7 @@ module Maximus
       # Get sha if words passed for :commit config option
       # @since 0.1.5
       # @return [String] commit sha
-      def set_psuedo_commit
+      def define_psuedo_commit
         case @settings[:commit]
           when 'master' then master_commit_sha
           when 'last' then previous_commit(head_sha)

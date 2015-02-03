@@ -94,23 +94,22 @@ module Maximus
       # @return [Array] compiled css files
       def compile_scss_rails
         searched_files = []
-        # @todo I'd rather Rake::Task but it's not working in different directories
-        Dir.chdir(@settings[:root_dir]) do
-          if @config.is_dev?
-             # @todo review that this may not be best practice, but it's really noisy in the console
-            quietly { `rake assets:precompile` }
-          else
-            `rake assets:precompile`
-          end
+        # I'd rather Rake::Task but it's not working in different directories
+        if @config.is_dev?
+           # @todo review that this may not be best practice, but it's really noisy in the console
+          quietly { `rake -f #{@settings[:root_dir]}/Rakefile assets:precompile` }
+        else
+          `rake -f #{@settings[:root_dir]}/Rakefile assets:precompile`
         end
       end
 
       # Turn scss files into css files
+      # Skips if the file starts with an underscore
       # @see find_css_files
       # @since 0.1.5
       def compile_scss_normal
         Dir["#{@path}.scss"].select { |f| File.file? f }.each do |file|
-          # @todo don't compile file if it starts with an underscore
+          next if File.basename(file).chr == '_'
           scss_file = File.open(file, 'rb') { |f| f.read }
 
           output_file = File.open( file.split('.').reverse.drop(1).reverse.join('.'), "w" )
@@ -124,14 +123,12 @@ module Maximus
       def destroy_assets
 
         if is_rails?
-          # @todo I'd rather Rake::Task but it's not working in different directories
-          Dir.chdir(@settings[:root_dir]) do
-            if @config.is_dev?
-              # @todo review that this may not be best practice, but it's really noisy in the console
-              quietly { `rake assets:clobber` }
-            else
-              `rake assets:clobber`
-            end
+          # I'd rather Rake::Task but it's not working in different directories
+          if @config.is_dev?
+            # @todo review that this may not be best practice, but it's really noisy in the console
+            quietly { `rake -f #{@settings[:root_dir]}/Rakefile assets:clobber` }
+          else
+            `rake -f #{@settings[:root_dir]}/Rakefile assets:clobber`
           end
         end
 

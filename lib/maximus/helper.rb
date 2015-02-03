@@ -99,25 +99,6 @@ module Maximus
       STDIN.gets
     end
 
-    # Convert the array from lines_added into spelled-out ranges
-    # This is a GitControl helper but it's used in Lint
-    # @see GitControl#lines_added
-    # @see Lint#relevant_lint
-    #
-    # @example typical output
-    #   lines_added = {changes: ['0..10', '11..14']}
-    #   lines_added_to_range(lines_added)
-    #   # output
-    #   [0,1,2,3,4,5,6,7,8,9,10, 11,12,13,14]
-    #
-    # @todo I'm sure there's a better way of doing this
-    # @todo figure out a better place to put this than in Helper
-    # @return [Hash] changes_array of spelled-out arrays of integers
-    def lines_added_to_range(file)
-      changes_array = file[:changes].map { |ch| ch.split("..").map(&:to_i) }
-      changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
-    end
-
     # Ensure path exists
     # @param path [String, Array] path to files can be directory or glob
     # @return [Boolean]

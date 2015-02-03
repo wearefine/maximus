@@ -85,28 +85,28 @@ describe Maximus::GitControl do
 
   end
 
-  describe '#set_psuedo_commit' do
+  describe '#define_psuedo_commit' do
 
     context 'words are provided' do
 
       context 'master is supplied' do
         let(:config) { { commit: 'master' } }
         it 'should return the master sha' do
-          expect( git.send(:set_psuedo_commit) ).to eq `git -C #{Dir.pwd} rev-parse --branches=master HEAD`.strip!
+          expect( git.send(:define_psuedo_commit) ).to eq `git -C #{Dir.pwd} rev-parse --branches=master HEAD`.strip!
         end
       end
 
       context 'last is supplied' do
         let(:config) { { commit: 'last' } }
         it 'should return the previous_commit sha' do
-          expect( git.send(:set_psuedo_commit) ).to eq `git -C #{Dir.pwd} rev-parse HEAD^`.strip!
+          expect( git.send(:define_psuedo_commit) ).to eq `git -C #{Dir.pwd} rev-parse HEAD^`.strip!
         end
       end
 
       context 'working is supplied' do
         let(:config) { { commit: 'working' } }
         it 'should return the word "working"' do
-          expect( git.send(:set_psuedo_commit) ).to eq 'working'
+          expect( git.send(:define_psuedo_commit) ).to eq 'working'
         end
       end
 
@@ -115,7 +115,7 @@ describe Maximus::GitControl do
     context 'a commit hash is provided' do
       let(:config) { { commit: '22126a6ba227d81f770d13c302e6225f7463f7be' } }
       it 'should return the provided hash' do
-        expect( git.send(:set_psuedo_commit) ).to eq '22126a6ba227d81f770d13c302e6225f7463f7be'
+        expect( git.send(:define_psuedo_commit) ).to eq '22126a6ba227d81f770d13c302e6225f7463f7be'
       end
     end
 
