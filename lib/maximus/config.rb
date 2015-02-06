@@ -22,7 +22,7 @@ module Maximus
     # @option opts [String, Boolean] :git_log (false) path to log file or don't log
     #   The git gem is very noisey
     # @option opts [String] :root_dir base directory
-    # @option opts [String] :domain ('http://localhost:3000') the host - used for Statistics
+    # @option opts [String] :domain ('http://localhost') the host - used for Statistics
     # @option opts [String, Integer] :port ('') port number - used for Statistics
     #   and appended to domain. If blank (false, empty string, etc.), will not
     #   append to domain
@@ -34,16 +34,12 @@ module Maximus
     # @return [#load_config_file #group_families #evaluate_settings] this method is used to set up instance variables
     def initialize(opts = {})
 
-      default_options = {
-        root_dir: root_dir,
-        domain: 'http://localhost',
-        port: is_rails? ? 3000 : '',
-        paths: { 'home' => '/' },
-        is_dev: false,
-        phantomas: false,
-        stylestats: false,
-        wraith: false
-      }
+      opts = opts.delete_if { |k, v| v.nil? }
+
+      default_options = YAML.load_file(File.join(File.dirname(__FILE__), 'config/maximus.yml')).symbolize_keys
+      default_options[:is_dev] = false
+      default_options[:root_dir] = root_dir
+      default_options[:port] = 3000 if is_rails?
 
       yaml = default_options.merge load_config_file(opts[:config_file])
       @settings = yaml.merge opts
@@ -166,7 +162,7 @@ module Maximus
     # Combine domain with port if necessary
     # @return [String] complete domain/host address
     def domain
-      (!@settings[:port].blank?) ? "#{@settings[:domain]}:#{@settings[:port]}" : @settings[:domain]
+      @settings[:port].blank? ? @settings[:domain] : "#{@settings[:domain]}:#{@settings[:port]}"
     end
 
 
@@ -187,11 +183,13 @@ module Maximus
         conf_location = if !file_path.nil? && File.exist?(file_path)
           file_path
         else
-          config_exists('.maximus.yml') || config_exists('maximus.yml') || check_default_config_path('config/maximus.yml')
+          config_exists('.maximus.yml') || config_exists('maximus.yml') || config_exists('config/maximus.yml')
         end
 
-        yaml = YAML.load_file(conf_location)
+        return {} if conf_location.is_a?(FalseClass)
 
+        yaml = YAML.load_file conf_location
+        yaml = {} if yaml.blank?
         yaml.symbolize_keys
 
       end
@@ -255,7 +253,8 @@ module Maximus
       # @return [String, FalseClass] if file is found return the absolute path
       #   otherwise return false so we can keep checking
       def config_exists(file)
-        File.exist?(File.join(File.dirname(__FILE__), file)) ? File.join(File.dirname(__FILE__), file) : false
+        present_location = File.join(Dir.pwd, file)
+        File.exist?(present_location) ? present_location : false
       end
 
       # Accounting for space-separated command line arrays

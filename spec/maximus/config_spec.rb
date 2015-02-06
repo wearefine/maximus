@@ -9,7 +9,7 @@ describe Maximus::Config do
     described_class.new(config_contents)
   end
 
-  describe '#is_dev?', :isolated_environment do
+  describe '.is_dev?', :isolated_environment do
     context 'setting root value is_dev to true' do
       let(:config_body) { 'is_dev: true' }
       it 'should be true' do
@@ -25,7 +25,7 @@ describe Maximus::Config do
     end
   end
 
-  describe '#initialize', :isolated_environment do
+  describe '.initialize', :isolated_environment do
 
     context 'setting a linter to be true' do
       let(:config_body) { 'scsslint: true' }
@@ -43,7 +43,7 @@ describe Maximus::Config do
 
   end
 
-  describe '#domain', :isolated_environment do
+  describe '.domain', :isolated_environment do
 
     context 'domain is provided' do
 
@@ -83,7 +83,7 @@ describe Maximus::Config do
 
   end
 
-  describe '#split_paths', :isolated_environment do
+  describe '.split_paths', :isolated_environment do
 
     context 'an array is provided' do
       let(:config_body) { "paths: \n  - '/'\n  - '/about'"}

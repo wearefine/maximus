@@ -7,9 +7,13 @@ describe Maximus::Lint do
     {"/Users/Tim/dummy/app/assets/stylesheets/application.css"=>[{"line"=>1, "column"=>1, "length"=>1, "severity"=>"warning", "reason"=>"Use `//` comments everywhere", "linter"=>"Comment"}], "/Users/Tim/dummy/app/assets/stylesheets/main.css.scss"=>[{"line"=>2, "column"=>3, "length"=>16, "severity"=>"warning", "reason"=>"Properties should be ordered margin, max-width", "linter"=>"PropertySortOrder"}]}
   }
 
-  subject(:lint) { described_class.new }
+  subject(:lint) do
+    # Use default settings
+    FileUtils.rm('.maximus.yml') if File.exist?('.maximus.yml')
+    described_class.new
+  end
 
-  describe '#refine', :isolated_environment do
+  describe '.refine', :isolated_environment do
     context 'data is blank' do
       let(:data) { }
       it 'should provide a blank response' do

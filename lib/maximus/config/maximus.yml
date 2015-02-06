@@ -1,3 +1,4 @@
+domain: 'http://localhost'
 paths:
   home: '/'
 
