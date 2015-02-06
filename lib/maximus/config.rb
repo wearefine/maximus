@@ -34,12 +34,15 @@ module Maximus
     # @return [#load_config_file #group_families #evaluate_settings] this method is used to set up instance variables
     def initialize(opts = {})
 
+      # Strips from command line
       opts = opts.delete_if { |k, v| v.nil? }
 
       default_options = YAML.load_file(File.join(File.dirname(__FILE__), 'config/maximus.yml')).symbolize_keys
       default_options[:is_dev] = false
       default_options[:root_dir] = root_dir
       default_options[:port] = 3000 if is_rails?
+
+      @root = opts[:root_dir] ? opts[:root_dir] : default_options[:root_dir]
 
       yaml = default_options.merge load_config_file(opts[:config_file])
       @settings = yaml.merge opts
@@ -253,7 +256,7 @@ module Maximus
       # @return [String, FalseClass] if file is found return the absolute path
       #   otherwise return false so we can keep checking
       def config_exists(file)
-        present_location = File.join(Dir.pwd, file)
+        present_location = File.join(@root, file)
         File.exist?(present_location) ? present_location : false
       end
 
