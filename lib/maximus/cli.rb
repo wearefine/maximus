@@ -6,9 +6,9 @@ class Maximus::CLI < Thor
 
   include Thor::Actions
 
-  class_option :frontend, aliases: ['-f', '--front-end'], type: :boolean, default: false, lazy_default: false, desc: "Do front-end lints"
-  class_option :backend, aliases: ['-b', '--back-end'], type: :boolean, default: false, lazy_default: false, desc: "Do back-end lints"
-  class_option :statistics, aliases: ['-s'], type: :boolean, default: false, lazy_default: false, desc: "Do statistics"
+  class_option :frontend, aliases: ['-f', '--front-end'], type: :boolean, default: false, lazy_default: true, desc: "Do front-end lints"
+  class_option :backend, aliases: ['-b', '--back-end'], type: :boolean, default: false, lazy_default: true, desc: "Do back-end lints"
+  class_option :statistics, aliases: ['-s'], type: :boolean, default: false, lazy_default: true, desc: "Do statistics"
   class_option :all, aliases: ['-a'], type: :boolean,  default: false, lazy_default: false, desc: "Do everything"
 
   class_option :filepath, aliases: ['-fp'], type: :array, default: [], desc: "Space-separated path(s) to files"
@@ -84,7 +84,7 @@ class Maximus::CLI < Thor
       send(opt) unless options[:exclude].include?(opt)
     end
     def default_options
-      {
+      opts = {
         file_paths: options[:filepath],
         paths: options[:urls],
         domain: options[:domain],
@@ -92,6 +92,13 @@ class Maximus::CLI < Thor
         is_dev: true,
         config_file: options[:config]
       }
+      stats = {
+        stylestats: options[:include].include?('stylestats'),
+        wraith: options[:include].include?('wraith'),
+        phantomas: options[:include].include?('phantomas')
+      }
+      opts = opts.merge(stats) unless options[:include].include?('statistics') || options[:statistics]
+      opts
     end
 
     def scsslint
