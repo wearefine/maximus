@@ -6,7 +6,7 @@ module Maximus
     # @see Lint#initialize
     def result
       @task = 'scsslint'
-      @path = is_rails? ? "#{@settings[:root_dir]}/app/assets/stylesheets" : "#{@settings[:root_dir]}/source/assets/stylesheets" if @path.blank?
+      @path = is_rails? ? "#{@config.pwd}/app/assets/stylesheets" : "#{@config.pwd}/source/assets/stylesheets" if @path.blank?
 
       return unless temp_config(@task) && path_exists?(@path)
 

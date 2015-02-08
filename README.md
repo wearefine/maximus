@@ -141,6 +141,13 @@ If calling Maximus::Wraith from a script, please see the note in lib/statistics/
 
 ## Changelog
 
+### 0.1.6 
+
+Bugfixes:
+
+* Clean up config option loading/overriding 
+* Remove some command line defaults
+
 ### 0.1.5.1 (February 2, 2015)
 
 Bugfixes:

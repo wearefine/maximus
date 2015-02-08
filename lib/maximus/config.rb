@@ -136,6 +136,14 @@ module Maximus
       @settings[:is_dev]
     end
 
+    # Grab root directory
+    # @since 0.1.6
+    # @return [String]
+    def pwd
+      @settings[:root_dir]
+    end
+
+
     # Defines base logger
     # @param out [String, STDOUT] location for logging
     #   Accepts file path

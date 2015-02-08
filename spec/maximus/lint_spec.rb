@@ -12,6 +12,7 @@ describe Maximus::Lint do
   end
 
   describe '.refine', :isolated_environment do
+
     context 'data is blank' do
       let(:data) { }
       it 'should provide a blank response' do
@@ -39,6 +40,7 @@ describe Maximus::Lint do
         expect( lint.refine(data.to_json) ).to be_a(Hash)
       end
     end
+
   end
 
   describe '#evaluate_severities', :isolated_environment do

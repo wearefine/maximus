@@ -6,7 +6,7 @@ module Maximus
     # @see Lint#initialize
     def result
       @task = 'rubocop'
-      @path = is_rails? ? "#{@settings[:root_dir]}/app" : "#{@settings[:root_dir]}/*.rb" if @path.blank?
+      @path = is_rails? ? "#{@config.pwd}/app" : "#{@config.pwd}/*.rb" if @path.blank?
 
       return unless temp_config(@task) && path_exists?(@path)
 

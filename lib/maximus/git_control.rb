@@ -19,7 +19,7 @@ module Maximus
       @settings = @config.settings
       @psuedo_commit = ( !@settings[:commit].blank? && %w(working last master).include?(@settings[:commit]) )
 
-      @g = Git.open(@settings[:root_dir])
+      @g = Git.open(@config.pwd)
     end
 
     # 30,000 foot view of a commit
@@ -77,7 +77,7 @@ module Maximus
 
         # Grab all files in that commit and group them by extension
         #   If working copy, just give the diff names of the files changed
-        files = @psuedo_commit ? `git -C #{@settings[:root_dir]} diff --name-only` : `git -C #{@settings[:root_dir]} show --pretty="format:" --name-only #{git_sha}`
+        files = @psuedo_commit ? `git -C #{@config.pwd} diff --name-only` : `git -C #{@config.pwd} show --pretty="format:" --name-only #{git_sha}`
 
         diff_return[git_sha.to_s] = match_associations(git_sha, files)
       end
@@ -176,7 +176,7 @@ module Maximus
     # @since 0.1.5
     # @return [String]
     def first_commit
-      `git -C #{@settings[:root_dir]} rev-list --max-parents=0 HEAD`.strip!
+      `git -C #{@config.pwd} rev-list --max-parents=0 HEAD`.strip!
     end
 
     # Get commit before current
@@ -185,7 +185,7 @@ module Maximus
     # @param previous_by [Integer] (1) commit n commits ago
     # @return [String]
     def previous_commit(current_commit = head_sha, previous_by = 1)
-      `git -C #{@settings[:root_dir]} rev-list --max-count=#{previous_by + 1} #{current_commit} --reverse | head -n1`.strip!
+      `git -C #{@config.pwd} rev-list --max-count=#{previous_by + 1} #{current_commit} --reverse | head -n1`.strip!
     end
 
     # Define associations to linters based on file extension
@@ -217,7 +217,7 @@ module Maximus
       # @param sha2 [String]
       # @return [Array] shas
       def commit_range(sha1, sha2)
-        git_spread = @psuedo_commit ? "git #{sha1}" : `git -C #{@settings[:root_dir]} rev-list #{sha1}..#{sha2} --no-merges`
+        git_spread = @psuedo_commit ? "git #{sha1}" : `git -C #{@config.pwd} rev-list #{sha1}..#{sha2} --no-merges`
         git_spread = git_spread.nil? ? [] : git_spread.split("\n")
 
         git_spread << sha1 unless @psuedo_commit
@@ -241,7 +241,7 @@ module Maximus
       # @since 0.1.5
       # @param sha [String]
       def create_branch(sha)
-        quietly { `git -C #{@settings[:root_dir]} checkout #{sha} -b maximus_#{sha}` }
+        quietly { `git -C #{@config.pwd} checkout #{sha} -b maximus_#{sha}` }
       end
 
       # Destroy created branch
@@ -282,7 +282,7 @@ module Maximus
       # @return [Hash] ranges by lines added in a commit by file name
       def lines_added(git_sha)
         new_lines = {}
-        git_lines = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{@settings[:root_dir]} #{git_sha}`.split("\n")
+        git_lines = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{@config.pwd} #{git_sha}`.split("\n")
         git_lines.each do |filename|
           fsplit = filename.split(':')
           # if file isn't already part of the array
@@ -336,7 +336,7 @@ module Maximus
       # @return [Hash] stat data similar to Ruby-git's Diff.stats return
       def diff_initial(commit_sha)
         # Start after the commit information
-        data = `git -C #{@settings[:root_dir]} log --numstat --oneline #{commit_sha}`.split("\n")[1..-1]
+        data = `git -C #{@config.pwd} log --numstat --oneline #{commit_sha}`.split("\n")[1..-1]
         value = {
           total: {
             insertions: 0,
@@ -387,7 +387,7 @@ module Maximus
             unless files[child].blank?
               files[child].each do |c|
                 # hack to ignore deleted files
-                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@settings[:root_dir]}/#{c}", changes: new_lines[c] ]
+                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@config.pwd}/#{c}", changes: new_lines[c] ]
               end
               files[ext].concat(files[child])
               files.delete(child)
