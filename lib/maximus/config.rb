@@ -38,7 +38,6 @@ module Maximus
       opts = opts.delete_if { |k, v| v.nil? }
 
       default_options = YAML.load_file(File.join(File.dirname(__FILE__), 'config/maximus.yml')).symbolize_keys
-      default_options[:is_dev] = false
       default_options[:root_dir] = root_dir
       default_options[:port] = 3000 if is_rails?
 
@@ -46,11 +45,6 @@ module Maximus
 
       yaml = default_options.merge load_config_file(opts[:config_file])
       @settings = yaml.merge opts
-
-      # Only set log file if it's set to true.
-      #   Otherwise, allow it to be nil or a path
-      @settings[:log] = false if @settings[:log].nil?
-      @settings[:log] ||= 'log/maximus.log' if @settings[:log].is_a?(TrueClass)
 
       @settings[:git_log] = false if @settings[:git_log].nil?
       @settings[:git_log] ||= 'log/maximus_git.log' if @settings[:git_log].is_a?(TrueClass)
@@ -141,18 +135,6 @@ module Maximus
     # @return [String]
     def pwd
       @settings[:root_dir]
-    end
-
-
-    # Defines base logger
-    # @param out [String, STDOUT] location for logging
-    #   Accepts file path
-    # @return [Logger] self.log
-    def log
-      out = @settings[:log] || STDOUT
-      @log ||= Logger.new(out)
-      @log.level ||= Logger::INFO
-      @log
     end
 
     # Remove all or one created temporary config file
