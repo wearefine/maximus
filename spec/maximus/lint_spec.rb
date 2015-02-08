@@ -8,8 +8,6 @@ describe Maximus::Lint do
   }
 
   subject(:lint) do
-    # Use default settings
-    FileUtils.rm('.maximus.yml') if File.exist?('.maximus.yml')
     described_class.new
   end
 
