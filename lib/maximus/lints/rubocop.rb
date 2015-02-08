@@ -1,4 +1,5 @@
 module Maximus
+  # Evaluates quality of ruby
   # @since 0.1.0
   class Rubocop < Maximus::Lint
 

@@ -226,7 +226,5 @@ module Maximus
         pretty_output
       end
 
-
-
   end
 end

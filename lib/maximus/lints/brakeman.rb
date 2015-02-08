@@ -1,4 +1,5 @@
 module Maximus
+  # Evaluates quality of security on a Rails site
   # @since 0.1.0
   class Brakeman < Maximus::Lint
 

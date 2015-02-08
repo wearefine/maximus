@@ -1,4 +1,5 @@
 module Maximus
+  # Evaluates quality of Rails methods
   # @since 0.1.0
   class Railsbp < Maximus::Lint
 

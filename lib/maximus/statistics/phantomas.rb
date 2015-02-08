@@ -1,9 +1,9 @@
 module Maximus
+  # Evaluate page performance
   # @since 0.1.0
   class Phantomas < Maximus::Statistic
 
-    # Phantomas evaluates page performance with phantomjs and node
-    #
+    # Run phantomas through the command line
     # @see Statistic#initialize
     def result
 

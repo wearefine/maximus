@@ -1,12 +1,13 @@
 require 'git'
 
 module Maximus
+  # Git management
   # @since 0.1.0
   class GitControl
 
     include Helper
 
-    # Git management
+    # Set up instance variables
     #
     # Inherits settings from {Config#initialize}
     # @param opts [Hash] options passed directly to config

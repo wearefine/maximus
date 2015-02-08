@@ -1,8 +1,9 @@
 module Maximus
+  # Produce CSS statistics
   # @since 0.1.0
   class Stylestats < Maximus::Statistic
 
-    # Produces CSS statistics
+    # Requires node
     # @see Statistic#initialize
     def result
 

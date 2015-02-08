@@ -23,6 +23,7 @@ class Maximus::CLI < Thor
 
   class_option :git, aliases: ['-g', '--git', '--sha'], type: :string, default: 'working', banner: "working, last, master, or sha", desc: "Lint by commit or working copy"
 
+  # Inherit from original Thor and add @config instance var
   def initialize(*args)
     super
     @config ||= Maximus::Config.new(default_options)

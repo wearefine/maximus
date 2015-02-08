@@ -1,4 +1,5 @@
 module Maximus
+  # Evaluates quality of scss
   # @since 0.1.0
   class Scsslint < Maximus::Lint
 

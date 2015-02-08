@@ -1,4 +1,5 @@
 module Maximus
+  # Evaluates quality of JavaScript
   # @since 0.1.0
   class Jshint < Maximus::Lint
 

@@ -1,9 +1,9 @@
 module Maximus
+  # Generates screenshots for visual regression testing
   # @since 0.1.0
   class Wraith < Maximus::Statistic
 
-    # Generates screenshots for visual regression testing
-    #
+    # Runs Wraith through command line
     # WARNING: If you call this class from a script,
     #   you should delete the images generated after they've been
     #   created.
