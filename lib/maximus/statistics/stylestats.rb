@@ -12,7 +12,7 @@ module Maximus
       node_module_exists('stylestats')
 
       if @path.blank?
-        @path = is_rails? ? "#{@config.pwd}/public/assets/**/*.css" : "#{@config.pwd}/**/*.css"
+        @path = is_rails? ? "#{@config.working_dir}/public/assets/**/*.css" : "#{@config.working_dir}/**/*.css"
       end
 
       if @path.is_a?(Array)
@@ -98,9 +98,9 @@ module Maximus
         # I'd rather Rake::Task but it's not working in different directories
         if @config.is_dev?
            # @todo review that this may not be best practice, but it's really noisy in the console
-          quietly { `rake -f #{@config.pwd}/Rakefile assets:precompile` }
+          quietly { `rake -f #{@config.working_dir}/Rakefile assets:precompile` }
         else
-          `rake -f #{@config.pwd}/Rakefile assets:precompile`
+          `rake -f #{@config.working_dir}/Rakefile assets:precompile`
         end
       end
 
@@ -127,9 +127,9 @@ module Maximus
           # I'd rather Rake::Task but it's not working in different directories
           if @config.is_dev?
             # @todo review that this may not be best practice, but it's really noisy in the console
-            quietly { `rake -f #{@config.pwd}/Rakefile assets:clobber` }
+            quietly { `rake -f #{@config.working_dir}/Rakefile assets:clobber` }
           else
-            `rake -f #{@config.pwd}/Rakefile assets:clobber`
+            `rake -f #{@config.working_dir}/Rakefile assets:clobber`
           end
         end
 

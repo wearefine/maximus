@@ -63,11 +63,11 @@ describe Maximus::Config do
 
   end
 
-  describe '.pwd', :isolated_environment do
+  describe '.working_dir', :isolated_environment do
     context 'root_dir is applied in the config' do
       let(:config_body) { 'root_dir: some/fake/directory' }
       it 'should equal the config setting' do
-        expect(config.pwd).to eq 'some/fake/directory'
+        expect(config.working_dir).to eq 'some/fake/directory'
       end
     end
   end

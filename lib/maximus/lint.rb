@@ -84,7 +84,7 @@ module Maximus
       # @param delimiter [String] comma or space separated
       # @param remove [String] remove from all file names
       # @return all_files [Array<string>] list of file names
-      def files_inspected(ext, delimiter = ',', remove = @config.pwd)
+      def files_inspected(ext, delimiter = ',', remove = @config.working_dir)
         @path.is_a?(Array) ? @path.split(delimiter) : file_list(@path, ext, remove)
       end
 
@@ -101,7 +101,7 @@ module Maximus
           lint_file = lint[file[:filename].to_s]
 
           expanded = lines_added_to_range(file)
-          revert_name = file[:filename].gsub("#{@config.pwd}/", '')
+          revert_name = file[:filename].gsub("#{@config.working_dir}/", '')
           unless lint_file.blank?
             all_files[revert_name] = []
 
@@ -144,7 +144,7 @@ module Maximus
             # so that :raw_data remains unaffected
             message = message.clone
             message.delete('length')
-            message['filename'] = filename.nil? ? '' : filename.gsub("#{@config.pwd}/", '')
+            message['filename'] = filename.nil? ? '' : filename.gsub("#{@config.working_dir}/", '')
             severity = message['severity']
             message.delete('severity')
             @output["lint_#{severity}s".to_sym] << message
@@ -210,7 +210,7 @@ module Maximus
         return if errors.blank?
         pretty_output = ''
         errors.each do |filename, error_list|
-          filename = filename.gsub("#{@config.pwd}/", '')
+          filename = filename.gsub("#{@config.working_dir}/", '')
           pretty_output += "\n#{filename.color(:cyan).underline} \n"
           error_list.each do |message|
             pretty_output += case message['severity']

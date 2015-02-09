@@ -8,7 +8,7 @@ module Maximus
     def result
 
       @task = 'railsbp'
-      @path = @config.pwd if @path.blank?
+      @path = @config.working_dir if @path.blank?
 
       return unless is_rails? && temp_config(@task) && path_exists?(@path)
 

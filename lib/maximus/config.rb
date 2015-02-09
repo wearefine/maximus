@@ -133,7 +133,7 @@ module Maximus
     # Grab root directory
     # @since 0.1.6
     # @return [String]
-    def pwd
+    def working_dir
       @settings[:root_dir]
     end
 

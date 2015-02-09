@@ -33,13 +33,13 @@ module Maximus
       @settings[:wraith].each do |browser, configpath|
         next unless File.file?(configpath) # prevents abortive YAML error if it can't find the file
         wraith_yaml = YAML.load_file(configpath)
-        if File.directory?("#{@config.pwd}/#{wraith_yaml['history_dir']}")
+        if File.directory?("#{@config.working_dir}/#{wraith_yaml['history_dir']}")
           puts `wraith latest #{configpath}`
 
           # Reset history dir
           # It puts the new shots in the history folder, even with absolute paths in the config.
           #   Could be a bug in wraith.
-          FileUtils.remove_dir("#{@config.pwd}/#{wraith_yaml['history_dir']}")
+          FileUtils.remove_dir("#{@config.working_dir}/#{wraith_yaml['history_dir']}")
         end
         wraith_parse browser unless @config.is_dev?
         puts `wraith history #{configpath}`
@@ -57,7 +57,7 @@ module Maximus
       # @param browser [String] headless browser used to generate the gallery
       # @return [Hash] { path: { browser, path_label, percent_changed: { size: percent_diff ] } }
       def wraith_parse(browser)
-        Dir.glob("#{@config.pwd}/maximus_wraith_#{browser}/**/*").select { |f| File.file? f }.each do |file|
+        Dir.glob("#{@config.working_dir}/maximus_wraith_#{browser}/**/*").select { |f| File.file? f }.each do |file|
           extension = File.extname(file)
           next unless extension == '.png' || extension == '.txt'
 
