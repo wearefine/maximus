@@ -37,7 +37,7 @@ module Maximus
       # Strips from command line
       opts = opts.delete_if { |k, v| v.nil? }
 
-      default_options = YAML.load_file(File.join(File.dirname(__FILE__), 'config/maximus.yml')).symbolize_keys
+      default_options = YAML.load_file(File.join(File.dirname(__FILE__), 'config', 'maximus.yml')).symbolize_keys
       default_options[:root_dir] = root_dir
       default_options[:port] = 3000 if is_rails?
 

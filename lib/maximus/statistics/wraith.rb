@@ -33,13 +33,13 @@ module Maximus
       @settings[:wraith].each do |browser, configpath|
         next unless File.file?(configpath) # prevents abortive YAML error if it can't find the file
         wraith_yaml = YAML.load_file(configpath)
-        if File.directory?("#{@config.working_dir}/#{wraith_yaml['history_dir']}")
+        if File.directory?(File.join(@config.working_dir, wraith_yaml['history_dir']))
           puts `wraith latest #{configpath}`
 
           # Reset history dir
           # It puts the new shots in the history folder, even with absolute paths in the config.
           #   Could be a bug in wraith.
-          FileUtils.remove_dir("#{@config.working_dir}/#{wraith_yaml['history_dir']}")
+          FileUtils.remove_dir(File.join(@config.working_dir, wraith_yaml['history_dir']))
         end
         wraith_parse browser unless @config.is_dev?
         puts `wraith history #{configpath}`

@@ -41,7 +41,7 @@ module Maximus
     # @param filename [String]
     # @return [String] absolute path to the reporter file
     def reporter_path(filename)
-      File.join(File.dirname(__FILE__), "reporter/#{filename}")
+      File.join(File.dirname(__FILE__), 'reporter', filename)
     end
 
     # Find all files that were linted by extension

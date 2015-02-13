@@ -7,7 +7,7 @@ module Maximus
     # @see Lint#initialize
     def result
       @task = 'jshint'
-      @path = is_rails? ? "#{@config.working_dir}/app/assets" : "#{@config.working_dir}source/assets" if @path.blank?
+      @path = is_rails? ? File.join(@config.working_dir, 'app', 'assets') : File.join(@config.working_dir, 'source', 'assets') if @path.blank?
 
       return unless temp_config(@task) && path_exists?(@path)
 
