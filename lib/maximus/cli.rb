@@ -98,7 +98,7 @@ class Maximus::CLI < Thor
         wraith: options[:include].include?('wraith'),
         phantomas: options[:include].include?('phantomas')
       }
-      opts = opts.merge(stats) unless options[:include].include?('statistics') || options[:statistics]
+      opts.merge!(stats) unless options[:include].include?('statistics') || options[:statistics]
       opts
     end
 

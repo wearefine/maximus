@@ -116,7 +116,10 @@ module Maximus
         create_branch(sha) unless @psuedo_commit
         sha = sha.to_s
         puts sha.color(:blue)
-        git_output[sha] = {lints: {}, statistics: {}}
+        git_output[sha] = {
+          lints: {},
+          statistics: {}
+        }
         lints = git_output[sha][:lints]
         statistics = git_output[sha][:statistics]
 
@@ -195,7 +198,7 @@ module Maximus
       {
         scss:   ['scss', 'sass'],
         js:     ['js'],
-        ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc', 'rake', 'Capfile'],
+        ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc', 'rake', 'Capfile', 'jbuilder'],
         rails:  ['slim', 'haml', 'jbuilder', 'erb']
       }
     end
@@ -283,7 +286,7 @@ module Maximus
       # @return [Hash] ranges by lines added in a commit by file name
       def lines_added(git_sha)
         new_lines = {}
-        git_lines = `#{File.join(File.dirname(__FILE__), 'reporter/git-lines.sh')} #{@config.working_dir} #{git_sha}`.split("\n")
+        git_lines = `#{File.join(File.dirname(__FILE__), 'reporter', 'git-lines.sh')} #{@config.working_dir} #{git_sha}`.split("\n")
         git_lines.each do |filename|
           fsplit = filename.split(':')
           # if file isn't already part of the array
@@ -388,7 +391,7 @@ module Maximus
             unless files[child].blank?
               files[child].each do |c|
                 # hack to ignore deleted files
-                files[child] = new_lines[c].blank? ? [] : [ filename: "#{@config.working_dir}/#{c}", changes: new_lines[c] ]
+                files[child] = new_lines[c].blank? ? [] : [ filename: File.join(@config.working_dir, c), changes: new_lines[c] ]
               end
               files[ext].concat(files[child])
               files.delete(child)
