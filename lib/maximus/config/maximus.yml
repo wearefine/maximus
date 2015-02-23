@@ -9,7 +9,11 @@ paths:
 
 scsslint: true
 
-rubocop: true
+rubocop:
+  AllCops:
+    Exclude:
+      - 'db/**/*'
+      - 'vendor/**/*'
 
 railsbp: true
 
