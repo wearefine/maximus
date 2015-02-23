@@ -99,7 +99,7 @@ describe Maximus::GitControl do
       context 'last is supplied' do
         let(:config) { { commit: 'last' } }
         it 'should return the previous_commit sha' do
-          expect( git.send(:define_psuedo_commit) ).to eq `git -C #{Dir.pwd} rev-parse HEAD^`.strip!
+          expect( git.send(:define_psuedo_commit) ).to eq `git -C #{Dir.pwd} rev-list --max-count=2 HEAD --reverse | head -n1`.strip!
         end
       end
 
