@@ -171,10 +171,29 @@ describe Maximus::Config do
   describe '#load_config', :isolated_environment do
 
     context 'a file path is provided' do
-      let(:config_body) { 'rubocop: spec/support/rubocop.yml' }
-      it 'should load the file' do
-        expect( YAML.load_file(config.settings[:rubocop])['Rubolinter'] ).to be true
+
+      context 'at a local address' do
+        let(:config_body) { 'rubocop: spec/support/rubocop.yml' }
+        it 'should load the file' do
+          expect( YAML.load_file(config.settings[:rubocop])['Rubolinter'] ).to be true
+        end
       end
+
+      context 'at an available remote address' do
+        let(:config_body) { 'rubocop: "https://raw.githubusercontent.com/wearefine/standards/master/linters/.rubocop.yml" ' }
+        it 'should load the file' do
+          expect( YAML.load_file(config.settings[:rubocop]) ).to be_a(Hash)
+        end
+      end
+
+      context 'at an unavailable remote address' do
+        let(:config_body) { 'rubocop: "http://raw.githubusercontent.com/wearefine/standards/master/linters/nonexistent_file.yml" ' }
+        it 'should report an error and return an empty hash' do
+          STDOUT.should_receive(:puts).with('http://raw.githubusercontent.com/wearefine/standards/master/linters/nonexistent_file.yml not accessible')
+          expect( YAML.load_file(config.settings[:rubocop]) ).to eq({})
+        end
+      end
+
     end
 
     context 'settings are provided' do

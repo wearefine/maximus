@@ -1,6 +1,6 @@
 # Maximus
 
-[![Gem Version](https://badge.fury.io/rb/maximus.svg)](http://badge.fury.io/rb/maximus) [![Code Climate](https://codeclimate.com/github/wearefine/maximus/badges/gpa.svg)](https://codeclimate.com/github/wearefine/maximus) [![Build Status](https://travis-ci.org/wearefine/maximus.svg)](https://travis-ci.org/wearefine/maximus) [![Coverage Status](https://coveralls.io/repos/wearefine/maximus/badge.svg)](https://coveralls.io/r/wearefine/maximus) [![Inline docs](http://inch-ci.org/github/wearefine/maximus.svg?branch=master&style=flat)](http://inch-ci.org/github/wearefine/maximus)
+[![Gem Version](https://badge.fury.io/rb/maximus.svg)](http://badge.fury.io/rb/maximus) [![Code Climate](https://codeclimate.com/github/wearefine/maximus/badges/gpa.svg)](https://codeclimate.com/github/wearefine/maximus) [![Build Status](https://travis-ci.org/wearefine/maximus.svg)](https://travis-ci.org/wearefine/maximus) [![Coverage Status](https://coveralls.io/repos/wearefine/maximus/badge.svg)](https://coveralls.io/r/wearefine/maximus) [![Inline docs](http://inch-ci.org/github/wearefine/maximus.svg?branch=master&style=flat)](http://inch-ci.org/github/wearefine/maximus) [![Yard Docs](http://img.shields.io/badge/yard-docs-blue.svg)](http://www.rubydoc.info/gems/maximus)
 
 The all-in-one linting solution.
 
@@ -142,6 +142,10 @@ If calling Maximus::Wraith from a script, please see the note in lib/statistics/
 ## Changelog
 
 ### 0.1.6 
+
+Features:
+
+* Remote config files can be specified
 
 Bugfixes:
 

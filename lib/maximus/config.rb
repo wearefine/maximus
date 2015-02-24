@@ -1,5 +1,6 @@
 require 'active_support'
 require 'active_support/core_ext/hash/keys'
+require 'open-uri'
 
 module Maximus
 
@@ -210,12 +211,21 @@ module Maximus
       #   the reset of the process doesn't break
       def load_config(value)
         return value unless value.is_a?(String)
-        if File.exist?(value)
-          return YAML.load_file(value)
+
+        if value =~ /^http/
+          begin open(value)
+            YAML.load open(value).read
+          rescue
+            puts "#{value} not accessible"
+            {}
+          end
+        elsif File.exist?(value)
+          YAML.load_file(value)
         else
           puts "#{value} not found"
-          return {}
+          {}
         end
+
       end
 
       # Create a temp file with config data
