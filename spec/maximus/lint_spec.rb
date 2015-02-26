@@ -17,7 +17,7 @@ describe Maximus::Lint do
       let(:data) { }
       it 'should provide a blank response' do
         STDOUT.should_receive(:puts).with("#{''.color(:green)}: #{'[0]'.color(:yellow)}#{' [0]'.color(:red)}")
-        blank_response = { lint_warnings: [], lint_errors: [], lint_conventions: [], lint_refactors: [], raw_data: "{}" }
+        blank_response = { lint_warnings: [], lint_errors: [], lint_conventions: [], lint_refactors: [], lint_fatals: [], raw_data: "{}" }
         expect( lint.refine(data) ).to eq blank_response
       end
     end

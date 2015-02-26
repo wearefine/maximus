@@ -62,7 +62,7 @@ module Maximus
 
       evaluate_severities(data)
 
-      lint_count = (@output[:lint_errors].length + @output[:lint_warnings].length + @output[:lint_conventions].length + @output[:lint_refactors].length)
+      lint_count = (@output[:lint_errors].length + @output[:lint_warnings].length + @output[:lint_conventions].length + @output[:lint_refactors].length + @output[:lint_fatals].length)
 
       puts lint_summarize
 
