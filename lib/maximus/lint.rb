@@ -145,9 +145,9 @@ module Maximus
             message = message.clone
             message.delete('length')
             message['filename'] = filename.nil? ? '' : filename.gsub("#{@config.working_dir}/", '')
-            severity = message['severity']
+            severity = "lint_#{message['severity'].clone}s".to_sym
             message.delete('severity')
-            @output["lint_#{severity}s".to_sym] << message
+            @output[severity] << message if @output.has_key?(severity)
           end
         end
         return @output
