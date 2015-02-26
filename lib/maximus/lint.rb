@@ -138,6 +138,7 @@ module Maximus
         @output[:lint_errors] = []
         @output[:lint_conventions] = []
         @output[:lint_refactors] = []
+        @output[:lint_fatals] = []
         return if data.blank?
         data.each do |filename, error_list|
           error_list.each do |message|
@@ -218,6 +219,7 @@ module Maximus
               when 'error' then 'E'.color(:red)
               when 'convention' then 'C'.color(:cyan)
               when 'refactor' then 'R'.color(:white)
+              when 'fatal' then 'F'.color(:red)
               else '?'.color(:blue)
             end
             pretty_output += " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
