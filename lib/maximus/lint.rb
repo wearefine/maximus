@@ -1,4 +1,5 @@
 require 'json'
+require 'rainbow'
 
 module Maximus
 
@@ -176,15 +177,15 @@ module Maximus
       # Send abbreviated results to console or to the log
       # @return [String] console message to display
       def lint_summarize
-        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task}" unless @output[:lint_errors].length
+        puts "#{Rainbow('Warning').red}: #{@output[:lint_errors].length} errors found in #{@task}" unless @output[:lint_errors].length
 
         success = @task.to_s.color(:green)
         success += ": "
-        success += "[#{@output[:lint_warnings].length}]".color(:yellow)
-        success += " [#{@output[:lint_errors].length}]".color(:red)
+        success += Rainbow("[#{@output[:lint_warnings].length}]").yellow
+        success += Rainbow(" [#{@output[:lint_errors].length}]").red
         if @task == 'rubocop'
-          success += " [#{@output[:lint_conventions].length}]".color(:cyan)
-          success += " [#{@output[:lint_refactors].length}]".color(:white)
+          success += Rainbow(" [#{@output[:lint_conventions].length}]").cyan
+          success += Rainbow(" [#{@output[:lint_refactors].length}]").white
         end
 
         success
@@ -196,7 +197,7 @@ module Maximus
       def lint_ceiling(lint_length)
         return unless lint_length > 100
         failed_task = @task.color(:green)
-        errors = "#{lint_length} failures.".color(:red)
+        errors = Rainbow("#{lint_length} failures.").red
         errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
         errormsg += "\n\n"
 
@@ -222,7 +223,7 @@ module Maximus
               when 'fatal' then 'F'.color(:red)
               else '?'.color(:blue)
             end
-            pretty_output += " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
+            pretty_output += " #{Rainbow(message['line'].to_s).blue} #{Rainbow(message['linter']).green}: #{message['reason']} \n"
           end
         end
         pretty_output
