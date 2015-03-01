@@ -177,15 +177,16 @@ module Maximus
       # Send abbreviated results to console or to the log
       # @return [String] console message to display
       def lint_summarize
-        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task}" unless @output[:lint_errors].length
+        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task}" if @output[:lint_errors].length > 0
 
-        success = @task.to_s.color(:green)
+        success = @task.color(:green)
         success += ": "
         success += "[#{@output[:lint_warnings].length}]".color(:yellow)
         success += " [#{@output[:lint_errors].length}]".color(:red)
         if @task == 'rubocop'
           success += " [#{@output[:lint_conventions].length}]".color(:cyan)
           success += " [#{@output[:lint_refactors].length}]".color(:white)
+          success += " [#{@output[:lint_fatals].length}]".color(:red)
         end
 
         success
