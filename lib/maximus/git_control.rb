@@ -279,7 +279,7 @@ module Maximus
       # Get last commit sha on the master branch
       # @return [String]
       def master_commit_sha
-        @g.branches[:master].gcommit.sha
+        @g.branches.key?(:master) ? @g.branches[:master].gcommit.sha : head_sha
       end
 
       # Get general stats of commit on HEAD versus last commit on master branch
@@ -292,7 +292,7 @@ module Maximus
         lines = lines_added(new_commit.sha)
         return if !lines.is_a?(Hash) || stats.blank?
         lines.each do |filename, filelines|
-          stats[:files][filename][:lines_added] = filelines if stats[:files].has_key?(filename)
+          stats[:files][filename][:lines_added] = filelines if stats[:files].key?(filename)
         end
         stats
       end
