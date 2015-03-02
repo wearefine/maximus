@@ -102,7 +102,7 @@ module Maximus
           lint_file = lint[file[:filename].to_s]
 
           expanded = lines_added_to_range(file)
-          revert_name = file[:filename].gsub("#{@config.working_dir}/", '')
+          revert_name = strip_working_dir(file[:filename])
           unless lint_file.blank?
             all_files[revert_name] = []
 
@@ -146,7 +146,7 @@ module Maximus
             # so that :raw_data remains unaffected
             message = message.clone
             message.delete('length')
-            message['filename'] = filename.nil? ? '' : filename.gsub("#{@config.working_dir}/", '')
+            message['filename'] = filename.nil? ? '' : strip_working_dir(filename)
             severity = "lint_#{message['severity'].clone}s".to_sym
             message.delete('severity')
             @output[severity] << message if @output.key?(severity)
@@ -215,7 +215,7 @@ module Maximus
         return if errors.blank?
         pretty_output = ''
         errors.each do |filename, error_list|
-          filename = filename.gsub("#{@config.working_dir}/", '')
+          filename = strip_working_dir(filename)
           pretty_output << "\n#{filename.color(:cyan).underline} \n"
           error_list.each do |message|
             pretty_output << case message['severity']
@@ -230,6 +230,14 @@ module Maximus
           end
         end
         pretty_output
+      end
+
+      # String working directory
+      # @since 0.1.6
+      # @param path [String]
+      # @return [String]
+      def strip_working_dir(path)
+        path.gsub("#{@config.working_dir}/", '')
       end
 
   end
