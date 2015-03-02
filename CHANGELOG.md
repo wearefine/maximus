@@ -1,6 +1,8 @@
 # Change log
 
-### 0.1.6 
+## master
+
+## 0.1.6 (March 1, 2015)
 
 Features:
 
@@ -12,13 +14,13 @@ Bugfixes:
 * Remove some command line defaults
 * Performance and syntax optimizations
 
-### 0.1.5.1 (February 2, 2015)
+## 0.1.5.1 (February 2, 2015)
 
 Bugfixes:
 
 * Active Support requirement was too strict
 
-### 0.1.5 (February 1, 2015)
+## 0.1.5 (February 1, 2015)
 
 Bugfixes:
 
@@ -32,7 +34,7 @@ Features:
 
 * Wraith includes images in output
 
-### 0.1.4 (January 3, 2015)
+## 0.1.4 (January 3, 2015)
 
 Bugfixes:
 
@@ -41,7 +43,7 @@ Bugfixes:
 * Remove tmp files error
 * Better documentation to README
 
-### 0.1.3 (December 22, 2014)
+## 0.1.3 (December 22, 2014)
 
 Features:
 
@@ -50,7 +52,7 @@ Features:
 * All lint and statistic options can be in the maximus config file
 * More command line flags
 
-### 0.1.2 (December 18, 2014)
+## 0.1.2 (December 18, 2014)
 
 Features: 
 
@@ -60,10 +62,10 @@ Bugfixes:
 
 * Resolve exiting error when no lint errors are preset (0efef67)
 
-### 0.1.1 (December 9, 2014)
+## 0.1.1 (December 9, 2014)
 
 * Description and homepage update
 
-### 0.1.0 (December 9, 2014)
+## 0.1.0 (December 9, 2014)
 
 * Initial
