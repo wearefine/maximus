@@ -2,6 +2,10 @@
 
 ## master
 
+Bugfixes:
+
+* Handle Middleman and generic app paths better
+
 ## 0.1.6 (March 1, 2015)
 
 Features:

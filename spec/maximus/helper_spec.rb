@@ -14,6 +14,30 @@ describe Maximus::Helper do
       end
     end
 
+    context 'when Rails is defined' do
+      it 'should be true' do
+        stub_const('Rails', true)
+        expect(dummy_class.is_rails?).to be_truthy
+      end
+    end
+
+  end
+
+  describe '#is_middleman?', :isolated_environment do
+
+    context 'when Middleman is not defined' do
+      it 'should be nil' do
+        expect(dummy_class.is_middleman?).to be_nil
+      end
+    end
+
+    context 'when Middleman is not defined' do
+      it 'should be true' do
+        stub_const('Middleman', true)
+        expect(dummy_class.is_middleman?).to be_truthy
+      end
+    end
+
   end
 
   describe '#root_dir', :isolated_environment do
@@ -81,5 +105,49 @@ describe Maximus::Helper do
     end
 
   end
+
+  describe '#discover_path' do
+
+    context 'when @path is set' do
+      it 'should return @path' do
+        dummy_class.instance_variable_set("@path", '/some/fake/path/to/files')
+        expect( dummy_class.discover_path(Dir.pwd) ).to eq '/some/fake/path/to/files'
+      end
+    end
+
+    context 'when Rails is defined' do
+      it 'should return a rails-y path' do
+        stub_const('Rails', true)
+        path = dummy_class.discover_path(Dir.pwd, 'stylesheets', 'scss')
+        expect( path ).to include('app/assets/stylesheets')
+        expect( dummy_class.discover_path(Dir.pwd, 'scss') ).to include('assets')
+      end
+    end
+
+    context 'when Middleman is defined' do
+      it 'should return a middleman-y path' do
+        stub_const('Middleman', true)
+        path = dummy_class.discover_path(Dir.pwd, 'stylesheets', 'scss')
+        expect( path ).to include('source/stylesheets')
+        expect( dummy_class.discover_path(Dir.pwd, 'scss') ).to include('source')
+      end
+    end
+
+    context 'when neither Middleman or Rails are defined' do
+      it 'should return a path with just the root directory' do
+        path = dummy_class.discover_path(Dir.pwd)
+        expect( path ).to eq Dir.pwd
+      end
+    end
+
+    context 'when neither Middleman or Rails are defined and an extension is provided' do
+      it 'should return a generic glob path' do
+        path = dummy_class.discover_path(Dir.pwd, 'stylesheets', 'scss')
+        expect( path ).to include('**/*')
+      end
+    end
+
+  end
+
 
 end

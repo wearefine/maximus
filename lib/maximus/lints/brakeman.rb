@@ -6,9 +6,8 @@ module Maximus
     # Brakeman (requires Rails)
     # @see Lint#initialize
     def result
-
       @task = 'brakeman'
-      @path = @config.working_dir if @path.blank?
+      @path = discover_path
 
       return unless is_rails? && temp_config(@task) && path_exists?(@path)
 

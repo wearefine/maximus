@@ -17,6 +17,13 @@ module Maximus
       defined?(Rails)
     end
 
+    # See if project is a Middleman app
+    # @since 0.1.7
+    # @return [Boolean]
+    def is_middleman?
+      defined?(Middleman)
+    end
+
     # Get root directory of file being called
     # @return [String] absolute path to root directory
     def root_dir
@@ -109,6 +116,23 @@ module Maximus
           puts "#{path} does not exist"
           return false
         end
+      end
+    end
+
+    # Default paths to check for lints and some stats
+    # @since 0.1.7
+    # @param root [String] base directory
+    # @param folder [String] nested folder to search for for Rails or Middleman
+    # @param extension [String] file glob type to search for if neither
+    # @return [String] path to desired files
+    def discover_path(root = @config.working_dir, folder = '', extension = '')
+      return @path unless @path.blank?
+      if is_rails?
+        File.join(root, 'app', 'assets', folder)
+      elsif is_middleman?
+        File.join(root, 'source', folder)
+      else
+        extension.blank? ? File.join(root) : File.join(root, '/**', "/*.#{extension}")
       end
     end
 
