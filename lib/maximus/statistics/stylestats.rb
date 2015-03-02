@@ -22,20 +22,7 @@ module Maximus
         css_files = find_css
       end
 
-      css_files.each do |file|
-
-        # For Rails, we only want the name of the compiled asset, because we know it'll live in public/assets.
-        #   If this isn't Rails, sure, give me the full path because the directory structure is likely unique
-        pretty_name = is_rails? ? file.split('/').pop.gsub(/(-{1}[a-z0-9]{32}*\.{1}){1}/, '.') : file
-
-        puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
-
-        # include JSON formatter unless we're in dev
-        stylestats = `stylestats #{file} --config=#{@settings[:stylestats]} #{'--type=json' unless @config.is_dev?}`
-        refine(stylestats, pretty_name)
-
-        File.delete(file)
-      end
+      css_files.each { |file| stylestats_report(file) }
 
       destroy_assets if @settings[:compile_assets]
       @output
@@ -140,6 +127,25 @@ module Maximus
       # @return [Array] paths to compiled CSS files
       def find_css(path = @path)
         Dir.glob(path).select { |f| File.file? f }.map { |file| file }
+      end
+
+      # Present stylestat result of a CSS file
+      # Deletes file at end
+      # @since 0.1.6
+      # @see #result
+      # @param file [String] path to file
+      def stylestats_report(file)
+        # For Rails, we only want the name of the compiled asset, because we know it'll live in public/assets.
+        #   If this isn't Rails, sure, give me the full path because the directory structure is likely unique
+        pretty_name = is_rails? ? file.split('/').pop.gsub(/(-{1}[a-z0-9]{32}*\.{1}){1}/, '.') : file
+
+        puts "#{'stylestats'.color(:green)}: #{pretty_name}\n\n"
+
+        # include JSON formatter unless we're in dev
+        stylestats = `stylestats #{file} --config=#{@settings[:stylestats]} #{'--type=json' unless @config.is_dev?}`
+        refine(stylestats, pretty_name)
+
+        File.delete(file)
       end
 
   end

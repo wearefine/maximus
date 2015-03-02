@@ -30,20 +30,8 @@ module Maximus
       #   in each wraith config file.
       # @yieldparam browser [String] headless browser name
       # @yieldparam configpath [String] path to temp config file (see Config#wraith_setup)
-      @settings[:wraith].each do |browser, configpath|
-        next unless File.file?(configpath) # prevents abortive YAML error if it can't find the file
-        wraith_yaml = YAML.load_file(configpath)
-        if File.directory?(File.join(@config.working_dir, wraith_yaml['history_dir']))
-          puts `wraith latest #{configpath}`
+      @settings[:wraith].each { |browser, configpath| wraith_report(browser, configpath) }
 
-          # Reset history dir
-          # It puts the new shots in the history folder, even with absolute paths in the config.
-          #   Could be a bug in wraith.
-          FileUtils.remove_dir(File.join(@config.working_dir, wraith_yaml['history_dir']))
-        end
-        wraith_parse browser unless @config.is_dev?
-        puts `wraith history #{configpath}`
-      end
       @output
 
     end
@@ -114,6 +102,27 @@ module Maximus
           f.close
         end
         image.path
+      end
+
+      # Generate thumbnails and history for each browser in the wraith config
+      # @since 0.1.6
+      # @see #result
+      # @param browser [String]
+      # @param configpath [String]
+      def wraith_report(browser, configpath)
+        return unless File.file?(configpath) # prevents abortive YAML error if it can't find the file
+        wraith_yaml = YAML.load_file(configpath)
+        if File.directory?(File.join(@config.working_dir, wraith_yaml['history_dir']))
+          puts `wraith latest #{configpath}`
+
+          # Reset history dir
+          # It puts the new shots in the history folder, even with absolute paths in the config.
+          #   Could be a bug in wraith.
+          FileUtils.remove_dir(File.join(@config.working_dir, wraith_yaml['history_dir']))
+        end
+
+        wraith_parse browser unless @config.is_dev?
+        puts `wraith history #{configpath}`
       end
 
   end

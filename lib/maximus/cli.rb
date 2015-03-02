@@ -57,12 +57,16 @@ class Maximus::CLI < Thor
   desc "git", "Display lint data based on working copy, last commit, master branch or specific sha"
   def git
     all_tasks = ['frontend', 'backend', 'statistics']
+
     # If all flag is enabled, run everything
     return all_tasks.each { |a| send(a) } if options[:all]
+
     # Lint by category unless all flags are blank
     return all_tasks.each { |a| check_option(a) } unless options[:frontend].blank? && options[:backend].blank? && options[:statistics].blank?
+
     # If include flag is enabled, run based on what's included
     return options[:include].each { |i| send(i) } unless options[:include].blank?
+
     # If all flag is not enabled, lint working copy as it's supposed to be
     @config.settings[:commit] = options[:git]
     Maximus::GitControl.new({config: @config}).lints_and_stats(true)
@@ -98,8 +102,13 @@ class Maximus::CLI < Thor
         wraith: options[:include].include?('wraith'),
         phantomas: options[:include].include?('phantomas')
       }
-      opts.merge!(stats) unless options[:include].include?('statistics') || options[:statistics]
-      opts
+
+      unless options[:include].include?('statistics') || options[:statistics]
+        opts.merge!(stats)
+      else
+        opts
+      end
+
     end
 
     def scsslint

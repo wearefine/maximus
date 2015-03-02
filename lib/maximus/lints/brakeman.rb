@@ -20,13 +20,7 @@ module Maximus
 
       unless brakeman.blank?
         bjson = JSON.parse(brakeman)
-        @output[:ignored_warnings] = bjson['scan_info']['ignored_warnings']
-        @output[:checks_performed] = bjson['scan_info']['checks_performed']
-        @output[:number_of_controllers] = bjson['scan_info']['number_of_controllers']
-        @output[:number_of_models] = bjson['scan_info']['number_of_models']
-        @output[:number_of_templates] = bjson['scan_info']['number_of_templates']
-        @output[:ruby_version] = bjson['scan_info']['ruby_version']
-        @output[:rails_version] = bjson['scan_info']['rails_version']
+        basics(bjson)
         brakeman = {}
         ['warnings', 'errors'].each do |type|
           new_brakeman = bjson[type].group_by { |s| s['file'] }
@@ -56,6 +50,20 @@ module Maximus
           'line' => error['line'].to_i,
           'confidence' => error['confidence']
         }
+      end
+
+      # Pull out the general data brakeman provides
+      # @since 0.1.6
+      # @see #result
+      # @param brakeman_data [Hash]
+      def basics(brakeman_data)
+        @output[:ignored_warnings] = brakeman_data['scan_info']['ignored_warnings']
+        @output[:checks_performed] = brakeman_data['scan_info']['checks_performed']
+        @output[:number_of_controllers] = brakeman_data['scan_info']['number_of_controllers']
+        @output[:number_of_models] = brakeman_data['scan_info']['number_of_models']
+        @output[:number_of_templates] = brakeman_data['scan_info']['number_of_templates']
+        @output[:ruby_version] = brakeman_data['scan_info']['ruby_version']
+        @output[:rails_version] = brakeman_data['scan_info']['rails_version']
       end
 
   end
