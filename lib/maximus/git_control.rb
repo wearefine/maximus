@@ -279,7 +279,7 @@ module Maximus
       # Get last commit sha on the master branch
       # @return [String]
       def master_commit_sha
-        @g.branches.key?(:master) ? @g.branches[:master].gcommit.sha : head_sha
+        @g.branches[:master].blank? ? head_sha : @g.branches[:master].gcommit.sha
       end
 
       # Get general stats of commit on HEAD versus last commit on master branch
