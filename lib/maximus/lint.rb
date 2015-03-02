@@ -49,9 +49,11 @@ module Maximus
     # @param data [Hash] unfiltered lint data
     # @return [Hash] refined lint data and all the other bells and whistles
     def refine(data)
+      @task ||= ''
 
       # Prevent abortive empty JSON.parse error
       data = '{}' if data.blank?
+
       return puts "Error from #{@task}: #{data}" if data.is_a?(String) && data.include?('No such')
 
       data = data.is_a?(String) ? JSON.parse(data) : data
@@ -63,13 +65,11 @@ module Maximus
 
       evaluate_severities(data)
 
-      lint_count = (@output[:lint_errors].length + @output[:lint_warnings].length + @output[:lint_conventions].length + @output[:lint_refactors].length + @output[:lint_fatals].length)
-
       puts lint_summarize
 
       if @config.is_dev?
-        puts lint_dev_format(data) unless data.blank?
-        lint_ceiling lint_count
+        puts lint_dev_format(data)
+        lint_ceiling
       else
         # Because this should be returned in the format it was received
         @output[:raw_data] = data.to_json
@@ -180,13 +180,13 @@ module Maximus
         puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task}" if @output[:lint_errors].length > 0
 
         success = @task.color(:green)
-        success += ": "
-        success += "[#{@output[:lint_warnings].length}]".color(:yellow)
-        success += " [#{@output[:lint_errors].length}]".color(:red)
+        success << ": "
+        success << "[#{@output[:lint_warnings].length}]".color(:yellow)
+        success << " [#{@output[:lint_errors].length}]".color(:red)
         if @task == 'rubocop'
-          success += " [#{@output[:lint_conventions].length}]".color(:cyan)
-          success += " [#{@output[:lint_refactors].length}]".color(:white)
-          success += " [#{@output[:lint_fatals].length}]".color(:red)
+          success << " [#{@output[:lint_conventions].length}]".color(:cyan)
+          success << " [#{@output[:lint_refactors].length}]".color(:white)
+          success << " [#{@output[:lint_fatals].length}]".color(:red)
         end
 
         success
@@ -195,7 +195,9 @@ module Maximus
       # If there's just too much to handle, through a warning.
       # @param lint_length [Integer] count of how many lints
       # @return [String] console message to display
-      def lint_ceiling(lint_length)
+      def lint_ceiling
+        lint_length = (@output[:lint_errors].length + @output[:lint_warnings].length + @output[:lint_conventions].length + @output[:lint_refactors].length + @output[:lint_fatals].length)
+
         return unless lint_length > 100
         failed_task = @task.color(:green)
         errors = "#{lint_length} failures.".color(:red)
