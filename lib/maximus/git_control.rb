@@ -88,6 +88,7 @@ module Maximus
     # Run appropriate lint for every sha in commit history.
     # For each sha a new branch is created then deleted
     #
+    # This is where everything goes down
     # @example sample output
     #   {
     #     'sha': {
@@ -110,22 +111,16 @@ module Maximus
     # @return [Hash] data all data grouped by task
     def lints_and_stats(lint_by_path = false, git_shas = compare, nuclear = false)
       return false if git_shas.blank?
+
       base_branch = branch
-      git_output = {}
+      git_ouput = {}
+
       git_shas.each do |sha, exts|
         create_branch(sha) unless @psuedo_commit
         sha = sha.to_s
         puts sha.color(:blue)
-        git_output[sha] = {
-          lints: {},
-          statistics: {}
-        }
-        lints = git_output[sha][:lints]
-        statistics = git_output[sha][:statistics]
 
-        # This is where everything goes down
         exts.each do |ext, files|
-
           # For relevant_lines data
           lint_opts = {
             git_files: files,
@@ -134,46 +129,16 @@ module Maximus
           }
 
           if nuclear
-            lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
-            lints[:jshint] = Maximus::Jshint.new(lint_opts).result
-            lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
-            lints[:railsbp] = Maximus::Railsbp.new(lint_opts).result
-            lints[:brakeman] = Maximus::Brakeman.new(lint_opts).result
-            statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
-            statistics[:phantomas] = Maximus::Phantomas.new({config: @config}).result
-            statistics[:wraith] = Maximus::Wraith.new({config: @config}).result
+            git_ouput[sha] = lints_and_stats_nuclear(lint_opts)
           else
-            case ext
-              when :scss
-                lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
-
-                # @todo stylestat is singular here because model name in Rails is singular.
-                #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
-                #   which breaks the model name.
-                statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
-
-                # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
-                statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
-              when :js
-                lints[:jshint] = Maximus::Jshint.new(lint_opts).result
-
-                statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
-
-                # @todo double pipe here is best way to say, if it's already run, don't run again, right?
-                statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
-              when :ruby
-                lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
-                lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
-                lints[:brakeman] = Maximus::Brakeman.new(lint_opts).result
-              when :rails
-                lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
-            end
+            git_ouput[sha] = lints_and_stats_switch(ext, lint_opts)
           end
         end
+
         destroy_branch(base_branch, sha) unless @psuedo_commit
       end
-      git_output
+
+      git_ouput
     end
 
     # Find first commit
@@ -401,6 +366,71 @@ module Maximus
 
         files.delete_if { |k,v| v.blank? }
         files
+      end
+
+      # All data retrieved from reports
+      # @since 0.1.6
+      # @param lint_opts [Hash]
+      # @return [Hash]
+      def lints_and_stats_nuclear(lint_opts)
+        {
+          lints: {
+            scsslint: Maximus::Scsslint.new(lint_opts).result,
+            jshint: Maximus::Jshint.new(lint_opts).result,
+            rubocop: Maximus::Rubocop.new(lint_opts).result,
+            railsbp: Maximus::Railsbp.new(lint_opts).result,
+            brakeman: Maximus::Brakeman.new(lint_opts).result
+          },
+          statistics: {
+            stylestat: Maximus::Stylestats.new({config: @config}).result,
+            phantomas: Maximus::Phantomas.new({config: @config}).result,
+            wraith: Maximus::Wraith.new({config: @config}).result
+          }
+        }
+      end
+
+      # Specific data retrieved by file extension
+      # @since 0.1.6
+      # @param ext [String]
+      # @param lint_opts [Hash]
+      # @return [Hash]
+      def lints_and_stats_switch(ext, lint_opts)
+        result = {
+          lints: {},
+          statistics: {}
+        }
+
+        lints = result[:lints]
+        statistics = result[:statistics]
+
+        case ext
+          when :scss
+            lints[:scsslint] = Maximus::Scsslint.new(lint_opts).result
+
+            # @todo stylestat is singular here because model name in Rails is singular.
+            #   But adding a .classify when it's converted to a model chops off the end s on 'phantomas',
+            #   which breaks the model name.
+            statistics[:stylestat] = Maximus::Stylestats.new({config: @config}).result
+
+            # @todo double pipe here is best way to say, if it's already run, don't run again, right?
+            statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
+            statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
+          when :js
+            lints[:jshint] = Maximus::Jshint.new(lint_opts).result
+
+            statistics[:phantomas] ||= Maximus::Phantomas.new({config: @config}).result
+
+            # @todo double pipe here is best way to say, if it's already run, don't run again, right?
+            statistics[:wraith] ||= Maximus::Wraith.new({config: @config}).result
+          when :ruby
+            lints[:rubocop] = Maximus::Rubocop.new(lint_opts).result
+            lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
+            lints[:brakeman] = Maximus::Brakeman.new(lint_opts).result
+          when :rails
+            lints[:railsbp] ||= Maximus::Railsbp.new(lint_opts).result
+        end
+
+        result
       end
 
   end
