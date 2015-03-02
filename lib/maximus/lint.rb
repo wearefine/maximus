@@ -140,19 +140,21 @@ module Maximus
         @output[:lint_conventions] = []
         @output[:lint_refactors] = []
         @output[:lint_fatals] = []
+
         return if data.blank?
+
         data.each do |filename, error_list|
           error_list.each do |message|
             # so that :raw_data remains unaffected
             message = message.clone
             message.delete('length')
             message['filename'] = filename.nil? ? '' : strip_working_dir(filename)
-            severity = "lint_#{message['severity'].clone}s".to_sym
+            severity = "lint_#{message['severity']}s".to_sym
             message.delete('severity')
             @output[severity] << message if @output.key?(severity)
           end
         end
-        return @output
+        @output
       end
 
       # Convert the array from lines_added into spelled-out ranges
