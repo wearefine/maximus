@@ -92,13 +92,13 @@ describe Maximus::Config do
     context 'setting a linter to be true' do
       let(:config_body) { 'scsslint: true' }
       it 'scsslint should exist' do
-        expect(config.settings.has_key?(:scsslint)).to be true
+        expect(config.settings.key?(:scsslint)).to be true
       end
     end
 
     context 'not supplying a linter but relying on the default' do
       it 'should include a linter' do
-        expect(config.settings.has_key?(:scsslint)).to be true
+        expect(config.settings.key?(:scsslint)).to be true
       end
     end
 

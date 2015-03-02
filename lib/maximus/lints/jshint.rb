@@ -14,7 +14,7 @@ module Maximus
       node_module_exists(@task)
 
       jshint_cli = "jshint #{@path} --config=#{temp_config(@task)} --reporter=#{reporter_path('jshint.js')}"
-      jshint_cli += " --exclude-path=#{temp_config(@settings[:jshintignore])}" if @settings.has_key?(:jshintignore)
+      jshint_cli += " --exclude-path=#{temp_config(@settings[:jshintignore])}" if @settings.key?(:jshintignore)
       jshint = `#{jshint_cli}`
 
       @output[:files_inspected] ||= files_inspected('js')

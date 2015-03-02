@@ -79,7 +79,7 @@ module Maximus
             #   global config variables (last when statement in this switch)
             value = load_config(value)
 
-            if settings_data[key].is_a?(Hash) && settings_data[key].has_key?('jshintignore')
+            if settings_data[key].is_a?(Hash) && settings_data[key].key?('jshintignore')
               jshintignore_file = []
               settings_data[key]['jshintignore'].each { |i| jshintignore_file << "#{i}\n" }
               @settings[:jshintignore] = temp_it('jshintignore.json', jshintignore_file)
@@ -199,7 +199,7 @@ module Maximus
       # @param family [Array] group of other @settings keys to be disabled
       # @return [void] modified @settings
       def set_families(head_of_house, family)
-        if @settings.has_key?(head_of_house)
+        if @settings.key?(head_of_house)
           family.each { |f| @settings[f] ||= @settings[head_of_house].is_a?(TrueClass) }
         end
       end
@@ -295,7 +295,7 @@ module Maximus
       # @return [String] temp file path
       def wraith_setup(value, name = 'phantomjs')
 
-        if @settings.has_key?(:urls)
+        if @settings.key?(:urls)
           value['domains'] = @settings[:urls]
         else
           value['domains'] = {}
