@@ -2,11 +2,7 @@
 
 ## master
 
-Bugfixes:
-
-* Handle Middleman and generic app paths better
-
-## 0.1.6 (March 1, 2015)
+## 0.1.6.1 (March 1, 2015)
 
 Features:
 
@@ -17,6 +13,7 @@ Bugfixes:
 * Clean up config option loading/overriding 
 * Remove some command line defaults
 * Performance and syntax optimizations
+* Handle Middleman and generic app paths better
 
 ## 0.1.5.1 (February 2, 2015)
 
