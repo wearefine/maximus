@@ -84,10 +84,12 @@ class Maximus::CLI < Thor
     def check_option(opt)
       send(opt) if options[opt.to_sym]
     end
+
     # Don't run command if it's present in the exlude options
     def check_exclude(opt)
       send(opt) unless options[:exclude].include?(opt)
     end
+
     def default_options
       opts = {
         file_paths: options[:filepath],

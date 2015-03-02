@@ -7,8 +7,7 @@ module Maximus
     # @see Lint#initialize
     def result
       @task = 'scsslint'
-      @path = discover_path(@config.working_dir, 'stylesheets', 'scss')
-
+      @path = discover_path(@config.working_dir, 'stylesheets')
       return unless temp_config(@task) && path_exists?(@path)
 
       scss = `scss-lint #{@path} -c #{temp_config(@task)} --format=JSON`

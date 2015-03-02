@@ -21,7 +21,7 @@ module Maximus
     # @since 0.1.7
     # @return [Boolean]
     def is_middleman?
-      defined?(Middleman)
+      Gem::Specification::find_all_by_name('middleman').any?
     end
 
     # Get root directory of file being called
@@ -110,6 +110,7 @@ module Maximus
           end
         end
       else
+        path = path.gsub('/**', '').gsub('/*', '').split('.')[0..1].first if path.include?('*')
         if File.exist?(path)
           return true
         else
