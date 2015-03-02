@@ -202,7 +202,7 @@ module Maximus
         failed_task = @task.color(:green)
         errors = "#{lint_length} failures.".color(:red)
         errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
-        errormsg += "\n\n"
+        errormsg << "\n\n"
 
         go_on = prompt "\n#{errors} Continue? (y/n) "
         abort errormsg unless truthy?(go_on)
@@ -216,9 +216,9 @@ module Maximus
         pretty_output = ''
         errors.each do |filename, error_list|
           filename = filename.gsub("#{@config.working_dir}/", '')
-          pretty_output += "\n#{filename.color(:cyan).underline} \n"
+          pretty_output << "\n#{filename.color(:cyan).underline} \n"
           error_list.each do |message|
-            pretty_output += case message['severity']
+            pretty_output << case message['severity']
               when 'warning' then 'W'.color(:yellow)
               when 'error' then 'E'.color(:red)
               when 'convention' then 'C'.color(:cyan)
@@ -226,7 +226,7 @@ module Maximus
               when 'fatal' then 'F'.color(:red)
               else '?'.color(:blue)
             end
-            pretty_output += " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
+            pretty_output << " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
           end
         end
         pretty_output
