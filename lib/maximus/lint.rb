@@ -51,15 +51,8 @@ module Maximus
     def refine(data)
       @task ||= ''
 
-      # Prevent abortive empty JSON.parse error
-      data = '{}' if data.blank?
-
-      return puts "Error from #{@task}: #{data}" if data.is_a?(String) && data.include?('No such')
-
-      data = JSON.parse(data) if data.is_a?(String)
-
-      @output[:relevant_lints] = relevant_lints( data, @git_files ) unless @git_files.blank?
-      data = @output[:relevant_lints] unless @settings[:commit].blank?
+      data = parse_data(data)
+      return puts data if data.is_a?(String)
 
       evaluate_severities(data)
 
@@ -96,9 +89,10 @@ module Maximus
         files.each do |file|
 
           # sometimes data will be blank but this is good - it means no errors were raised in the lint
-          next if lint.blank? || !file.has_key?(:filename)
+          next if lint.blank?
+          lint_file = lint[file[:filename]]
 
-          lint_file = lint[file[:filename].to_s]
+          next if lint_file.blank?
 
           expanded = lines_added_to_range(file)
           revert_name = strip_working_dir(file[:filename])
@@ -187,7 +181,7 @@ module Maximus
         if @task == 'rubocop'
           success << " [#{@output[:lint_conventions].length}]".color(:cyan)
           success << " [#{@output[:lint_refactors].length}]".color(:white)
-          success << " [#{@output[:lint_fatals].length}]".color(:red)
+          success << " [#{@output[:lint_fatals].length}]".color(:magenta)
         end
 
         success
@@ -232,7 +226,7 @@ module Maximus
               when 'error' then 'E'.color(:red)
               when 'convention' then 'C'.color(:cyan)
               when 'refactor' then 'R'.color(:white)
-              when 'fatal' then 'F'.color(:red)
+              when 'fatal' then 'F'.color(:magenta)
               else '?'.color(:blue)
             end
             pretty_output << " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
@@ -247,6 +241,24 @@ module Maximus
       # @return [String]
       def strip_working_dir(path)
         path.gsub("#{@config.working_dir}/", '')
+      end
+
+      # Handle data and generate relevant_lints if appropriate
+      # @since 0.1.6
+      # @see #refine
+      # @param data [String, Hash]
+      # @return [String, Hash] String if error, Hash if success
+      def parse_data(data)
+        # Prevent abortive empty JSON.parse error
+        data = '{}' if data.blank?
+
+        return "Error from #{@task}: #{data}" if data.is_a?(String) && data.include?('No such')
+
+        data = JSON.parse(data) if data.is_a?(String)
+
+        @output[:relevant_lints] = relevant_lints( data, @git_files ) unless @git_files.blank?
+        data = @output[:relevant_lints] unless @settings[:commit].blank?
+        data
       end
 
   end
