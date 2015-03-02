@@ -161,10 +161,15 @@ module Maximus
     # @return [Hash] linters and extension arrays
     def associations
       {
+        css:    ['css'],
         scss:   ['scss', 'sass'],
         js:     ['js'],
         ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc', 'rake', 'Capfile', 'jbuilder'],
-        rails:  ['slim', 'haml', 'jbuilder', 'erb']
+        rails:  ['slim', 'haml', 'jbuilder', 'erb'],
+        images: ['png', 'jpg', 'jpeg', 'gif'],
+        markup: ['html', 'xml', 'xhtml'],
+        markdown: ['md', 'markdown', 'mdown'],
+        php:    ['php', 'ini']
       }
     end
 
