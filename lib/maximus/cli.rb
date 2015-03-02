@@ -103,12 +103,8 @@ class Maximus::CLI < Thor
         phantomas: options[:include].include?('phantomas')
       }
 
-      unless options[:include].include?('statistics') || options[:statistics]
-        opts.merge!(stats)
-      else
-        opts
-      end
-
+      opts.merge!(stats) unless options[:include].include?('statistics') || options[:statistics]
+      opts
     end
 
     def scsslint

@@ -56,12 +56,10 @@ module Maximus
 
       return puts "Error from #{@task}: #{data}" if data.is_a?(String) && data.include?('No such')
 
-      data = data.is_a?(String) ? JSON.parse(data) : data
+      data = JSON.parse(data) if data.is_a?(String)
 
       @output[:relevant_lints] = relevant_lints( data, @git_files ) unless @git_files.blank?
-      unless @settings[:commit].blank?
-        data = @output[:relevant_lints]
-      end
+      data = @output[:relevant_lints] unless @settings[:commit].blank?
 
       evaluate_severities(data)
 
@@ -98,25 +96,26 @@ module Maximus
         files.each do |file|
 
           # sometimes data will be blank but this is good - it means no errors were raised in the lint
-          next if lint.blank?
+          next if lint.blank? || !file.has_key?(:filename)
+
           lint_file = lint[file[:filename].to_s]
 
           expanded = lines_added_to_range(file)
           revert_name = strip_working_dir(file[:filename])
-          unless lint_file.blank?
-            all_files[revert_name] = []
 
-            # @todo originally I tried .map and delete_if, but this works,
-            #   and the other method didn't cover all bases.
-            #   Gotta be a better way to write this though
-            lint_file.each do |l|
-              if expanded.include?(l['line'].to_i)
-                all_files[revert_name] << l
-              end
+          all_files[revert_name] = []
+
+          # @todo originally I tried .map and delete_if, but this works,
+          #   and the other method didn't cover all bases.
+          #   Gotta be a better way to write this though
+          lint_file.each do |l|
+            if expanded.include?(l['line'].to_i)
+              all_files[revert_name] << l
             end
-            # If there's nothing there, then it definitely isn't a relevant lint
-            all_files.delete(revert_name) if all_files[revert_name].blank?
           end
+
+          # If there's nothing there, then it definitely isn't a relevant lint
+          all_files.delete(revert_name) if all_files[revert_name].blank?
         end
         @output[:files_linted] = all_files.keys
         all_files
@@ -203,7 +202,15 @@ module Maximus
         return unless lint_length > 100
         failed_task = @task.color(:green)
         errors = "#{lint_length} failures.".color(:red)
-        errormsg = ["You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.", "The gods frown upon you, mortal.\n#{failed_task}. Again.", "Do not embarrass the city. Fight another day. Use #{failed_task}.", "You are without honor. Replenish it with another #{failed_task}.", "You will never claim the throne with a performance like that.", "Pompeii has been lost.", "A wise choice. Do not be discouraged from another #{failed_task}."].sample
+        errormsg = [
+          "You wouldn't stand a chance in Rome.\nResolve thy errors and train with #{failed_task} again.",
+          "The gods frown upon you, mortal.\n#{failed_task}. Again.",
+          "Do not embarrass the city. Fight another day. Use #{failed_task}.",
+          "You are without honor. Replenish it with another #{failed_task}.",
+          "You will never claim the throne with a performance like that.",
+          "Pompeii has been lost.",
+          "A wise choice. Do not be discouraged from another #{failed_task}."
+        ].sample
         errormsg << "\n\n"
 
         go_on = prompt "\n#{errors} Continue? (y/n) "
