@@ -211,27 +211,23 @@ module Maximus
       end
 
       # Create branch to run report on
-      # @todo better way to silence git, in case there's a real error?
       # @since 0.1.5
       # @param sha [String]
       def create_branch(sha)
-        quietly { `git -C #{@config.working_dir} checkout #{sha} -b maximus_#{sha}` }
+        `git -C #{@config.working_dir} checkout #{sha} -b maximus_#{sha}`
       end
 
       # Destroy created branch
-      # @todo better way to silence git, in case there's a real error?
       # @since 0.1.5
       # @param base_branch [String] branch we started on
       # @param sha [String] used to check against created branch name
       def destroy_branch(base_branch, sha)
-        quietly {
-          if base_branch == "maximus_#{sha}"
-            @g.branch('master').checkout
-          else
-            @g.branch(base_branch).checkout
-          end
-          @g.branch("maximus_#{sha}").delete
-        }
+        if base_branch == "maximus_#{sha}"
+          @g.branch('master').checkout
+        else
+          @g.branch(base_branch).checkout
+        end
+        @g.branch("maximus_#{sha}").delete
       end
 
       # Get list of file paths

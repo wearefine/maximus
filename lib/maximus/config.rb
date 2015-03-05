@@ -32,6 +32,8 @@ module Maximus
     # @option opts [String] :commit accepts sha, "working", "last", or "master".
     # @option opts [String] :config_file ('maximus.yml') path to config file
     # @option opts [Boolean] :compile_assets (true) compile and destroy assets automagically
+    # @option opts [String] :framework (nil) accepts 'rails' and 'middleman' (should only be used
+    #   when calling Maximus from a Ruby script)
     # @return [#load_config_file #group_families #evaluate_settings] this method is used to set up instance variables
     def initialize(opts = {})
 

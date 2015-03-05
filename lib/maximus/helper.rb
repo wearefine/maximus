@@ -14,14 +14,14 @@ module Maximus
     # This will usually be stored as a class variable in the inherited class
     # @return [Boolean]
     def is_rails?
-      defined?(Rails)
+      (@config.settings[:framework] == 'rails' unless @config.blank?) || defined?(Rails)
     end
 
     # See if project is a Middleman app
     # @since 0.1.7
     # @return [Boolean]
     def is_middleman?
-      Gem::Specification::find_all_by_name('middleman').any?
+      (@config.settings[:framework] == 'middleman' unless @config.blank?) || Gem::Specification::find_all_by_name('middleman').any?
     end
 
     # Get root directory of file being called
@@ -110,7 +110,7 @@ module Maximus
           end
         end
       else
-        path = path.gsub('/**', '').gsub('/*', '').split('.')[0..1].first if path.include?('*')
+        path = path.gsub('/**', '').gsub('/*', '').gsub(/\/\.*/, '') if path.include?('*')
         if File.exist?(path)
           return true
         else

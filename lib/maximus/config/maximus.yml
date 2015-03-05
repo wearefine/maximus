@@ -4,6 +4,7 @@ domain: 'http://localhost'
 #   here because this is the default file. If set to true, output is logged directly
 #   to the parent process and does not appear in the log.
 is_dev: false
+
 paths:
   home: '/'
 
