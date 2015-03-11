@@ -2,6 +2,11 @@
 
 ## master
 
+Features:
+
+* More file associations for linting
+* Framework option in config
+
 ## 0.1.6.1 (March 1, 2015)
 
 Features:

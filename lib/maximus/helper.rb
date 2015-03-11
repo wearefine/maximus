@@ -18,7 +18,7 @@ module Maximus
     end
 
     # See if project is a Middleman app
-    # @since 0.1.7
+    # @since 0.1.6.1
     # @return [Boolean]
     def is_middleman?
       (@config.settings[:framework] == 'middleman' unless @config.blank?) || Gem::Specification::find_all_by_name('middleman').any?
@@ -121,17 +121,18 @@ module Maximus
     end
 
     # Default paths to check for lints and some stats
-    # @since 0.1.7
+    # @since 0.1.6.1
+    # Note: is_rails? must be defined second-to-last if more frameworks are added
     # @param root [String] base directory
     # @param folder [String] nested folder to search for for Rails or Middleman
     # @param extension [String] file glob type to search for if neither
     # @return [String] path to desired files
     def discover_path(root = @config.working_dir, folder = '', extension = '')
       return @path unless @path.blank?
-      if is_rails?
-        File.join(root, 'app', 'assets', folder)
-      elsif is_middleman?
+      if is_middleman?
         File.join(root, 'source', folder)
+      elsif is_rails?
+        File.join(root, 'app', 'assets', folder)
       else
         extension.blank? ? File.join(root) : File.join(root, '/**', "/*.#{extension}")
       end

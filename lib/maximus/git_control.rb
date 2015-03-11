@@ -1,4 +1,5 @@
 require 'git'
+require 'active_support/core_ext/kernel/reporting'
 
 module Maximus
   # Git management
@@ -214,7 +215,7 @@ module Maximus
       # @since 0.1.5
       # @param sha [String]
       def create_branch(sha)
-        `git -C #{@config.working_dir} checkout #{sha} -b maximus_#{sha}`
+        silence_stream(STDERR) { `git -C #{@config.working_dir} checkout #{sha} -b maximus_#{sha}` }
       end
 
       # Destroy created branch

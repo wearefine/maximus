@@ -172,8 +172,6 @@ module Maximus
       # Send abbreviated results to console or to the log
       # @return [String] console message to display
       def lint_summarize
-        puts "#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task}" if @output[:lint_errors].length > 0
-
         success = @task.color(:green)
         success << ": "
         success << "[#{@output[:lint_warnings].length}]".color(:yellow)
@@ -183,6 +181,7 @@ module Maximus
           success << " [#{@output[:lint_refactors].length}]".color(:white)
           success << " [#{@output[:lint_fatals].length}]".color(:magenta)
         end
+        success << "\n#{'Warning'.color(:red)}: #{@output[:lint_errors].length} errors found in #{@task}" if @output[:lint_errors].length > 0
 
         success
       end
@@ -232,6 +231,7 @@ module Maximus
             pretty_output << " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
           end
         end
+        pretty_output << "-----\n\n"
         pretty_output
       end
 
