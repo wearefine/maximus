@@ -56,11 +56,11 @@ module Maximus
 
       evaluate_severities(data)
 
-      puts lint_summarize
+      puts summarize
 
       if @config.is_dev?
-        puts lint_dev_format(data)
-        lint_ceiling
+        puts dev_format(data)
+        ceiling_warning
       else
         # Because this should be returned in the format it was received
         @output[:raw_data] = data.to_json
@@ -84,7 +84,7 @@ module Maximus
       # @param lint [Hash] output lint data
       # @param files [Hash<String: String>] filename: filepath
       # @return [Array] lints that match the lines in commit
-      def relevant_lints(lint, files)
+      def relevant_output(lint, files)
         all_files = {}
         files.each do |file|
 
@@ -99,9 +99,6 @@ module Maximus
 
           all_files[revert_name] = []
 
-          # @todo originally I tried .map and delete_if, but this works,
-          #   and the other method didn't cover all bases.
-          #   Gotta be a better way to write this though
           lint_file.each do |l|
             if expanded.include?(l['line'].to_i)
               all_files[revert_name] << l
@@ -167,11 +164,12 @@ module Maximus
         changes_array.map { |e| (e[0]..e[1]).to_a }.flatten!
       end
 
+
     private
 
       # Send abbreviated results to console or to the log
       # @return [String] console message to display
-      def lint_summarize
+      def summarize
         success = @task.color(:green)
         success << ": "
         success << "[#{@output[:lint_warnings].length}]".color(:yellow)
@@ -189,10 +187,10 @@ module Maximus
       # If there's just too much to handle, through a warning.
       # @param lint_length [Integer] count of how many lints
       # @return [String] console message to display
-      def lint_ceiling
+      def ceiling_warning
         lint_length = (@output[:lint_errors].length + @output[:lint_warnings].length + @output[:lint_conventions].length + @output[:lint_refactors].length + @output[:lint_fatals].length)
-
         return unless lint_length > 100
+
         failed_task = @task.color(:green)
         errors = "#{lint_length} failures.".color(:red)
         errormsg = [
@@ -213,21 +211,15 @@ module Maximus
       # Dev display, executed only when called from command line
       # @param errors [Hash] data from lint
       # @return [String] console message to display
-      def lint_dev_format(errors = @output[:raw_data])
+      def dev_format(errors = @output[:raw_data])
         return if errors.blank?
+
         pretty_output = ''
         errors.each do |filename, error_list|
           filename = strip_working_dir(filename)
           pretty_output << "\n#{filename.color(:cyan).underline} \n"
           error_list.each do |message|
-            pretty_output << case message['severity']
-              when 'warning' then 'W'.color(:yellow)
-              when 'error' then 'E'.color(:red)
-              when 'convention' then 'C'.color(:cyan)
-              when 'refactor' then 'R'.color(:white)
-              when 'fatal' then 'F'.color(:magenta)
-              else '?'.color(:blue)
-            end
+            pretty_output << severity_color(message['severity'])
             pretty_output << " #{message['line'].to_s.color(:blue)} #{message['linter'].color(:green)}: #{message['reason']} \n"
           end
         end
@@ -243,7 +235,7 @@ module Maximus
         path.gsub("#{@config.working_dir}/", '')
       end
 
-      # Handle data and generate relevant_lints if appropriate
+      # Handle data and generate relevant_output if appropriate
       # @since 0.1.6
       # @see #refine
       # @param data [String, Hash]
@@ -256,9 +248,20 @@ module Maximus
 
         data = JSON.parse(data) if data.is_a?(String)
 
-        @output[:relevant_lints] = relevant_lints( data, @git_files ) unless @git_files.blank?
-        data = @output[:relevant_lints] unless @settings[:commit].blank?
+        @output[:relevant_output] = relevant_output( data, @git_files ) unless @git_files.blank?
+        data = @output[:relevant_output] unless @settings[:commit].blank?
         data
+      end
+
+      def severity_color(severity)
+        case severity
+          when 'warning' then 'W'.color(:yellow)
+          when 'error' then 'E'.color(:red)
+          when 'convention' then 'C'.color(:cyan)
+          when 'refactor' then 'R'.color(:white)
+          when 'fatal' then 'F'.color(:magenta)
+          else '?'.color(:blue)
+        end
       end
 
   end

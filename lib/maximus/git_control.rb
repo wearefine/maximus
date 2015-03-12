@@ -211,26 +211,6 @@ module Maximus
         end
       end
 
-      # Create branch to run report on
-      # @since 0.1.5
-      # @param sha [String]
-      def create_branch(sha)
-        silence_stream(STDERR) { `git -C #{@config.working_dir} checkout #{sha} -b maximus_#{sha}` }
-      end
-
-      # Destroy created branch
-      # @since 0.1.5
-      # @param base_branch [String] branch we started on
-      # @param sha [String] used to check against created branch name
-      def destroy_branch(base_branch, sha)
-        if base_branch == "maximus_#{sha}"
-          @g.branch('master').checkout
-        else
-          @g.branch(base_branch).checkout
-        end
-        @g.branch("maximus_#{sha}").delete
-      end
-
       # Get list of file paths
       # @param files [Hash] hash of files denoted by key 'filename'
       # @param ext [String] file extension - different extensions are joined different ways
@@ -340,17 +320,12 @@ module Maximus
       # Associate files by extension and match their changes
       # @since 0.1.5
       # @param git_sha [String]
-      # @param files [String] list of files from git return
+      # @param files [String] list of files from git
       # @return [Hash] files with matched extensions and changes
       def match_associations(git_sha, files)
         new_lines = lines_added(git_sha)
 
-        # File.extname is not used here in case dotfiles are encountered
-        files = files.split("\n").group_by { |f| f.split('.').pop }
-
-        # Don't worry about files that we don't have a lint or a statistic for
-        flat_associations = associations.clone.flatten(2)
-        files.delete_if { |k,v| !flat_associations.include?(k) || k.nil? }
+        files = list_relevant_files(files)
 
         associations.each do |ext, related|
           files[ext] ||= []
@@ -367,6 +342,21 @@ module Maximus
         end
 
         files.delete_if { |k,v| v.blank? }
+        files
+      end
+
+      # Evaluate all files of commit, group by extension,
+      #   and delete ones that can't be linted or stat'd
+      # @since 0.1.7
+      # @see match_associations
+      # @param files [String] list of files from git
+      def list_relevant_files(files)
+        # File.extname is not used here in case dotfiles are encountered
+        files = files.split("\n").group_by { |f| f.split('.').pop }
+
+        # Don't worry about files that we don't have a lint or a statistic for
+        flat_associations = associations.clone.flatten(2)
+        files.delete_if { |k,v| !flat_associations.include?(k) || k.nil? }
         files
       end
 
@@ -433,6 +423,29 @@ module Maximus
         end
 
         result
+      end
+
+
+    private
+
+      # Create branch to run report on
+      # @since 0.1.5
+      # @param sha [String]
+      def create_branch(sha)
+        silence_stream(STDERR) { `git -C #{@config.working_dir} checkout #{sha} -b maximus_#{sha}` }
+      end
+
+      # Destroy created branch
+      # @since 0.1.5
+      # @param base_branch [String] branch we started on
+      # @param sha [String] used to check against created branch name
+      def destroy_branch(base_branch, sha)
+        if base_branch == "maximus_#{sha}"
+          @g.branch('master').checkout
+        else
+          @g.branch(base_branch).checkout
+        end
+        @g.branch("maximus_#{sha}").delete
       end
 
   end
