@@ -81,7 +81,7 @@ module Maximus
         #   If working copy, just give the diff names of the files changed
         files = @psuedo_commit ? `git -C #{@config.working_dir} diff --name-only` : `git -C #{@config.working_dir} show --pretty="format:" --name-only #{git_sha}`
 
-        diff_return[git_sha.to_s] = match_associations(git_sha, files)
+        diff_return[git_sha] = match_associations(git_sha, files)
       end
       diff_return
     end
@@ -129,11 +129,8 @@ module Maximus
             file_paths: (lint_file_paths(files, ext) if lint_by_path)
           }
 
-          if nuclear
-            git_ouput[sha] = lints_and_stats_nuclear(lint_opts)
-          else
-            git_ouput[sha] = lints_and_stats_switch(ext, lint_opts)
-          end
+          git_ouput[sha] = nuclear ? lints_and_stats_nuclear(lint_opts) : lints_and_stats_switch(ext, lint_opts)
+
         end
 
         destroy_branch(base_branch, sha) unless @psuedo_commit
@@ -209,16 +206,6 @@ module Maximus
           when 'working' then 'working'
           else @settings[:commit]
         end
-      end
-
-      # Get list of file paths
-      # @param files [Hash] hash of files denoted by key 'filename'
-      # @param ext [String] file extension - different extensions are joined different ways
-      # @return [String] file paths delimited by comma or space
-      def lint_file_paths(files, ext)
-        file_list = files.map { |f| f[:filename] }.compact
-        # Lints accept files differently
-        ext == :ruby ? file_list.join(' ') : file_list.join(',')
       end
 
       # Determine which lines were added (where and how many) in a commit
@@ -446,6 +433,16 @@ module Maximus
           @g.branch(base_branch).checkout
         end
         @g.branch("maximus_#{sha}").delete
+      end
+
+      # Get list of file paths
+      # @param files [Hash] hash of files denoted by key 'filename'
+      # @param ext [String] file extension - different extensions are joined different ways
+      # @return [String] file paths delimited by comma or space
+      def lint_file_paths(files, ext)
+        file_list = files.map { |f| f[:filename] }.compact
+        # Lints accept files differently
+        ext == :ruby ? file_list.join(' ') : file_list.join(',')
       end
 
   end
