@@ -32,19 +32,16 @@ class Maximus::CLI < Thor
   desc "frontend", "Execute all front-end tasks"
   def frontend
     ['scsslint', 'jshint'].each { |e| check_exclude(e) }
-    @config.destroy_temp
   end
 
   desc "backend", "Lint with all backend lints"
   def backend
     ['rubocop', 'railsbp', 'brakeman'].each { |e| check_exclude(e) }
-    @config.destroy_temp
   end
 
   desc "statistics", "Run all statistics"
   def statistics
     ['stylestats', 'phantomas', 'wraith'].each { |e| check_exclude(e) }
-    @config.destroy_temp
   end
 
   # Alias ruby to backend
@@ -59,17 +56,23 @@ class Maximus::CLI < Thor
     all_tasks = ['frontend', 'backend', 'statistics']
 
     # If all flag is enabled, run everything
-    return all_tasks.each { |a| send(a) } if options[:all]
+    if options[:all]
+      all_tasks.each { |a| send(a) }
 
-    # Lint by category unless all flags are blank
-    return all_tasks.each { |a| check_option(a) } unless options[:frontend].blank? && options[:backend].blank? && options[:statistics].blank?
+    elsif options[:frontend].present? && options[:backend].present? && options[:statistics].present?
+      all_tasks.each { |a| check_option(a) }
 
     # If include flag is enabled, run based on what's included
-    return options[:include].each { |i| send(i) } unless options[:include].blank?
+    elsif options[:include].present?
+      options[:include].each { |i| send(i) }
 
-    # If all flag is not enabled, lint working copy as it's supposed to be
-    @config.settings[:commit] = options[:git]
-    Maximus::GitControl.new({config: @config}).lints_and_stats(true)
+    else
+      # If all flag is not enabled, lint working copy as it's supposed to be
+      @config.settings[:commit] = options[:git]
+      Maximus::GitControl.new({config: @config}).lints_and_stats(true)
+
+    end
+
     @config.destroy_temp
   end
 
@@ -80,6 +83,7 @@ class Maximus::CLI < Thor
   end
 
   no_commands do
+
     # Only run command if option is present
     def check_option(opt)
       send(opt) if options[opt.to_sym]
