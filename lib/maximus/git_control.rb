@@ -165,6 +165,7 @@ module Maximus
         ruby:   ['rb', 'Gemfile', 'lock', 'yml', 'Rakefile', 'ru', 'rdoc', 'rake', 'Capfile', 'jbuilder'],
         rails:  ['slim', 'haml', 'jbuilder', 'erb'],
         images: ['png', 'jpg', 'jpeg', 'gif'],
+        static: ['pdf', 'txt', 'doc', 'docx', 'csv', 'xls', 'xlsx'],
         markup: ['html', 'xml', 'xhtml'],
         markdown: ['md', 'markdown', 'mdown'],
         php:    ['php', 'ini']
@@ -312,7 +313,7 @@ module Maximus
       def match_associations(git_sha, files)
         new_lines = lines_added(git_sha)
 
-        files = list_relevant_files(files)
+        files = files.split("\n").group_by { |f| f.split('.').pop }
 
         associations.each do |ext, related|
           files[ext] ||= []
@@ -329,21 +330,6 @@ module Maximus
         end
 
         files.delete_if { |k,v| v.blank? }
-        files
-      end
-
-      # Evaluate all files of commit, group by extension,
-      #   and delete ones that can't be linted or stat'd
-      # @since 0.1.7
-      # @see match_associations
-      # @param files [String] list of files from git
-      def list_relevant_files(files)
-        # File.extname is not used here in case dotfiles are encountered
-        files = files.split("\n").group_by { |f| f.split('.').pop }
-
-        # Don't worry about files that we don't have a lint or a statistic for
-        flat_associations = associations.clone.flatten(2)
-        files.delete_if { |k,v| !flat_associations.include?(k) || k.nil? }
         files
       end
 
