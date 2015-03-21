@@ -76,16 +76,9 @@ module Maximus
         case key
 
           when :jshint, :JSHint, :JShint
-
-            # @todo DRY this load_config up, but can't call it at the start because of the
-            #   global config variables (last when statement in this switch)
             value = load_config(value)
 
-            if settings_data[key].is_a?(Hash) && settings_data[key].key?('jshintignore')
-              jshintignore_file = []
-              settings_data[key]['jshintignore'].each { |i| jshintignore_file << "#{i}\n" }
-              @settings[:jshintignore] = temp_it('jshintignore.json', jshintignore_file)
-            end
+            jshint_ignore settings_data[key]
             @settings[:jshint] = temp_it('jshint.json', value.to_json)
 
           when :scsslint, :SCSSlint
@@ -162,7 +155,7 @@ module Maximus
     end
 
 
-    private
+    protected
 
       # Look for a maximus config file
       #
@@ -352,6 +345,21 @@ module Maximus
           @settings[:wraith][:phantomjs] = wraith_setup value.merge(append_value)
         end
 
+      end
+
+
+    private
+
+      # Save jshintignore if available
+      # @since 0.1.7
+      # @param settings_data_key [Hash]
+      # @return updates settings
+      def jshint_ignore(settings_data_key)
+        return unless settings_data_key.is_a?(Hash) && settings_data_key.key?('jshintignore')
+
+        jshintignore_file = []
+        settings_data_key['jshintignore'].each { |i| jshintignore_file << "#{i}\n" }
+        @settings[:jshintignore] = temp_it('jshintignore.json', jshintignore_file)
       end
 
   end
