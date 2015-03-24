@@ -329,7 +329,7 @@ module Maximus
           end
         end
 
-        files.delete_if { |k,v| v.blank? }
+        files.delete_if { |k,v| v.blank? || k.nil? }
         files
       end
 
