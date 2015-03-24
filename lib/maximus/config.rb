@@ -43,10 +43,11 @@ module Maximus
       default_options = YAML.load_file(File.join(File.dirname(__FILE__), 'config', 'maximus.yml')).symbolize_keys
       default_options[:root_dir] = root_dir
       default_options[:port] = 3000 if is_rails?
+      default_options[:port] = 4567 if is_middleman?
 
-      @root = opts[:root_dir] ? opts[:root_dir] : default_options[:root_dir]
+      root = opts[:root_dir] ? opts[:root_dir] : default_options[:root_dir]
 
-      yaml = default_options.merge load_config_file(opts[:config_file])
+      yaml = default_options.merge load_config_file(opts[:config_file], root)
       @settings = yaml.merge opts
 
       @settings[:git_log] = false if @settings[:git_log].nil?
@@ -166,13 +167,14 @@ module Maximus
       #
       # @since 0.1.4
       # @param file_path [String]
+      # @param root [String] file path to root directory
       # @return @settings [Hash]
-      def load_config_file(file_path)
+      def load_config_file(file_path, root)
 
-        conf_location = if !file_path.nil? && File.exist?(file_path)
+        conf_location = if file_path.present? && File.exist?(file_path)
           file_path
         else
-          config_exists('.maximus.yml') || config_exists('maximus.yml') || config_exists('config/maximus.yml')
+          config_exists('.maximus.yml', root) || config_exists('maximus.yml', root) || config_exists('config/maximus.yml', root)
         end
 
         return {} if conf_location.is_a?(FalseClass)
@@ -240,19 +242,6 @@ module Maximus
         end
         @temp_files[ext[0].to_sym] = file
         file.path
-      end
-
-      # See if a config file exists
-      #
-      # @see load_config_file
-      #
-      # This is used exclusively for the load_config_file method
-      # @param file [String] file name
-      # @return [String, FalseClass] if file is found return the absolute path
-      #   otherwise return false so we can keep checking
-      def config_exists(file)
-        present_location = File.join(@root, file)
-        File.exist?(present_location) ? present_location : false
       end
 
       # Accounting for space-separated command line arrays
@@ -349,6 +338,20 @@ module Maximus
 
 
     private
+
+      # See if a config file exists
+      #
+      # @see load_config_file
+      #
+      # This is used exclusively for the load_config_file method
+      # @param file [String] file name
+      # @param root [String] file path to root directory
+      # @return [String, FalseClass] if file is found return the absolute path
+      #   otherwise return false so we can keep checking
+      def config_exists(file, root)
+        present_location = File.join(root, file)
+        File.exist?(present_location) ? present_location : false
+      end
 
       # Save jshintignore if available
       # @since 0.1.7
