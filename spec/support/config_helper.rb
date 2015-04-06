@@ -1,4 +1,3 @@
-
 module ConfigHelper
 
   def create_config(contents = '', location = '.maximus.yml')

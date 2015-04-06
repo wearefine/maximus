@@ -116,12 +116,10 @@ module Maximus
         end
       end
 
-      # Finally, we're done
       @settings
     end
 
-    # If output should be returned to console
-    #   in a pretty display
+    # If output should be returned to console in a pretty display
     # @return [Boolean]
     def is_dev?
       @settings[:is_dev]
