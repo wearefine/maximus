@@ -45,9 +45,9 @@ module Maximus
       default_options[:port] = 3000 if is_rails?
       default_options[:port] = 4567 if is_middleman?
 
-      root = opts[:root_dir] ? opts[:root_dir] : default_options[:root_dir]
+      opts[:root_dir] ||= default_options[:root_dir]
 
-      yaml = default_options.merge load_config_file(opts[:config_file], root)
+      yaml = default_options.merge load_config_file(opts[:config_file], opts[:root_dir])
       @settings = yaml.merge opts
 
       @settings[:git_log] = false if @settings[:git_log].nil?

@@ -232,7 +232,7 @@ module Maximus
       # @param path [String]
       # @return [String]
       def strip_working_dir(path)
-        path.gsub("#{@config.working_dir}/", '')
+        path.gsub(@config.working_dir, '')
       end
 
       # Handle data and generate relevant_output if appropriate
