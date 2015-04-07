@@ -7,6 +7,7 @@ module Maximus
   class GitControl
 
     include Helper
+    include GitHelper
 
     # Set up instance variables
     #
@@ -79,17 +80,17 @@ module Maximus
 
         # Grab all files in that commit and group them by extension
         #   If working copy, just give the diff names of the files changed
-        files = @psuedo_commit ? `git -C #{@config.working_dir} diff --name-only` : `git -C #{@config.working_dir} show --pretty="format:" --name-only #{git_sha}`
+        files = @psuedo_commit ? working_copy_files : files_by_sha(git_sha)
 
         diff_return[git_sha] = match_associations(git_sha, files)
       end
+
       diff_return
     end
 
     # Run appropriate lint for every sha in commit history.
     # For each sha a new branch is created then deleted
     #
-    # This is where everything goes down
     # @example sample output
     #   {
     #     'sha': {
@@ -110,8 +111,8 @@ module Maximus
     #   and relevant file types in the commit
     # @param nuclear [Boolean] do everything regardless of what's in the commit
     # @return [Hash] data all data grouped by task
-    def lints_and_stats(lint_by_path = false, git_shas = compare, nuclear = false)
-      return false if git_shas.blank?
+    def lints_and_stats(lint_by_path = false, commit_shas = compare, nuclear = false)
+      return false if commit_shas.blank?
 
       base_branch = branch
       git_ouput = {}
@@ -137,22 +138,6 @@ module Maximus
       end
 
       git_ouput
-    end
-
-    # Find first commit
-    # @since 0.1.5
-    # @return [String]
-    def first_commit
-      `git -C #{@config.working_dir} rev-list --max-parents=0 HEAD`.strip!
-    end
-
-    # Get commit before current
-    # @since 0.1.5
-    # @param current_commit [String] (head_sha) commit to start at
-    # @param previous_by [Integer] (1) commit n commits ago
-    # @return [String]
-    def previous_commit(current_commit = head_sha, previous_by = 1)
-      `git -C #{@config.working_dir} rev-list --max-count=#{previous_by + 1} #{current_commit} --reverse | head -n1`.strip!
     end
 
     # Define associations to linters based on file extension
@@ -190,7 +175,7 @@ module Maximus
       # @param sha2 [String]
       # @return [Array] shas
       def commit_range(sha1, sha2)
-        git_spread = @psuedo_commit ? "git #{sha1}" : `git -C #{@config.working_dir} rev-list #{sha1}..#{sha2} --no-merges`
+        git_spread = @psuedo_commit ? "git #{sha1}" : sha_range(sha1, sha2)
         git_spread = git_spread.nil? ? [] : git_spread.split("\n")
 
         git_spread << sha1 unless @psuedo_commit
@@ -219,9 +204,9 @@ module Maximus
       #
       # @param git_sha [String] sha of the commit
       # @return [Hash] ranges by lines added in a commit by file name
-      def lines_added(git_sha)
+      def lines_added(commit_sha)
         new_lines = {}
-        git_lines = `#{File.join(File.dirname(__FILE__), 'reporter', 'git-lines.sh')} #{@config.working_dir} #{git_sha}`.split("\n")
+        git_lines = lines_by_sha(commit_sha)
         git_lines.each do |filename|
           fsplit = filename.split(':')
           # if file isn't already part of the array
@@ -234,24 +219,6 @@ module Maximus
         new_lines
       end
 
-      # Get last commit on current branch
-      # @return [String] sha
-      def head_sha
-        @g.object('HEAD').sha
-      end
-
-      # Get current branch name
-      # @return [String]
-      def branch
-        `env -i git rev-parse --abbrev-ref HEAD`.strip!
-      end
-
-      # Get last commit sha on the master branch
-      # @return [String]
-      def master_commit_sha
-        @g.branches[:master].blank? ? head_sha : @g.branches[:master].gcommit.sha
-      end
-
       # Get general stats of commit on HEAD versus last commit on master branch
       # @modified 0.1.4
       # @param old_commit [Git::Object]
@@ -261,9 +228,11 @@ module Maximus
         stats = @g.diff(old_commit, new_commit).stats
         lines = lines_added(new_commit.sha)
         return if !lines.is_a?(Hash) || stats.blank?
+
         lines.each do |filename, filelines|
           stats[:files][filename][:lines_added] = filelines if stats[:files].key?(filename)
         end
+
         stats
       end
 
@@ -274,8 +243,7 @@ module Maximus
       # @param commit_sha [String]
       # @return [Hash] stat data similar to Ruby-git's Diff.stats return
       def diff_initial(commit_sha)
-        # Start after the commit information
-        data = `git -C #{@config.working_dir} log --numstat --oneline #{commit_sha}`.split("\n")[1..-1]
+        data = commit_information(commit_sha)
         value = {
           total: {
             insertions: 0,
@@ -299,33 +267,27 @@ module Maximus
         value
       end
 
-      # Get remote URL
-      # @return [String, nil] nil returns if remotes is blank
-      def remote
-        @g.remotes.first.url unless @g.remotes.blank?
-      end
-
       # Associate files by extension and match their changes
       # @since 0.1.5
-      # @param git_sha [String]
+      # @param commit_sha [String]
       # @param files [String] list of files from git
       # @return [Hash] files with matched extensions and changes
-      def match_associations(git_sha, files)
-        new_lines = lines_added(git_sha)
+      def match_associations(commit_sha, files)
+        new_lines = lines_added(commit_sha)
 
         files = files.split("\n").group_by { |f| f.split('.').pop }
 
         associations.each do |ext, related|
           files[ext] ||= []
           related.each do |child|
-            unless files[child].blank?
-              files[child].each do |c|
-                # hack to ignore deleted files
-                files[child] = new_lines[c].blank? ? [] : [ filename: File.join(@config.working_dir, c), changes: new_lines[c] ]
-              end
-              files[ext].concat(files[child])
-              files.delete(child)
+            next if files[child].blank?
+
+            files[child].each do |c|
+              # hack to ignore deleted files
+              files[child] = new_lines[c].blank? ? [] : [ filename: File.join(@config.working_dir, c), changes: new_lines[c] ]
             end
+            files[ext].concat(files[child])
+            files.delete(child)
           end
         end
 

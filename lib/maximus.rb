@@ -1,4 +1,5 @@
 require 'maximus/version'
+require 'maximus/git_helper'
 require 'maximus/helper'
 require 'maximus/config'
 require 'maximus/git_control'
