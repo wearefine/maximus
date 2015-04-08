@@ -89,7 +89,7 @@ module Maximus
         files.each do |file|
 
           # sometimes data will be blank but this is good - it means no errors were raised in the lint
-          next if lint.blank? || file.blank? || !file.key?(:filename)
+          next if lint.blank? || file.blank? || !file.is_a?(Hash) || !file.key?(:filename)
           lint_file = lint[file[:filename]]
 
           next if lint_file.blank?

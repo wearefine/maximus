@@ -111,8 +111,8 @@ module Maximus
     #   and relevant file types in the commit
     # @param nuclear [Boolean] do everything regardless of what's in the commit
     # @return [Hash] data all data grouped by task
-    def lints_and_stats(lint_by_path = false, commit_shas = compare, nuclear = false)
-      return false if commit_shas.blank?
+    def lints_and_stats(lint_by_path = false, git_shas = compare, nuclear = false)
+      return false if git_shas.blank?
 
       base_branch = branch
       git_ouput = {}
