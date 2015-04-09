@@ -1,11 +1,16 @@
 # Change log
 
-## master
+## 0.1.7 (April 9, 2015)
 
 Features:
 
 * More file associations for linting
 * Framework option in config
+* Additional associations sorted when evaluating a codebase
+
+Bugfixes:
+
+* Fix #11 (`maximus -a` fails)
 
 ## 0.1.6.1 (March 1, 2015)
 
