@@ -4,9 +4,15 @@ language: ruby
 git:
   depth: 800
 rvm:
-  - 2.0.0
-  - 2.1
+- 2.0.0
+- 2.1
 install:
-  - bundle install --retry=3
+- bundle install --retry=3
 script:
-  - bundle exec rspec
+- bundle exec rspec
+after_success:
+- chmod ugo+x notify.sh
+- '[ "${TRAVIS_PULL_REQUEST}" != "false" ] || ./notify.sh'
+env:
+  global:
+    secure: MwBB/DO0woaS9cqOJ+mn2S2Kq5yzstPjh/stRb10itI3bIgybMHJQR4Jmir82xCthKDQaVbIZoZn+2Z6Xg49wXBiLgoBl2o9eCFVddmnWgozSYUMwVuJt5utTT62i/1svySKC3LENCPDsES7q16XTvCdYzipdkJcVuWlCaKn2GU=
